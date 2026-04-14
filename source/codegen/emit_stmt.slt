@@ -1,0 +1,164 @@
+module emit_stmt;
+
+use node;
+use emitter;
+use emit_types;
+use emit_expr;
+
+# Emit a return statement
+
+Emitter emit_return(Emitter e, string value, string slate_type) {
+    if slate_type == "void" {
+        return emit_line(e, "  ret void");
+    }
+    string llvm_t = llvm_type(slate_type);
+    return emit_line(e, "  ret " + llvm_t + " " + value);
+}
+
+# Emit a variable declaration — alloca + store
+
+Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
+    string slot = "%" + name;
+    e = emit_alloca(e, slot, slate_type);
+    e = emit_store(e, value, slate_type, slot);
+    return e;
+}
+
+# Emit an assignment — store into existing slot
+
+Emitter emit_assign(Emitter e, string name, string slate_type, string value) {
+    string slot = "%" + name;
+    e = emit_store(e, value, slate_type, slot);
+    return e;
+}
+
+# Emit if/else — uses LLVM basic blocks
+
+Emitter emit_if(Emitter e, string cond_reg, string then_label, string else_label, string merge_label) {
+    e = emit_line(e, "  br i1 " + cond_reg + ", label %" + then_label + ", label %" + else_label);
+    return e;
+}
+
+Emitter emit_then_block(Emitter e, string then_label, string merge_label) {
+    e = emit_line(e, then_label + ":");
+    return e;
+}
+
+Emitter emit_else_block(Emitter e, string else_label, string merge_label) {
+    e = emit_line(e, else_label + ":");
+    return e;
+}
+
+Emitter emit_merge_block(Emitter e, string merge_label) {
+    e = emit_line(e, merge_label + ":");
+    return e;
+}
+
+Emitter emit_jump(Emitter e, string label) {
+    return emit_line(e, "  br label %" + label);
+}
+
+# Emit while loop — condition block, body block, exit block
+
+Emitter emit_while_start(Emitter e, string cond_label) {
+    e = emit_jump(e, cond_label);
+    e = emit_line(e, cond_label + ":");
+    return e;
+}
+
+Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
+    e = emit_line(e, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
+    e = emit_line(e, body_label + ":");
+    return e;
+}
+
+Emitter emit_while_end(Emitter e, string cond_label, string exit_label) {
+    e = emit_jump(e, cond_label);
+    e = emit_line(e, exit_label + ":");
+    return e;
+}
+
+# Emit for loop — range based
+# Emits: alloca for loop var, init store, jump to cond,
+# cond block, body block, increment, exit block
+
+Emitter emit_for_init(Emitter e, string var, string start_val) {
+    string slot = "%" + var;
+    e = emit_alloca(e, slot, "int");
+    e = emit_store(e, start_val, "int", slot);
+    return e;
+}
+
+Emitter emit_for_cond(Emitter e, string cond_label, string var, string end_val) {
+    string slot = "%" + var;
+    string loaded = next_reg(e);
+    e = advance_reg(e);
+    e = emit_line(e, cond_label + ":");
+    e = emit_load(e, loaded, "int", slot);
+    string cmp_reg = next_reg(e);
+    e = advance_reg(e);
+    e = emit_line(e, "  " + cmp_reg + " = icmp slt i64 " + loaded + ", " + end_val);
+    return e;
+}
+
+Emitter emit_for_increment(Emitter e, string var, string cond_label) {
+    string slot = "%" + var;
+    string loaded = next_reg(e);
+    e = advance_reg(e);
+    e = emit_load(e, loaded, "int", slot);
+    string incremented = next_reg(e);
+    e = advance_reg(e);
+    e = emit_line(e, "  " + incremented + " = add i64 " + loaded + ", 1");
+    e = emit_store(e, incremented, "int", slot);
+    e = emit_jump(e, cond_label);
+    return e;
+}
+
+# Emit a break — unconditional jump to exit label
+
+Emitter emit_break(Emitter e, string exit_label) {
+    return emit_jump(e, exit_label);
+}
+
+# Emit a function declaration header
+
+Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) param_names, list(string) param_types) {
+    string llvm_ret = llvm_return_type(return_type);
+    mutable string params = "";
+    mutable int i = 0;
+    while i < param_names.len() {
+        if i > 0 { params = params + ", "; }
+        params = params + llvm_param_type(param_types.get(i)) + " %" + param_names.get(i);
+        i += 1;
+    }
+    e = emit_line(e, "define " + llvm_ret + " @" + name + "(" + params + ") {");
+    e = emit_line(e, "entry:");
+    return e;
+}
+
+# Emit a function footer
+
+Emitter emit_fn_footer(Emitter e, string return_type) {
+    if return_type == "void" {
+        e = emit_line(e, "  ret void");
+    }
+    e = emit_line(e, "}");
+    return e;
+}
+
+# Emit the LLVM IR file header — target triple and data layout
+
+Emitter emit_file_header(Emitter e, string target_triple) {
+    e = emit_line(e, "; Slate compiled output");
+    e = emit_line(e, "target triple = \"" + target_triple + "\"");
+    e = emit_line(e, "");
+    return e;
+}
+
+# Emit a global string constant
+
+Emitter emit_global_string(Emitter e, string name, string value) {
+    int len = value.len() + 1;
+    e = emit_line(e, "@" + name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + value + "\\00\"");
+    return e;
+}

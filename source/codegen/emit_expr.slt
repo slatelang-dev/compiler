@@ -1,0 +1,158 @@
+module emit_expr;
+
+use node;
+use emitter;
+use emit_types;
+
+# Emit a literal value — returns the LLVM value string and updated emitter
+
+string emit_int_lit(string value) {
+    return value;
+}
+
+string emit_float_lit(string value) {
+    return value;
+}
+
+string emit_bool_lit(string value) {
+    if value == "true"  { return "1"; }
+    return "0";
+}
+
+string emit_char_lit(string value) {
+    return string(value.chars().get(0));
+}
+
+# Emit a binary operation — returns result register
+
+Emitter emit_binary_op(Emitter e, string op, string left, string right, string slate_type) {
+    string reg = next_reg(e);
+    e = advance_reg(e);
+    string llvm_t = llvm_type(slate_type);
+
+    if op == "+" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fadd " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = add " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "-" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fsub " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = sub " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "*" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fmul " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = mul " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "/" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fdiv " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = sdiv " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "%" {
+        return emit_line(e, "  " + reg + " = srem " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "==" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp oeq " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp eq " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "!=" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp one " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp ne " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "<" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp olt " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp slt " + llvm_t + " " + left + ", " + right);
+    }
+    if op == ">" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp ogt " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp sgt " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "<=" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp ole " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp sle " + llvm_t + " " + left + ", " + right);
+    }
+    if op == ">=" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp oge " + llvm_t + " " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp sge " + llvm_t + " " + left + ", " + right);
+    }
+    if op == "and" {
+        return emit_line(e, "  " + reg + " = and i1 " + left + ", " + right);
+    }
+    if op == "or" {
+        return emit_line(e, "  " + reg + " = or i1 " + left + ", " + right);
+    }
+
+    return emit_error(e, "unknown binary op: " + op);
+}
+
+# Emit a unary operation
+
+Emitter emit_unary_op(Emitter e, string op, string operand, string slate_type) {
+    string reg = next_reg(e);
+    e = advance_reg(e);
+    if op == "not" {
+        return emit_line(e, "  " + reg + " = xor i1 " + operand + ", 1");
+    }
+    if op == "-" {
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fneg double " + operand);
+        }
+        return emit_line(e, "  " + reg + " = sub i64 0, " + operand);
+    }
+    return emit_error(e, "unknown unary op: " + op);
+}
+
+# Emit a function call
+
+Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_values, list(string) arg_types) {
+    string reg = next_reg(e);
+    e = advance_reg(e);
+    string llvm_ret = llvm_type(return_type);
+    mutable string args = "";
+    mutable int i = 0;
+    while i < arg_values.len() {
+        if i > 0 { args = args + ", "; }
+        args = args + llvm_type(arg_types.get(i)) + " " + arg_values.get(i);
+        i += 1;
+    }
+    return emit_line(e, "  " + reg + " = call " + llvm_ret + " @" + name + "(" + args + ")");
+}
+
+# Emit a variable load from alloca slot
+
+Emitter emit_load(Emitter e, string reg_dest, string slate_type, string alloca_reg) {
+    string llvm_t = llvm_type(slate_type);
+    return emit_line(e, "  " + reg_dest + " = load " + llvm_t + ", ptr " + alloca_reg);
+}
+
+# Emit a variable store to alloca slot
+
+Emitter emit_store(Emitter e, string value, string slate_type, string alloca_reg) {
+    string llvm_t = llvm_type(slate_type);
+    return emit_line(e, "  store " + llvm_t + " " + value + ", ptr " + alloca_reg);
+}
+
+# Emit an alloca — stack slot for a variable
+
+Emitter emit_alloca(Emitter e, string reg, string slate_type) {
+    string llvm_t = llvm_type(slate_type);
+    return emit_line(e, "  " + reg + " = alloca " + llvm_t);
+}

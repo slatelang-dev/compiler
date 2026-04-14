@@ -1,0 +1,101 @@
+module modules;
+
+use project;
+use slate;
+
+# A loaded module — source text and its parsed AST
+
+struct LoadedModule {
+    string name;
+    string path;
+    string source;
+    Node ast;
+    bool ok;
+    string error;
+}
+
+LoadedModule make_loaded_module(string name, string path, string source, Node ast) {
+    return LoadedModule(
+        name: name,
+        path: path,
+        source: source,
+        ast: ast,
+        ok: true,
+        error: ""
+    );
+}
+
+LoadedModule make_failed_module(string name, string path, string error) {
+    Node empty_ast = make_program(empty, 0, 0);
+    return LoadedModule(
+        name: name,
+        path: path,
+        source: "",
+        ast: empty_ast,
+        ok: false,
+        error: error
+    );
+}
+
+# Load and parse a single .slt file
+
+LoadedModule load_module(string name, string path) {
+    if file(path).exists() == false {
+        return make_failed_module(name, path, "file not found: " + path);
+    }
+    string source = file(path).read();
+    ParseResult result = parse(source);
+    if result.ok == false {
+        return make_failed_module(name, path, result.error);
+    }
+    return make_loaded_module(name, path, source, result.node);
+}
+
+# Load the entry point module from a project
+
+LoadedModule load_entry(Project p) {
+    return load_module(p.name, p.entry);
+}
+
+# Collect all modules needed by a program
+# Walks Use nodes and loads each dependency
+
+list(LoadedModule) load_all_modules(Node program, string base_path) {
+    mutable list(LoadedModule) modules = empty;
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.Use {
+            string mod_name = decl.value;
+            string mod_path = base_path + "/" + mod_name + ".slt";
+            LoadedModule loaded = load_module(mod_name, mod_path);
+            modules = modules.add(loaded);
+        }
+        i += 1;
+    }
+    return modules;
+}
+
+bool all_modules_ok(list(LoadedModule) modules) {
+    mutable bool ok = true;
+    mutable int i = 0;
+    while i < modules.len() {
+        if modules.get(i).ok == false {
+            ok = false;
+        }
+        i += 1;
+    }
+    return ok;
+}
+
+string first_module_error(list(LoadedModule) modules) {
+    mutable int i = 0;
+    while i < modules.len() {
+        LoadedModule m = modules.get(i);
+        if m.ok == false {
+            return m.error;
+        }
+        i += 1;
+    }
+    return "";
+}

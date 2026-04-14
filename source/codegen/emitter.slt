@@ -1,0 +1,98 @@
+module emitter;
+
+# Emitter state — passed through all emit functions
+# output: the accumulated .ll text
+# reg: current SSA register counter (e.g. %1, %2, %3)
+# label: current label counter (e.g. label0, label1)
+# fn_name: current function being emitted
+# errors: any codegen errors encountered
+
+struct Emitter {
+    string output;
+    int reg;
+    int label;
+    string fn_name;
+    list(string) errors;
+}
+
+Emitter new_emitter() {
+    return Emitter(
+        output: "",
+        reg: 0,
+        label: 0,
+        fn_name: "",
+        errors: empty
+    );
+}
+
+# Append a line to the output buffer
+
+Emitter emit_line(Emitter e, string line) {
+    return Emitter(
+        output: e.output + line + "\n",
+        reg: e.reg,
+        label: e.label,
+        fn_name: e.fn_name,
+        errors: e.errors
+    );
+}
+
+# Allocate a new SSA register — returns the name and advanced emitter
+
+string next_reg(Emitter e) {
+    return "%r" + string(e.reg);
+}
+
+Emitter advance_reg(Emitter e) {
+    return Emitter(
+        output: e.output,
+        reg: e.reg + 1,
+        label: e.label,
+        fn_name: e.fn_name,
+        errors: e.errors
+    );
+}
+
+# Allocate a new label
+
+string next_label(Emitter e) {
+    return "label" + string(e.label);
+}
+
+Emitter advance_label(Emitter e) {
+    return Emitter(
+        output: e.output,
+        reg: e.reg,
+        label: e.label + 1,
+        fn_name: e.fn_name,
+        errors: e.errors
+    );
+}
+
+# Set current function name
+
+Emitter set_fn(Emitter e, string name) {
+    return Emitter(
+        output: e.output,
+        reg: e.reg,
+        label: e.label,
+        fn_name: name,
+        errors: e.errors
+    );
+}
+
+# Record a codegen error
+
+Emitter emit_error(Emitter e, string message) {
+    return Emitter(
+        output: e.output,
+        reg: e.reg,
+        label: e.label,
+        fn_name: e.fn_name,
+        errors: e.errors.add(message)
+    );
+}
+
+bool emitter_has_errors(Emitter e) {
+    return e.errors.len() > 0;
+}

@@ -10,8 +10,8 @@ struct LoadedModule {
     string path;
     string source;
     Node ast;
-    bool ok;
-    string error;
+    bool loaded;
+    string load_error;
 }
 
 LoadedModule make_loaded_module(string name, string path, string source, Node ast) {

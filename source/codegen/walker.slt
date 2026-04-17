@@ -100,14 +100,18 @@ Emitter walk_fn(Node fn_node, Emitter e) {
     mutable list(string) param_types = empty;
     mutable table(string, string) locals = empty;
     mutable int i = 1;
+    print("DEBUG walk_fn: loop start, children.len=" + string(fn_node.children.len()));
     while i < fn_node.children.len() - 1 {
+        print("DEBUG walk_fn: loop i=" + string(i));
         Node param = fn_node.children.get(i);
+        print("DEBUG walk_fn: param=" + param.value + " param.children.len=" + string(param.children.len()));
         string param_type = param.children.get(0).value;
         param_names = param_names.add(param.value);
         param_types = param_types.add(param_type);
         locals = locals.set(param.value, param_type);
         i += 1;
     }
+    print("DEBUG walk_fn: loop done");
     e = set_fn(e, fn_name);
     e = emit_fn_header(e, fn_name, return_type, param_names, param_types);
     e = walk_block(body, e, locals);

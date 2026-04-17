@@ -25,7 +25,7 @@ LoadedModule make_loaded_module(string name, string path, string source, Node as
     );
 }
 
-LoadedModule make_failed_module(string name, string path, string error) {
+LoadedModule make_failed_module(string name, string path, string msg) {
     Node empty_ast = make_program(empty, 0, 0);
     return LoadedModule(
         name: name,
@@ -33,7 +33,7 @@ LoadedModule make_failed_module(string name, string path, string error) {
         source: "",
         ast: empty_ast,
         loaded: false,
-        load_error: error
+        load_error: msg
     );
 }
 

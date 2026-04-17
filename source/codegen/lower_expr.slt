@@ -84,6 +84,12 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.Call {
+        print("DEBUG walk_expr: Call value=" + node.value + " children.len=" + string(node.children.len()));
+        if node.children.len() == 0 {
+            print("DEBUG walk_expr: Call with no children - returning dummy");
+            string result_reg = next_reg(e);
+            return EmitResult(emitter: e, value: result_reg);
+        }
         mutable Emitter cur = e;
         mutable list(string) arg_values = empty;
         mutable int i = 0;

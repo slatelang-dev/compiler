@@ -87,7 +87,12 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
 }
 
 Emitter walk_fn(Node fn_node, Emitter e) {
+    print("DEBUG walk_fn: value=" + fn_node.value + " children=" + string(fn_node.children.len()));
     string fn_name = fn_node.value;
+    if fn_node.children.len() == 0 {
+        print("DEBUG walk_fn: NO CHILDREN!");
+        return e;
+    }
     Node return_type_node = fn_node.children.get(0);
     string return_type = return_type_node.value;
     Node body = fn_node.children.get(fn_node.children.len() - 1);
@@ -117,8 +122,11 @@ string walk_program(Node program, string target_triple) {
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
+        print("walker: child " + string(i) + " kind = " + string(decl.kind));
         if decl.kind == NodeKind.FnDecl {
+            print("walker: calling walk_fn for " + decl.value);
             e = walk_fn(decl, e);
+            print("walker: walk_fn done");
         }
         i += 1;
     }

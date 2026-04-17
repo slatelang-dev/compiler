@@ -112,11 +112,17 @@ Emitter walk_fn(Node fn_node, Emitter e) {
         i += 1;
     }
     print("DEBUG walk_fn: loop done");
+    print("DEBUG walk_fn: about to set_fn");
     e = set_fn(e, fn_name);
+    print("DEBUG walk_fn: about to emit_fn_header");
     e = emit_fn_header(e, fn_name, return_type, param_names, param_types);
+    print("DEBUG walk_fn: about to walk_block");
     e = walk_block(body, e, locals);
+    print("DEBUG walk_fn: about to emit_fn_footer");
     e = emit_fn_footer(e, return_type);
+    print("DEBUG walk_fn: about to emit_line");
     e = emit_line(e, "");
+    print("DEBUG walk_fn: returning");
     return e;
 }
 

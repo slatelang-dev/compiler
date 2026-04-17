@@ -113,6 +113,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.MethodCall {
+        string method = node.value;
         print("DEBUG: MethodCall before check, value=" + node.value + " children=" + string(node.children.len()));
         # Handle empty specially
         if node.children.len() == 0 {

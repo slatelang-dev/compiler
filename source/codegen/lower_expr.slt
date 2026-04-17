@@ -107,7 +107,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
         print("DEBUG: not primitive, calling next_reg");
+        print("DEBUG: cur.output.len=" + string(cur.output.len()));
         string result_reg = next_reg(cur);
+        print("DEBUG: got result_reg=" + result_reg);
         cur = emit_call(cur, node.value, "int", arg_values, empty);
         return EmitResult(emitter: cur, value: result_reg);
     }

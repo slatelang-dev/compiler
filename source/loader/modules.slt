@@ -20,8 +20,8 @@ LoadedModule make_loaded_module(string name, string path, string source, Node as
         path: path,
         source: source,
         ast: ast,
-        ok: true,
-        error: ""
+        loaded: true,
+        load_error: ""
     );
 }
 
@@ -32,8 +32,8 @@ LoadedModule make_failed_module(string name, string path, string error) {
         path: path,
         source: "",
         ast: empty_ast,
-        ok: false,
-        error: error
+        loaded: false,
+        load_error: error
     );
 }
 
@@ -77,23 +77,23 @@ list(LoadedModule) load_all_modules(Node program, string base_path) {
 }
 
 bool all_modules_ok(list(LoadedModule) modules) {
-    mutable bool ok = true;
+    mutable bool all_loaded = true;
     mutable int i = 0;
     while i < modules.len() {
-        if modules.get(i).ok == false {
-            ok = false;
+        if modules.get(i).loaded == false {
+            all_loaded = false;
         }
         i += 1;
     }
-    return ok;
+    return all_loaded;
 }
 
 string first_module_error(list(LoadedModule) modules) {
     mutable int i = 0;
     while i < modules.len() {
         LoadedModule m = modules.get(i);
-        if m.ok == false {
-            return m.error;
+        if m.loaded == false {
+            return m.load_error;
         }
         i += 1;
     }

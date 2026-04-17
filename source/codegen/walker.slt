@@ -8,13 +8,18 @@ use emit_stmt;
 use lower_expr;
 
 Emitter walk_block(Node block, Emitter e, table(string, string) locals) {
+    print("DEBUG walk_block: children.len=" + string(block.children.len()));
     mutable Emitter cur = e;
     mutable table(string, string) block_locals = locals;
     mutable int i = 0;
+    print("DEBUG walk_block: loop start");
     while i < block.children.len() {
+        print("DEBUG walk_block: i=" + string(i));
         cur = walk_stmt(block.children.get(i), cur, block_locals);
+        print("DEBUG walk_block: stmt done");
         i += 1;
     }
+    print("DEBUG walk_block: loop done, returning");
     return cur;
 }
 

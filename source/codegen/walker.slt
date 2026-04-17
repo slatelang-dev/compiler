@@ -8,31 +8,22 @@ use emit_stmt;
 use lower_expr;
 
 Emitter walk_block(Node block, Emitter e, table(string, string) locals) {
-    print("DEBUG walk_block: children.len=" + string(block.children.len()));
     mutable Emitter cur = e;
     mutable table(string, string) block_locals = locals;
     mutable int i = 0;
-    print("DEBUG walk_block: loop start");
     while i < block.children.len() {
-        print("DEBUG walk_block: i=" + string(i));
         cur = walk_stmt(block.children.get(i), cur, block_locals);
-        print("DEBUG walk_block: stmt done");
         i += 1;
     }
-    print("DEBUG walk_block: loop done, returning");
     return cur;
 }
 
 Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
-    print("DEBUG walk_stmt: kind=" + string(node.kind) + " children.len=" + string(node.children.len()));
     if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
     or node.kind == NodeKind.ConstDecl {
         string var_name = node.value;
-        print("DEBUG walk_stmt: VarDecl, accessing children.get(0)");
         string slate_type = node.children.get(0).value;
-        print("DEBUG walk_stmt: about to walk_expr for init");
         EmitResult init = walk_expr(node.children.get(1), e, locals);
-        print("DEBUG walk_stmt: about to emit_var_decl");
         e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
         return e;
     }
@@ -98,40 +89,30 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
 Emitter walk_fn(Node fn_node, Emitter e) {
     print("DEBUG walk_fn: value=" + fn_node.value + " children=" + string(fn_node.children.len()));
     string fn_name = fn_node.value;
-    print("DEBUG walk_fn: about to get return_type_node");
+    if fn_node.children.len() == 0 {
+        print("DEBUG walk_fn: NO CHILDREN!");
+        return e;
+    }
     Node return_type_node = fn_node.children.get(0);
-    print("DEBUG walk_fn: got return_type_node");
     string return_type = return_type_node.value;
-    print("DEBUG walk_fn: about to get body");
     Node body = fn_node.children.get(fn_node.children.len() - 1);
-    print("DEBUG walk_fn: got body");
     mutable list(string) param_names = empty;
     mutable list(string) param_types = empty;
     mutable table(string, string) locals = empty;
     mutable int i = 1;
-    print("DEBUG walk_fn: loop start, children.len=" + string(fn_node.children.len()));
     while i < fn_node.children.len() - 1 {
-        print("DEBUG walk_fn: loop i=" + string(i));
         Node param = fn_node.children.get(i);
-        print("DEBUG walk_fn: param=" + param.value + " param.children.len=" + string(param.children.len()));
         string param_type = param.children.get(0).value;
         param_names = param_names.add(param.value);
         param_types = param_types.add(param_type);
         locals = locals.set(param.value, param_type);
         i += 1;
     }
-    print("DEBUG walk_fn: loop done");
-    print("DEBUG walk_fn: about to set_fn");
     e = set_fn(e, fn_name);
-    print("DEBUG walk_fn: about to emit_fn_header");
     e = emit_fn_header(e, fn_name, return_type, param_names, param_types);
-    print("DEBUG walk_fn: about to walk_block");
     e = walk_block(body, e, locals);
-    print("DEBUG walk_fn: about to emit_fn_footer");
     e = emit_fn_footer(e, return_type);
-    print("DEBUG walk_fn: about to emit_line");
     e = emit_line(e, "");
-    print("DEBUG walk_fn: returning");
     return e;
 }
 

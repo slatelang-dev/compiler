@@ -1,0 +1,126 @@
+module walker;
+
+use node;
+use emitter;
+use emit_types;
+use emit_expr;
+use emit_stmt;
+use lower_expr;
+
+Emitter walk_block(Node block, Emitter e, table(string, string) locals) {
+    mutable Emitter cur = e;
+    mutable table(string, string) block_locals = locals;
+    mutable int i = 0;
+    while i < block.children.len() {
+        cur = walk_stmt(block.children.get(i), cur, block_locals);
+        i += 1;
+    }
+    return cur;
+}
+
+Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
+    if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
+    or node.kind == NodeKind.ConstDecl {
+        string var_name = node.value;
+        string slate_type = node.children.get(0).value;
+        EmitResult init = walk_expr(node.children.get(1), e, locals);
+        e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
+        return e;
+    }
+    if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+        string var_name = node.value;
+        string slate_type = "int";
+        if locals.has(var_name) {
+            slate_type = locals.get(var_name);
+        }
+        EmitResult val = walk_expr(node.children.get(0), e, locals);
+        e = emit_assign(val.emitter, var_name, slate_type, val.value);
+        return e;
+    }
+    if node.kind == NodeKind.Return {
+        if node.children.len() == 0 {
+            return emit_return(e, "", "void");
+        }
+        EmitResult val = walk_expr(node.children.get(0), e, locals);
+        e = emit_return(val.emitter, val.value, "int");
+        return e;
+    }
+    if node.kind == NodeKind.If {
+        EmitResult cond = walk_expr(node.children.get(0), e, locals);
+        string then_label = next_label(cond.emitter);
+        e = advance_label(cond.emitter);
+        string else_label = next_label(e);
+        e = advance_label(e);
+        string merge_label = next_label(e);
+        e = advance_label(e);
+        e = emit_if(e, cond.value, then_label, else_label, merge_label);
+        e = emit_then_block(e, then_label, merge_label);
+        e = walk_block(node.children.get(1), e, locals);
+        e = emit_jump(e, merge_label);
+        e = emit_else_block(e, else_label, merge_label);
+        if node.children.len() > 2 {
+            e = walk_block(node.children.get(2), e, locals);
+        }
+        e = emit_jump(e, merge_label);
+        e = emit_merge_block(e, merge_label);
+        return e;
+    }
+    if node.kind == NodeKind.While {
+        string cond_label = next_label(e);
+        e = advance_label(e);
+        string body_label = next_label(e);
+        e = advance_label(e);
+        string exit_label = next_label(e);
+        e = advance_label(e);
+        e = emit_while_start(e, cond_label);
+        EmitResult cond = walk_expr(node.children.get(0), e, locals);
+        e = emit_while_body(cond.emitter, cond.value, body_label, exit_label);
+        e = walk_block(node.children.get(1), e, locals);
+        e = emit_while_end(e, cond_label, exit_label);
+        return e;
+    }
+    if node.kind == NodeKind.Block {
+        return walk_block(node, e, locals);
+    }
+    e = emit_line(e, "  ; unimplemented stmt");
+    return e;
+}
+
+Emitter walk_fn(Node fn_node, Emitter e) {
+    string fn_name = fn_node.value;
+    Node return_type_node = fn_node.children.get(0);
+    string return_type = return_type_node.value;
+    Node body = fn_node.children.get(fn_node.children.len() - 1);
+    mutable list(string) param_names = empty;
+    mutable list(string) param_types = empty;
+    mutable table(string, string) locals = empty;
+    mutable int i = 1;
+    while i < fn_node.children.len() - 1 {
+        Node param = fn_node.children.get(i);
+        string param_type = param.children.get(0).value;
+        param_names = param_names.add(param.value);
+        param_types = param_types.add(param_type);
+        locals = locals.set(param.value, param_type);
+        i += 1;
+    }
+    e = set_fn(e, fn_name);
+    e = emit_fn_header(e, fn_name, return_type, param_names, param_types);
+    e = walk_block(body, e, locals);
+    e = emit_fn_footer(e, return_type);
+    e = emit_line(e, "");
+    return e;
+}
+
+string walk_program(Node program, string target_triple) {
+    mutable Emitter e = new_emitter();
+    e = emit_file_header(e, target_triple);
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            e = walk_fn(decl, e);
+        }
+        i += 1;
+    }
+    return e.output;
+}

@@ -4,3 +4,5 @@ use emit_types;
 use emitter;
 use emit_expr;
 use emit_stmt;
+use lower_expr;
+use walker.slt;

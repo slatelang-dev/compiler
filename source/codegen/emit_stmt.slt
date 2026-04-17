@@ -152,6 +152,13 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     e = emit_line(e, "; Slate compiled output");
     e = emit_line(e, "target triple = \"" + target_triple + "\"");
     e = emit_line(e, "");
+    e = emit_line(e, "declare ptr @malloc(i64)");
+    e = emit_line(e, "declare void @free(ptr)");
+    e = emit_line(e, "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)");
+    e = emit_line(e, "declare i64 @strlen(ptr)");
+    e = emit_line(e, "declare i32 @strcmp(ptr, ptr)");
+    e = emit_line(e, "declare i32 @puts(ptr)");
+    e = emit_line(e, "");
     return e;
 }
 

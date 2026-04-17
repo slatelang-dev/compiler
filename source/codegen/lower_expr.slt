@@ -98,10 +98,15 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             cur = arg.emitter;
             i += 1;
         }
+        print("DEBUG: arg_values.len=" + string(arg_values.len()));
         print("DEBUG: Call finished processing, checking primitive");
+        print("DEBUG: calling is_primitive_call");
+        print("DEBUG: node.value=" + node.value);
         if is_primitive_call(node.value) {
+            print("DEBUG: is primitive, calling emit_primitive_call");
             return emit_primitive_call(cur, node.value, arg_values);
         }
+        print("DEBUG: not primitive, calling next_reg");
         string result_reg = next_reg(cur);
         cur = emit_call(cur, node.value, "int", arg_values, empty);
         return EmitResult(emitter: cur, value: result_reg);

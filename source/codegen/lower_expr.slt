@@ -111,12 +111,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         string result_reg = next_reg(cur);
         print("DEBUG: got result_reg=" + result_reg);
         print("DEBUG: about to call emit_call");
-        print("DEBUG: arg_values=" + string(arg_values.len()));
-        cur = emit_call(cur, node.value, "int", arg_values, empty);
-        print("DEBUG: Call successfully called emit_call");
-        EmitResult result = EmitResult(emitter: cur, value: result_reg);
-        print("DEBUG: Created result variable");
-        return result;
+        e = emit_call(e, node.value, "int", arg_values, empty);
+        return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.MethodCall {
         string method = node.value;

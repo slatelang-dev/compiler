@@ -86,17 +86,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
     }
     if node.kind == NodeKind.Call {
         print("DEBUG: Call before check, value=" + node.value + " children=" + string(node.children.len()));
-        # Handle empty children
-        if node.children.len() == 0 {
-            print("DEBUG: Call - about to call next_reg");
-            print("DEBUG: e.output.len=" + string(e.output.len()));
-            print("DEBUG: e.reg=" + string(e.reg));
-            string result_reg = next_reg(e);
-            print("DEBUG: Call - got result_reg=" + result_reg + ", making EmitResult");
-            EmitResult r = EmitResult(emitter: e, value: result_reg);
-            print("DEBUG: EmitResult made, about to return");
-            return r;
-        }
+        # Process args (empty list is ok with while loop check)
         print("DEBUG: About to handle Call for " + node.value + " with args");
         mutable Emitter cur = e;
         mutable list(string) arg_values = empty;

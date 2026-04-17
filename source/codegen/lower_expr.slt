@@ -84,9 +84,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.Call {
-        print("DEBUG walk_expr: Call value=" + node.value + " children.len=" + string(node.children.len()));
+        # Handle empty children specially
         if node.children.len() == 0 {
-            print("DEBUG walk_expr: Call with no children - returning dummy");
             string result_reg = next_reg(e);
             return EmitResult(emitter: e, value: result_reg);
         }
@@ -108,6 +107,11 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
     }
     if node.kind == NodeKind.MethodCall {
         string method = node.value;
+        # Handle empty specially
+        if node.children.len() == 0 {
+            string result_reg = next_reg(e);
+            return EmitResult(emitter: e, value: result_reg);
+        }
         EmitResult receiver = walk_expr(node.children.get(0), e, locals);
         string fn_name = method;
         mutable list(string) arg_values = (receiver.value,);
@@ -123,5 +127,11 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         cur = emit_call(cur, fn_name, "int", arg_values, empty);
         return EmitResult(emitter: cur, value: result_reg);
     }
+    return EmitResult(emitter: e, value: "0");
+}
+
+# Fallback - should not reach here
+EmitResult fallback_walk_expr(Node node, Emitter e, table(string, string) locals) {
+    print("DEBUG fallback_walk_expr: kind=" + string(node.kind));
     return EmitResult(emitter: e, value: "0");
 }

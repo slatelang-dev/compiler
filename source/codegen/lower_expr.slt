@@ -88,9 +88,9 @@ if node.kind == NodeKind.Call {
         print("DEBUG: Call before check, value=" + node.value + " children=" + string(node.children.len()));
         # Handle empty children
         if node.children.len() == 0 {
-            print("DEBUG: Call has empty children - returning early for " + node.value);
+            print("DEBUG: Call has empty children - about to call next_reg");
             string result_reg = next_reg(e);
-            print("DEBUG: Call returning for " + node.value);
+            print("DEBUG: Call got result_reg=" + result_reg + " - about to return");
             return EmitResult(emitter: e, value: result_reg);
         }
         print("DEBUG: About to handle Call for " + node.value + " with args");

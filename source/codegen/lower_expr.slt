@@ -85,11 +85,16 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.Call {
+        print("DEBUG: in Call handler, value=" + node.value);
+        print("DEBUG: children.len check starting...");
+        print("DEBUG: children.len=" + string(node.children.len()));
         # Handle empty children specially
         if node.children.len() == 0 {
+            print("DEBUG: Call has empty children - returning early");
             string result_reg = next_reg(e);
             return EmitResult(emitter: e, value: result_reg);
         }
+        print("DEBUG: Call has args, processing...");
         mutable Emitter cur = e;
         mutable list(string) arg_values = empty;
         mutable int i = 0;

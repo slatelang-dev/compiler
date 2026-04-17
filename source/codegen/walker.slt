@@ -24,11 +24,15 @@ Emitter walk_block(Node block, Emitter e, table(string, string) locals) {
 }
 
 Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
+    print("DEBUG walk_stmt: kind=" + string(node.kind) + " children.len=" + string(node.children.len()));
     if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
     or node.kind == NodeKind.ConstDecl {
         string var_name = node.value;
+        print("DEBUG walk_stmt: VarDecl, accessing children.get(0)");
         string slate_type = node.children.get(0).value;
+        print("DEBUG walk_stmt: about to walk_expr for init");
         EmitResult init = walk_expr(node.children.get(1), e, locals);
+        print("DEBUG walk_stmt: about to emit_var_decl");
         e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
         return e;
     }

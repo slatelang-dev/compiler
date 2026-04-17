@@ -47,6 +47,7 @@ EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) 
 }
 
 EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
+    print("DEBUG walk_expr: kind=" + string(node.kind) + " children.len=" + string(node.children.len()));
     if node.kind == NodeKind.IntLit {
         return EmitResult(emitter: e, value: emit_int_lit(node.value));
     }

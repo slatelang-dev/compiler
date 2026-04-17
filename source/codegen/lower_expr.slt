@@ -84,13 +84,13 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         e = emit_unary_op(operand.emitter, node.value, operand.value, "int");
         return EmitResult(emitter: e, value: result_reg);
     }
-if node.kind == NodeKind.Call {
+    if node.kind == NodeKind.Call {
         print("DEBUG: Call before check, value=" + node.value + " children=" + string(node.children.len()));
         # Handle empty children
         if node.children.len() == 0 {
-            print("DEBUG: Call has empty children - about to call next_reg");
+            print("DEBUG: Call - about to call next_reg");
             string result_reg = next_reg(e);
-            print("DEBUG: Call got result_reg=" + result_reg + " - about to return");
+            print("DEBUG: Call - got result_reg, about to make EmitResult");
             return EmitResult(emitter: e, value: result_reg);
         }
         print("DEBUG: About to handle Call for " + node.value + " with args");
@@ -105,39 +105,6 @@ if node.kind == NodeKind.Call {
             i += 1;
         }
         print("DEBUG: Call finished processing, checking primitive");
-        if is_primitive_call(node.value) {
-            return emit_primitive_call(cur, node.value, arg_values);
-        }
-        string result_reg = next_reg(cur);
-        cur = emit_call(cur, node.value, "int", arg_values, empty);
-        return EmitResult(emitter: cur, value: result_reg);
-    }
-        print("DEBUG: About to handle Call for " + node.value + " with args");
-        mutable Emitter cur = e;
-        mutable list(string) arg_values = empty;
-        mutable int i = 0;
-        while i < node.children.len() {
-            print("DEBUG: processing arg " + string(i));
-            EmitResult arg = walk_expr(node.children.get(i), cur, locals);
-            arg_values = arg_values.add(arg.value);
-            cur = arg.emitter;
-            i += 1;
-        }
-        if is_primitive_call(node.value) {
-            return emit_primitive_call(cur, node.value, arg_values);
-        }
-        string result_reg = next_reg(cur);
-        cur = emit_call(cur, node.value, "int", arg_values, empty);
-        return EmitResult(emitter: cur, value: result_reg);
-        mutable Emitter cur = e;
-        mutable list(string) arg_values = empty;
-        mutable int i = 0;
-        while i < node.children.len() {
-            EmitResult arg = walk_expr(node.children.get(i), cur, locals);
-            arg_values = arg_values.add(arg.value);
-            cur = arg.emitter;
-            i += 1;
-        }
         if is_primitive_call(node.value) {
             return emit_primitive_call(cur, node.value, arg_values);
         }

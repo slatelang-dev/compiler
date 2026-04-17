@@ -45,8 +45,8 @@ LoadedModule load_module(string name, string path) {
     }
     string source = file(path).read();
     ParseResult result = parse(source);
-    if result.ok == false {
-        return make_failed_module(name, path, result.error);
+    if result.success == false {
+        return make_failed_module(name, path, result.message);
     }
     return make_loaded_module(name, path, source, result.node);
 }

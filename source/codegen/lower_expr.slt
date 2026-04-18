@@ -96,8 +96,14 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         if is_primitive_call(node.value) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
+        mutable list(string) arg_types = empty;
+        mutable int j = 0;
+        while j < arg_values.len() {
+            arg_types = arg_types.add("int");
+            j += 1;
+        }
         string result_reg = next_reg(cur);
-        cur = emit_call(cur, node.value, "int", arg_values, empty);
+        cur = emit_call(cur, node.value, "int", arg_values, arg_types);
         return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.MethodCall {
@@ -114,8 +120,14 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             cur = arg.emitter;
             i += 1;
         }
+        mutable list(string) arg_types = empty;
+        mutable int k = 0;
+        while k < arg_values.len() {
+            arg_types = arg_types.add("int");
+            k += 1;
+        }
         string result_reg = next_reg(cur);
-        cur = emit_call(cur, fn_name, "int", arg_values, empty);
+        cur = emit_call(cur, fn_name, "int", arg_values, arg_types);
         return EmitResult(emitter: cur, value: result_reg);
     }
     return EmitResult(emitter: e, value: "0");

@@ -7,14 +7,16 @@ struct Project {
     string version;
     string description;
     string entry;
+    string bin;
 }
 
-Project make_project(string name, string version, string description, string entry) {
+Project make_project(string name, string version, string description, string entry, string bin) {
     return Project(
         name: name,
         version: version,
         description: description,
-        entry: entry
+        entry: entry,
+        bin: bin
     );
 }
 
@@ -27,6 +29,7 @@ Project load_project(string toml_source) {
     mutable string version = "";
     mutable string description = "";
     mutable string entry = "";
+    mutable string bin = name;
     if parsed.has("project.name") {
         name = parsed.get("project.name");
     }
@@ -39,7 +42,10 @@ Project load_project(string toml_source) {
     if parsed.has("project.entry") {
         entry = parsed.get("project.entry");
     }
-    return make_project(name, version, description, entry);
+    if parsed.has("project.bin") {
+        bin = parsed.get("project.bin");
+    }
+    return make_project(name, version, description, entry, bin);
 }
 
 # Load project from slate.toml in current directory

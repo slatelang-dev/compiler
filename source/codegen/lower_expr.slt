@@ -135,7 +135,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         EmitResult receiver = walk_expr(method_children.get(0), e, locals);
         string fn_name = method;
         mutable list(string) arg_values = (receiver.value,);
-        mutable list(string) arg_types = ("int",);
+        mutable list(string) arg_types = ("ptr",);
         mutable Emitter cur = receiver.emitter;
         mutable int i = 1;
         while i < method_children.len() {

@@ -10,40 +10,30 @@ bool is_primitive_call(string name) {
         or name == "strlen" or name == "strcmp" or name == "puts";
 }
 
-EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
-    if name == "alloc" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call ptr @malloc(i64 " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: reg);
-    }
-    if name == "free" {
-        e = emit_line(e, "  call void @free(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: "");
-    }
-    if name == "memcpy" {
-        e = emit_line(e, "  call void @llvm.memcpy.p0.p0.i64(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ", i64 " + arg_values.get(2) + ", i1 false)");
-        return EmitResult(emitter: e, value: "");
-    }
-    if name == "strlen" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call i64 @strlen(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: reg);
-    }
-    if name == "strcmp" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call i32 @strcmp(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ")");
-        return EmitResult(emitter: e, value: reg);
-    }
-    if name == "puts" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call i32 @puts(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: reg);
-    }
-    return EmitResult(emitter: e, value: "");
+string builtin_return_type(string name) {
+    # functions that return ptr
+    if name == "input" { return "ptr"; }
+    if name == "args" { return "ptr"; }
+    if name == "slate_string_new" { return "ptr"; }
+    if name == "slate_list_new" { return "ptr"; }
+    if name == "slate_table_new" { return "ptr"; }
+    if name == "slate_list_get" { return "ptr"; }
+    if name == "slate_table_get" { return "ptr"; }
+    if name == "slate_string_concat" { return "ptr"; }
+    if name == "slate_string_data" { return "ptr"; }
+    if name == "alloc" { return "ptr"; }
+    if name == "gc_alloc" { return "ptr"; }
+    # functions that return bool (i1)
+    if name == "slate_string_eq" { return "bool"; }
+    if name == "slate_table_has" { return "bool"; }
+    # functions that return int (i64)
+    if name == "slate_string_len" { return "int"; }
+    if name == "slate_list_len" { return "int"; }
+    if name == "slate_table_len" { return "int"; }
+    if name == "strlen" { return "int"; }
+    if name == "strcmp" { return "int"; }
+    # default
+    return "int";
 }
 
 EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
@@ -93,17 +83,37 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             cur = arg.emitter;
             i += 1;
         }
-        if is_primitive_call(node.value) {
+if is_primitive_call(node.value) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
-        mutable list(string) arg_types = empty;
-        mutable int j = 0;
-        while j < arg_values.len() {
-            arg_types = arg_types.add("int");
-            j += 1;
-        }
+        string call_return_type = builtin_return_type(node.value);
         string result_reg = next_reg(cur);
-        cur = emit_call(cur, node.value, "int", arg_values, arg_types);
+        cur = emit_call(cur, node.value, call_return_type, arg_values, arg_types);
+        return EmitResult(emitter: cur, value: result_reg);
+    }
+    if node.kind == NodeKind.MethodCall {
+        list(Node) method_children = node.children;
+        string method = node.value;
+        EmitResult receiver = walk_expr(method_children.get(0), e, locals);
+        string fn_name = method;
+        mutable list(string) arg_values = (receiver.value,);
+        mutable Emitter cur = receiver.emitter;
+        mutable int i = 1;
+        while i < method_children.len() {
+            EmitResult arg = walk_expr(method_children.get(i), cur, locals);
+            arg_values = arg_values.add(arg.value);
+            cur = arg.emitter;
+            i += 1;
+        }
+        mutable list(string) arg_types = empty;
+        mutable int k = 0;
+        while k < arg_values.len() {
+            arg_types = arg_types.add("int");
+            k += 1;
+        }
+        string method_return_type = builtin_return_type(fn_name);
+        string result_reg = next_reg(cur);
+        cur = emit_call(cur, fn_name, method_return_type, arg_values, arg_types);
         return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.MethodCall {

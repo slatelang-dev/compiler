@@ -95,6 +95,9 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
 Emitter walk_fn(Node fn_node, Emitter e) {
     string fn_name = fn_node.value;
     list(Node) fn_children = fn_node.children;
+    if fn_children.len() == 0 {
+        return e;
+    }
     Node return_type_node = fn_children.get(0);
     string return_type = return_type_node.value;
     Node body = fn_children.get(fn_children.len() - 1);

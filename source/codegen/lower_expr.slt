@@ -83,11 +83,12 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.Call {
+        list(Node) call_children = node.children;
         mutable Emitter cur = e;
         mutable list(string) arg_values = empty;
         mutable int i = 0;
-        while i < node.children.len() {
-            EmitResult arg = walk_expr(node.children.get(i), cur, locals);
+        while i < call_children.len() {
+            EmitResult arg = walk_expr(call_children.get(i), cur, locals);
             arg_values = arg_values.add(arg.value);
             cur = arg.emitter;
             i += 1;
@@ -100,14 +101,15 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.MethodCall {
+        list(Node) method_children = node.children;
         string method = node.value;
-        EmitResult receiver = walk_expr(node.children.get(0), e, locals);
+        EmitResult receiver = walk_expr(method_children.get(0), e, locals);
         string fn_name = method;
         mutable list(string) arg_values = (receiver.value,);
         mutable Emitter cur = receiver.emitter;
         mutable int i = 1;
-        while i < node.children.len() {
-            EmitResult arg = walk_expr(node.children.get(i), cur, locals);
+        while i < method_children.len() {
+            EmitResult arg = walk_expr(method_children.get(i), cur, locals);
             arg_values = arg_values.add(arg.value);
             cur = arg.emitter;
             i += 1;

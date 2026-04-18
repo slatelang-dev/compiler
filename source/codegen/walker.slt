@@ -10,9 +10,10 @@ use lower_expr;
 Emitter walk_block(Node block, Emitter e, table(string, string) locals) {
     mutable Emitter cur = e;
     mutable table(string, string) block_locals = locals;
+    list(Node) block_children = block.children;
     mutable int i = 0;
-    while i < block.children.len() {
-        cur = walk_stmt(block.children.get(i), cur, block_locals);
+    while i < block_children.len() {
+        cur = walk_stmt(block_children.get(i), cur, block_locals);
         i += 1;
     }
     return cur;
@@ -21,32 +22,36 @@ Emitter walk_block(Node block, Emitter e, table(string, string) locals) {
 Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
     if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
     or node.kind == NodeKind.ConstDecl {
+        list(Node) stmt_children = node.children;
         string var_name = node.value;
-        string slate_type = node.children.get(0).value;
-        EmitResult init = walk_expr(node.children.get(1), e, locals);
+        string slate_type = stmt_children.get(0).value;
+        EmitResult init = walk_expr(stmt_children.get(1), e, locals);
         e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
         return e;
     }
     if node.kind == NodeKind.Assign or node.kind == NodeKind.AssignOp {
+        list(Node) stmt_children = node.children;
         string var_name = node.value;
         string slate_type = "int";
         if locals.has(var_name) {
             slate_type = locals.get(var_name);
         }
-        EmitResult val = walk_expr(node.children.get(0), e, locals);
+        EmitResult val = walk_expr(stmt_children.get(0), e, locals);
         e = emit_assign(val.emitter, var_name, slate_type, val.value);
         return e;
     }
     if node.kind == NodeKind.Return {
-        if node.children.len() == 0 {
+        list(Node) stmt_children = node.children;
+        if stmt_children.len() == 0 {
             return emit_return(e, "", "void");
         }
-        EmitResult val = walk_expr(node.children.get(0), e, locals);
+        EmitResult val = walk_expr(stmt_children.get(0), e, locals);
         e = emit_return(val.emitter, val.value, "int");
         return e;
     }
     if node.kind == NodeKind.If {
-        EmitResult cond = walk_expr(node.children.get(0), e, locals);
+        list(Node) stmt_children = node.children;
+        EmitResult cond = walk_expr(stmt_children.get(0), e, locals);
         string then_label = next_label(cond.emitter);
         e = advance_label(cond.emitter);
         string else_label = next_label(e);
@@ -55,17 +60,18 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
         e = advance_label(e);
         e = emit_if(e, cond.value, then_label, else_label, merge_label);
         e = emit_then_block(e, then_label, merge_label);
-        e = walk_block(node.children.get(1), e, locals);
+        e = walk_block(stmt_children.get(1), e, locals);
         e = emit_jump(e, merge_label);
         e = emit_else_block(e, else_label, merge_label);
-        if node.children.len() > 2 {
-            e = walk_block(node.children.get(2), e, locals);
+        if stmt_children.len() > 2 {
+            e = walk_block(stmt_children.get(2), e, locals);
         }
         e = emit_jump(e, merge_label);
         e = emit_merge_block(e, merge_label);
         return e;
     }
     if node.kind == NodeKind.While {
+        list(Node) stmt_children = node.children;
         string cond_label = next_label(e);
         e = advance_label(e);
         string body_label = next_label(e);
@@ -73,9 +79,9 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
         string exit_label = next_label(e);
         e = advance_label(e);
         e = emit_while_start(e, cond_label);
-        EmitResult cond = walk_expr(node.children.get(0), e, locals);
+        EmitResult cond = walk_expr(stmt_children.get(0), e, locals);
         e = emit_while_body(cond.emitter, cond.value, body_label, exit_label);
-        e = walk_block(node.children.get(1), e, locals);
+        e = walk_block(stmt_children.get(1), e, locals);
         e = emit_while_end(e, cond_label, exit_label);
         return e;
     }
@@ -88,19 +94,18 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
 
 Emitter walk_fn(Node fn_node, Emitter e) {
     string fn_name = fn_node.value;
-    if fn_node.children.len() == 0 {
-        return e;
-    }
-    Node return_type_node = fn_node.children.get(0);
+    list(Node) fn_children = fn_node.children;
+    Node return_type_node = fn_children.get(0);
     string return_type = return_type_node.value;
-    Node body = fn_node.children.get(fn_node.children.len() - 1);
+    Node body = fn_children.get(fn_children.len() - 1);
     mutable list(string) param_names = empty;
     mutable list(string) param_types = empty;
     mutable table(string, string) locals = empty;
     mutable int i = 1;
-    while i < fn_node.children.len() - 1 {
-        Node param = fn_node.children.get(i);
-        string param_type = param.children.get(0).value;
+    while i < fn_children.len() - 1 {
+        Node param = fn_children.get(i);
+        list(Node) param_children = param.children;
+        string param_type = param_children.get(0).value;
         param_names = param_names.add(param.value);
         param_types = param_types.add(param_type);
         locals = locals.set(param.value, param_type);
@@ -117,9 +122,10 @@ Emitter walk_fn(Node fn_node, Emitter e) {
 string walk_program(Node program, string target_triple) {
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);
+    list(Node) program_children = program.children;
     mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
+    while i < program_children.len() {
+        Node decl = program_children.get(i);
         if decl.kind == NodeKind.FnDecl {
             e = walk_fn(decl, e);
         }

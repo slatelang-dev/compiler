@@ -31,6 +31,14 @@ string builtin_return_type(string name) {
     if name == "slate_list_len" { return "int"; }
     if name == "slate_table_len" { return "int"; }
     if name == "strlen" { return "int"; }
+    if name == "len" { return "int"; }
+    if name == "get" { return "ptr"; }
+    if name == "add" { return "ptr"; }
+    if name == "has" { return "bool"; }
+    if name == "set" { return "ptr"; }
+    if name == "print" { return "void"; }
+    if name == "keys" { return "ptr"; }
+    if name == "values" { return "ptr"; }
     if name == "strcmp" { return "int"; }
     # default
     return "int";

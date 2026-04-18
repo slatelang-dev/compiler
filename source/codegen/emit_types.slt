@@ -9,6 +9,7 @@ string llvm_type(string slate_type) {
     if slate_type == "bool"   { return "i1"; }
     if slate_type == "char"   { return "i32"; }
     if slate_type == "string" { return "ptr"; }
+    if slate_type == "ptr"    { return "ptr"; }
     if slate_type == "void"   { return "void"; }
     # Heap allocated — all represented as pointers for now
     if slate_type == "option" { return "ptr"; }

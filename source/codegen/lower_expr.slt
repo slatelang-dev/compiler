@@ -98,9 +98,10 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         if locals.has(node.value) {
             slate_type = locals.get(node.value);
         }
+        string llvm_t = llvm_type(slate_type);
         string reg = next_reg(e);
         e = advance_reg(e);
-        e = emit_load(e, reg, slate_type, "%" + node.value);
+        e = emit_line(e, "  " + reg + " = load " + llvm_t + ", ptr %" + node.value);
         return EmitResult(emitter: e, value: reg);
     }
     if node.kind == NodeKind.BinaryOp {

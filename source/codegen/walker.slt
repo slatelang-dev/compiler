@@ -24,8 +24,14 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
     or node.kind == NodeKind.ConstDecl {
         list(Node) stmt_children = node.children;
         string var_name = node.value;
-        string slate_type = stmt_children.get(0).value;
-        locals = locals.set(var_name, llvm_type(slate_type));
+        Node type_node = stmt_children.get(0);
+        mutable string slate_type = type_node.value;
+        if type_node.kind == NodeKind.TypeList { slate_type = "list"; }
+        if type_node.kind == NodeKind.TypeTable { slate_type = "table"; }
+        if type_node.kind == NodeKind.TypeOption { slate_type = "option"; }
+        if type_node.kind == NodeKind.TypeResult { slate_type = "result"; }
+        if slate_type == "" { slate_type = "int"; }
+        locals = locals.set(var_name, slate_type);
         EmitResult init = walk_expr(stmt_children.get(1), e, locals);
         e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
         return e;

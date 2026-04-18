@@ -25,6 +25,7 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
         list(Node) stmt_children = node.children;
         string var_name = node.value;
         string slate_type = stmt_children.get(0).value;
+        locals = locals.set(var_name, slate_type);
         EmitResult init = walk_expr(stmt_children.get(1), e, locals);
         e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
         return e;

@@ -72,18 +72,20 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         e = emit_unary_op(operand.emitter, node.value, operand.value, "int");
         return EmitResult(emitter: e, value: result_reg);
     }
-    if node.kind == NodeKind.Call {
+if node.kind == NodeKind.Call {
         list(Node) call_children = node.children;
         mutable Emitter cur = e;
         mutable list(string) arg_values = empty;
+        mutable list(string) arg_types = empty;
         mutable int i = 0;
         while i < call_children.len() {
             EmitResult arg = walk_expr(call_children.get(i), cur, locals);
             arg_values = arg_values.add(arg.value);
+            arg_types = arg_types.add("int");
             cur = arg.emitter;
             i += 1;
         }
-if is_primitive_call(node.value) {
+        if is_primitive_call(node.value) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
         string call_return_type = builtin_return_type(node.value);
@@ -97,19 +99,15 @@ if is_primitive_call(node.value) {
         EmitResult receiver = walk_expr(method_children.get(0), e, locals);
         string fn_name = method;
         mutable list(string) arg_values = (receiver.value,);
+        mutable list(string) arg_types = empty;
         mutable Emitter cur = receiver.emitter;
         mutable int i = 1;
         while i < method_children.len() {
             EmitResult arg = walk_expr(method_children.get(i), cur, locals);
             arg_values = arg_values.add(arg.value);
+            arg_types = arg_types.add("int");
             cur = arg.emitter;
             i += 1;
-        }
-        mutable list(string) arg_types = empty;
-        mutable int k = 0;
-        while k < arg_values.len() {
-            arg_types = arg_types.add("int");
-            k += 1;
         }
         string method_return_type = builtin_return_type(fn_name);
         string result_reg = next_reg(cur);

@@ -33,9 +33,6 @@ Emitter walk_stmt(Node node, Emitter e, table(string, string) locals) {
         list(Node) stmt_children = node.children;
         string var_name = node.value;
         string slate_type = "int";
-        if locals.has(var_name) {
-            slate_type = locals.get(var_name);
-        }
         EmitResult val = walk_expr(stmt_children.get(0), e, locals);
         e = emit_assign(val.emitter, var_name, slate_type, val.value);
         return e;
@@ -101,9 +98,9 @@ Emitter walk_fn(Node fn_node, Emitter e) {
     Node return_type_node = fn_children.get(0);
     string return_type = return_type_node.value;
     Node body = fn_children.get(fn_children.len() - 1);
-    mutable list(string) param_names = empty;
+mutable list(string) param_names = empty;
     mutable list(string) param_types = empty;
-    mutable table(string, string) locals = empty.set("__init__", "int").remove("__init__");
+    mutable table(string, string) locals = empty;
     mutable int i = 1;
     while i < fn_children.len() - 1 {
         Node param = fn_children.get(i);

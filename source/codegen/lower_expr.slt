@@ -137,12 +137,23 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         EmitResult left = walk_expr(bin_children.get(0), e, locals);
         EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
         string result_reg = next_reg(right.emitter);
+        EmitResult left = walk_expr(bin_children.get(0), e, locals);
+        EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
         mutable string op_type = "int";
         if bin_children.get(0).kind == NodeKind.Ident {
             if locals.has(bin_children.get(0).value) {
                 op_type = locals.get(bin_children.get(0).value);
             }
         }
+        if bin_children.get(0).kind == NodeKind.StringLit { op_type = "string"; }
+        if left.value.starts_with("@str") { op_type = "string"; }
+        if node.value == "+" and op_type == "string" {
+            string result_reg = next_reg(right.emitter);
+            e = advance_reg(right.emitter);
+            e = emit_line(e, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left.value + ", ptr " + right.value + ")");
+            return EmitResult(emitter: e, value: result_reg);
+        }
+        string result_reg = next_reg(right.emitter);
         e = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
         return EmitResult(emitter: e, value: result_reg);
     }
@@ -162,7 +173,20 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         while i < call_children.len() {
             EmitResult arg = walk_expr(call_children.get(i), cur, locals);
             arg_values = arg_values.add(arg.value);
-            arg_types = arg_types.add("int");
+            mutable string arg_type = "int";
+            if arg.value.starts_with("@str") { arg_type = "ptr"; }
+            if arg.value.starts_with("%") {
+                string ident_name = arg.value.replace("%", "");
+                if locals.has(ident_name) {
+                    string local_type = locals.get(ident_name);
+                    if local_type == "string" or local_type == "ptr"
+                    or local_type == "param_ptr" or local_type == "param_string"
+                    or local_type == "list" or local_type == "table" {
+                        arg_type = "ptr";
+                    }
+                }
+            }
+            arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
         }
@@ -188,7 +212,20 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         while i < method_children.len() {
             EmitResult arg = walk_expr(method_children.get(i), cur, locals);
             arg_values = arg_values.add(arg.value);
-            arg_types = arg_types.add("int");
+            mutable string arg_type = "int";
+            if arg.value.starts_with("@str") { arg_type = "ptr"; }
+            if arg.value.starts_with("%") {
+                string ident_name = arg.value.replace("%", "");
+                if locals.has(ident_name) {
+                    string local_type = locals.get(ident_name);
+                    if local_type == "string" or local_type == "ptr"
+                    or local_type == "param_ptr" or local_type == "param_string"
+                    or local_type == "list" or local_type == "table" {
+                        arg_type = "ptr";
+                    }
+                }
+            }
+            arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
         }

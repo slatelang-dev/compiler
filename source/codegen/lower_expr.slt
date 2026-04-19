@@ -114,7 +114,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: emit_bool_lit(node.value));
     }
     if node.kind == NodeKind.StringLit {
-        return EmitResult(emitter: e, value: "null");
+        string name = emit_string_global(e, node.value);
+        e = advance_str(e, node.value);
+        return EmitResult(emitter: e, value: name);
     }
     if node.kind == NodeKind.Ident {
         string slate_type = "int";

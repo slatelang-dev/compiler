@@ -157,5 +157,5 @@ string walk_program(Node program, string target_triple, bool full_header) {
         }
         i += 1;
     }
-    return e.output;
+    return e.globals + e.output;
 }

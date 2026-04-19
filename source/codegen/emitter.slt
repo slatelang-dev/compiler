@@ -2,15 +2,19 @@ module emitter;
 
 # Emitter state — passed through all emit functions
 # output: the accumulated .ll text
+# globals: global constant definitions
 # reg: current SSA register counter (e.g. %1, %2, %3)
 # label: current label counter (e.g. label0, label1)
+# str_count: string constant counter
 # fn_name: current function being emitted
 # errors: any codegen errors encountered
 
 struct Emitter {
     string output;
+    string globals;
     int reg;
     int label;
+    int str_count;
     string fn_name;
     list(string) errors;
 }
@@ -18,8 +22,10 @@ struct Emitter {
 Emitter new_emitter() {
     return Emitter(
         output: "",
+        globals: "",
         reg: 0,
         label: 0,
+        str_count: 0,
         fn_name: "",
         errors: empty
     );
@@ -30,14 +36,16 @@ Emitter new_emitter() {
 Emitter emit_line(Emitter e, string line) {
     return Emitter(
         output: e.output + line + "\n",
+        globals: e.globals,
         reg: e.reg,
         label: e.label,
+        str_count: e.str_count,
         fn_name: e.fn_name,
         errors: e.errors
     );
 }
 
-# Allocate a new SSA register — returns the name and advanced emitter
+# Allocate a new SSA register — returns the name
 
 string next_reg(Emitter e) {
     return "%r" + string(e.reg);
@@ -46,8 +54,10 @@ string next_reg(Emitter e) {
 Emitter advance_reg(Emitter e) {
     return Emitter(
         output: e.output,
+        globals: e.globals,
         reg: e.reg + 1,
         label: e.label,
+        str_count: e.str_count,
         fn_name: e.fn_name,
         errors: e.errors
     );
@@ -62,8 +72,10 @@ string next_label(Emitter e) {
 Emitter advance_label(Emitter e) {
     return Emitter(
         output: e.output,
+        globals: e.globals,
         reg: e.reg,
         label: e.label + 1,
+        str_count: e.str_count,
         fn_name: e.fn_name,
         errors: e.errors
     );
@@ -74,9 +86,34 @@ Emitter advance_label(Emitter e) {
 Emitter set_fn(Emitter e, string name) {
     return Emitter(
         output: e.output,
+        globals: e.globals,
         reg: e.reg,
         label: e.label,
+        str_count: e.str_count,
         fn_name: name,
+        errors: e.errors
+    );
+}
+
+# Get string global name
+
+string emit_string_global(Emitter e, string value) {
+    return "@str" + string(e.str_count);
+}
+
+# Advance string counter and emit global constant
+
+Emitter advance_str(Emitter e, string value) {
+    string name = "@str" + string(e.str_count);
+    int len = value.len() + 1;
+    string global = name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + value + "\\00\"\n";
+    return Emitter(
+        output: e.output,
+        globals: e.globals + global,
+        reg: e.reg,
+        label: e.label,
+        str_count: e.str_count + 1,
+        fn_name: e.fn_name,
         errors: e.errors
     );
 }
@@ -86,8 +123,10 @@ Emitter set_fn(Emitter e, string name) {
 Emitter emit_error(Emitter e, string message) {
     return Emitter(
         output: e.output,
+        globals: e.globals,
         reg: e.reg,
         label: e.label,
+        str_count: e.str_count,
         fn_name: e.fn_name,
         errors: e.errors.add(message)
     );

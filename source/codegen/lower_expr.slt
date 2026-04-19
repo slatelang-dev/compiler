@@ -105,10 +105,17 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: reg);
     }
     if node.kind == NodeKind.BinaryOp {
-        EmitResult left = walk_expr(node.children.get(0), e, locals);
-        EmitResult right = walk_expr(node.children.get(1), left.emitter, locals);
+        list(Node) bin_children = node.children;
+        EmitResult left = walk_expr(bin_children.get(0), e, locals);
+        EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
         string result_reg = next_reg(right.emitter);
-        e = emit_binary_op(right.emitter, node.value, left.value, right.value, "int");
+        mutable string op_type = "int";
+        if bin_children.get(0).kind == NodeKind.Ident {
+            if locals.has(bin_children.get(0).value) {
+                op_type = locals.get(bin_children.get(0).value);
+            }
+        }
+        e = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
         return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.UnaryOp {

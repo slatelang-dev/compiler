@@ -130,7 +130,7 @@ Emitter walk_fn(Node fn_node, Emitter e) {
         string param_type = param_children.get(0).value;
         param_names = param_names.add(param.value);
         param_types = param_types.add(param_type);
-        locals = locals.set(param.value, param_type);
+        locals = locals.set(param.value, "param_" + param_type);
         i += 1;
     }
     e = set_fn(e, fn_name);

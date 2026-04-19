@@ -120,6 +120,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         if locals.has(node.value) {
             slate_type = locals.get(node.value);
         }
+        if slate_type.starts_with("param_") {
+            return EmitResult(emitter: e, value: "%" + node.value);
+        }
         string llvm_t = llvm_type(slate_type);
         string reg = next_reg(e);
         e = advance_reg(e);

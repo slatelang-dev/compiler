@@ -31,7 +31,7 @@ Project load_project(string toml_source) {
     mutable string version = "";
     mutable string description = "";
     mutable string entry = "";
-    mutable string bin = name;
+    mutable string bin = "";
     mutable bool bare = false;
     if parsed.has("project.name") {
         name = parsed.get("project.name");
@@ -51,6 +51,9 @@ Project load_project(string toml_source) {
     if parsed.has("project.bare") {
         string bare_str = parsed.get("project.bare");
         bare = bare_str == "true";
+    }
+    if bin == "" {
+        bin = name;
     }
     return make_project(name, version, description, entry, bin, bare);
 }

@@ -11,37 +11,59 @@ bool is_primitive_call(string name) {
 }
 
 string builtin_return_type(string name) {
-    # functions that return ptr
-    if name == "input" { return "ptr"; }
-    if name == "args" { return "ptr"; }
-    if name == "slate_string_new" { return "ptr"; }
-    if name == "slate_list_new" { return "ptr"; }
-    if name == "slate_table_new" { return "ptr"; }
-    if name == "slate_list_get" { return "ptr"; }
-    if name == "slate_table_get" { return "ptr"; }
-    if name == "slate_string_concat" { return "ptr"; }
-    if name == "slate_string_data" { return "ptr"; }
+    # primitive functions
     if name == "alloc" { return "ptr"; }
     if name == "gc_alloc" { return "ptr"; }
-    # functions that return bool (i1)
+    # slate runtime functions
+    if name == "slate_input" { return "ptr"; }
+    if name == "slate_args" { return "ptr"; }
+    if name == "slate_string" { return "ptr"; }
+    if name == "slate_string_new" { return "ptr"; }
+    if name == "slate_string_concat" { return "ptr"; }
+    if name == "slate_string_data" { return "ptr"; }
+    if name == "slate_list_new" { return "ptr"; }
+    if name == "slate_list_get" { return "ptr"; }
+    if name == "slate_table_new" { return "ptr"; }
+    if name == "slate_table_get" { return "ptr"; }
+    if name == "slate_get" { return "ptr"; }
+    if name == "slate_add" { return "ptr"; }
+    if name == "slate_set" { return "ptr"; }
+    if name == "slate_keys" { return "ptr"; }
+    if name == "slate_values" { return "ptr"; }
+    if name == "slate_alloc" { return "ptr"; }
+    # bool returns
+    if name == "slate_has" { return "bool"; }
     if name == "slate_string_eq" { return "bool"; }
     if name == "slate_table_has" { return "bool"; }
-    # functions that return int (i64)
+    # int returns
+    if name == "slate_len" { return "int"; }
     if name == "slate_string_len" { return "int"; }
     if name == "slate_list_len" { return "int"; }
     if name == "slate_table_len" { return "int"; }
     if name == "strlen" { return "int"; }
-    if name == "len" { return "int"; }
-    if name == "get" { return "ptr"; }
-    if name == "add" { return "ptr"; }
-    if name == "has" { return "bool"; }
-    if name == "set" { return "ptr"; }
-    if name == "print" { return "void"; }
-    if name == "keys" { return "ptr"; }
-    if name == "values" { return "ptr"; }
     if name == "strcmp" { return "int"; }
+    # void returns
+    if name == "slate_print" { return "void"; }
     # default
     return "int";
+}
+
+string remap_call_name(string name) {
+    if name == "print" { return "slate_print"; }
+    if name == "input" { return "slate_input"; }
+    if name == "string" { return "slate_string"; }
+    return name;
+}
+
+string remap_method_name(string name) {
+    if name == "len" { return "slate_len"; }
+    if name == "get" { return "slate_get"; }
+    if name == "add" { return "slate_add"; }
+    if name == "has" { return "slate_has"; }
+    if name == "set" { return "slate_set"; }
+    if name == "keys" { return "slate_keys"; }
+    if name == "values" { return "slate_values"; }
+    return name;
 }
 
 EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
@@ -119,7 +141,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: result_reg);
     }
     if node.kind == NodeKind.UnaryOp {
-        EmitResult operand = walk_expr(node.children.get(0), e, locals);
+        list(Node) un_children = node.children;
+        EmitResult operand = walk_expr(un_children.get(0), e, locals);
         string result_reg = next_reg(operand.emitter);
         e = emit_unary_op(operand.emitter, node.value, operand.value, "int");
         return EmitResult(emitter: e, value: result_reg);
@@ -140,17 +163,19 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         if is_primitive_call(node.value) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
-        string call_return_type = builtin_return_type(node.value);
+        string call_name = remap_call_name(node.value);
+        string call_return_type = builtin_return_type(call_name);
         string result_reg = next_reg(cur);
-        cur = emit_call(cur, node.value, call_return_type, arg_values, arg_types);
+        cur = emit_call(cur, call_name, call_return_type, arg_values, arg_types);
         return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.MethodCall {
         list(Node) method_children = node.children;
         string method = node.value;
         EmitResult receiver = walk_expr(method_children.get(0), e, locals);
-        string fn_name = method;
-        mutable list(string) arg_values = (receiver.value,);
+        string fn_name = remap_method_name(method);
+        mutable list(string) arg_values = empty;
+        arg_values = arg_values.add(receiver.value);
         mutable list(string) arg_types = ("ptr",);
         mutable Emitter cur = receiver.emitter;
         mutable int i = 1;

@@ -63,6 +63,7 @@ string remap_method_name(string name) {
     if name == "set" { return "slate_set"; }
     if name == "keys" { return "slate_keys"; }
     if name == "values" { return "slate_values"; }
+    if name == "args" { return "slate_args"; }
     return name;
 }
 

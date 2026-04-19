@@ -44,6 +44,24 @@ string builtin_return_type(string name) {
     if name == "strcmp" { return "int"; }
     # void returns
     if name == "slate_print" { return "void"; }
+    if name == "bold_slate" { return "ptr"; }
+    if name == "bold_red" { return "ptr"; }
+    if name == "bold_green" { return "ptr"; }
+    if name == "bold_yellow" { return "ptr"; }
+    if name == "bold_blue" { return "ptr"; }
+    if name == "bold" { return "ptr"; }
+    if name == "red" { return "ptr"; }
+    if name == "green" { return "ptr"; }
+    if name == "blue" { return "ptr"; }
+    if name == "yellow" { return "ptr"; }
+    if name == "orange" { return "ptr"; }
+    if name == "purple" { return "ptr"; }
+    if name == "slate_color" { return "ptr"; }
+    if name == "gray" { return "ptr"; }
+    if name == "white" { return "ptr"; }
+    if name == "dim" { return "ptr"; }
+    if name == "italic" { return "ptr"; }
+    if name == "underline" { return "ptr"; }
     # default
     return "int";
 }

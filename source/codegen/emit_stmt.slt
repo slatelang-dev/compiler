@@ -158,6 +158,12 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     e = emit_line(e, "declare i64 @strlen(ptr)");
     e = emit_line(e, "declare i32 @strcmp(ptr, ptr)");
     e = emit_line(e, "declare i32 @puts(ptr)");
+    e = emit_line(e, "");
+    return e;
+}
+
+Emitter emit_file_header_full(Emitter e, string target_triple) {
+    e = emit_file_header(e, target_triple);
     e = emit_line(e, "declare ptr @slate_input()");
     e = emit_line(e, "declare ptr @slate_args(ptr)");
     e = emit_line(e, "declare i64 @slate_len(ptr)");
@@ -169,6 +175,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     e = emit_line(e, "declare ptr @slate_keys(ptr)");
     e = emit_line(e, "declare ptr @slate_values(ptr)");
     e = emit_line(e, "declare ptr @slate_string(i64)");
+    e = emit_line(e, "");
     return e;
 }
 

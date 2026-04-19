@@ -141,9 +141,13 @@ Emitter walk_fn(Node fn_node, Emitter e) {
     return e;
 }
 
-string walk_program(Node program, string target_triple) {
+string walk_program(Node program, string target_triple, bool full_header) {
     mutable Emitter e = new_emitter();
-    e = emit_file_header(e, target_triple);
+    if full_header {
+        e = emit_file_header_full(e, target_triple);
+    } else {
+        e = emit_file_header(e, target_triple);
+    }
     list(Node) program_children = program.children;
     mutable int i = 0;
     while i < program_children.len() {

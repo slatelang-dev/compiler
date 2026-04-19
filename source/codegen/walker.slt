@@ -148,6 +148,8 @@ string walk_program(Node program, string target_triple, bool full_header) {
     } else {
         e = emit_file_header(e, target_triple);
     }
+    string header = e.output;
+    e = new_emitter();
     list(Node) program_children = program.children;
     mutable int i = 0;
     while i < program_children.len() {
@@ -157,5 +159,5 @@ string walk_program(Node program, string target_triple, bool full_header) {
         }
         i += 1;
     }
-    return e.globals + e.output;
+    return header + e.globals + e.output;
 }

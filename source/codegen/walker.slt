@@ -107,6 +107,10 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         e = walk_block(node, e, locals, return_type);
         return stmt_result(e, locals);
     }
+    if node.kind == NodeKind.Call or node.kind == NodeKind.MethodCall {
+        EmitResult expr = walk_expr(node, e, locals);
+        return stmt_result(expr.emitter, locals);
+    }
     e = emit_line(e, "  ; unimplemented stmt");
     return stmt_result(e, locals);
 }

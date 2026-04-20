@@ -62,6 +62,24 @@ string builtin_return_type(string name) {
     if name == "dim" { return "ptr"; }
     if name == "italic" { return "ptr"; }
     if name == "underline" { return "ptr"; }
+    # void returns
+    if name == "cmd_run" { return "void"; }
+    if name == "cmd_check" { return "void"; }
+    if name == "cmd_build" { return "void"; }
+    if name == "cmd_test" { return "void"; }
+    if name == "cmd_debug" { return "void"; }
+    if name == "cmd_tidy" { return "void"; }
+    if name == "cmd_new" { return "void"; }
+    if name == "cmd_init" { return "void"; }
+    if name == "cmd_create" { return "void"; }
+    if name == "cmd_add" { return "void"; }
+    if name == "cmd_remove" { return "void"; }
+    if name == "cmd_sync" { return "void"; }
+    if name == "cmd_update" { return "void"; }
+    if name == "cmd_docs" { return "void"; }
+    if name == "cmd_info" { return "void"; }
+    if name == "cmd_help" { return "void"; }
+    if name == "cmd_clean" { return "void"; }
     # default
     return "int";
 }

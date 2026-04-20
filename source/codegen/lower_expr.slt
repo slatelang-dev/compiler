@@ -154,9 +154,6 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         list(Node) bin_children = node.children;
         EmitResult left = walk_expr(bin_children.get(0), e, locals);
         EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
-        string result_reg = next_reg(right.emitter);
-        EmitResult left = walk_expr(bin_children.get(0), e, locals);
-        EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
         mutable string op_type = "int";
         if bin_children.get(0).kind == NodeKind.Ident {
             if locals.has(bin_children.get(0).value) {
@@ -164,12 +161,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             }
         }
         if bin_children.get(0).kind == NodeKind.StringLit { op_type = "string"; }
-        if node.value == "+" {
-            if left.value.starts_with("@str") { op_type = "string"; }
-            if left.value.starts_with("%r") and op_type != "bool" and op_type != "int" {
-                op_type = "string";
-            }
-        }
+        if left.value.starts_with("@str") { op_type = "string"; }
+        if right.value.starts_with("@str") { op_type = "string"; }
+        if left.value.starts_with("%r") and node.value == "+" { op_type = "string"; }
         if node.value == "+" and op_type == "string" {
             string result_reg = next_reg(right.emitter);
             e = advance_reg(right.emitter);

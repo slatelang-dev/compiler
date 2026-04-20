@@ -176,6 +176,23 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     e = emit_line(e, "declare ptr @slate_values(ptr)");
     e = emit_line(e, "declare ptr @slate_string(i64)");
     e = emit_line(e, "declare ptr @slate_string_concat(ptr, ptr)");
+    e = emit_line(e, "declare ptr @bold_slate(ptr)");
+    e = emit_line(e, "declare ptr @bold_red(ptr)");
+    e = emit_line(e, "declare ptr @bold_green(ptr)");
+    e = emit_line(e, "declare ptr @bold_yellow(ptr)");
+    e = emit_line(e, "declare ptr @bold_blue(ptr)");
+    e = emit_line(e, "declare ptr @bold(ptr)");
+    e = emit_line(e, "declare ptr @red(ptr)");
+    e = emit_line(e, "declare ptr @green(ptr)");
+    e = emit_line(e, "declare ptr @blue(ptr)");
+    e = emit_line(e, "declare ptr @yellow(ptr)");
+    e = emit_line(e, "declare ptr @orange(ptr)");
+    e = emit_line(e, "declare ptr @purple(ptr)");
+    e = emit_line(e, "declare ptr @gray(ptr)");
+    e = emit_line(e, "declare ptr @white(ptr)");
+    e = emit_line(e, "declare ptr @dim(ptr)");
+    e = emit_line(e, "declare ptr @italic(ptr)");
+    e = emit_line(e, "declare ptr @underline(ptr)");
     e = emit_line(e, "");
     return e;
 }

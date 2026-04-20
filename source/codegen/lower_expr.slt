@@ -192,6 +192,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             arg_values = arg_values.add(arg.value);
             mutable string arg_type = "int";
             if arg.value.starts_with("@str") { arg_type = "ptr"; }
+            if arg.value.starts_with("%r") { arg_type = "ptr"; }
             if arg.value.starts_with("%") {
                 string ident_name = arg.value.replace("%", "");
                 if locals.has(ident_name) {
@@ -231,6 +232,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             arg_values = arg_values.add(arg.value);
             mutable string arg_type = "int";
             if arg.value.starts_with("@str") { arg_type = "ptr"; }
+            if arg.value.starts_with("%r") { arg_type = "ptr"; }
             if arg.value.starts_with("%") {
                 string ident_name = arg.value.replace("%", "");
                 if locals.has(ident_name) {

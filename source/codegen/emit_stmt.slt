@@ -193,6 +193,23 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     e = emit_line(e, "declare ptr @dim(ptr)");
     e = emit_line(e, "declare ptr @italic(ptr)");
     e = emit_line(e, "declare ptr @underline(ptr)");
+    e = emit_line(e, "declare void @cmd_run(ptr)");
+    e = emit_line(e, "declare void @cmd_check(ptr)");
+    e = emit_line(e, "declare void @cmd_build(ptr)");
+    e = emit_line(e, "declare void @cmd_test(ptr)");
+    e = emit_line(e, "declare void @cmd_debug(ptr)");
+    e = emit_line(e, "declare void @cmd_tidy(ptr)");
+    e = emit_line(e, "declare void @cmd_new(ptr)");
+    e = emit_line(e, "declare void @cmd_init(ptr)");
+    e = emit_line(e, "declare void @cmd_create(ptr)");
+    e = emit_line(e, "declare void @cmd_add(ptr)");
+    e = emit_line(e, "declare void @cmd_remove(ptr)");
+    e = emit_line(e, "declare void @cmd_sync(ptr)");
+    e = emit_line(e, "declare void @cmd_update(ptr)");
+    e = emit_line(e, "declare void @cmd_docs(ptr)");
+    e = emit_line(e, "declare void @cmd_info(ptr)");
+    e = emit_line(e, "declare void @cmd_help(ptr)");
+    e = emit_line(e, "declare void @cmd_clean(ptr)");
     e = emit_line(e, "");
     return e;
 }

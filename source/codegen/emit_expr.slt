@@ -123,8 +123,6 @@ Emitter emit_unary_op(Emitter e, string op, string operand, string slate_type) {
 # Emit a function call
 
 Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_values, list(string) arg_types) {
-    string reg = next_reg(e);
-    e = advance_reg(e);
     string llvm_ret = llvm_type(return_type);
     mutable string args = "";
     mutable int i = 0;
@@ -133,6 +131,12 @@ Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_v
         args = args + llvm_type(arg_types.get(i)) + " " + arg_values.get(i);
         i += 1;
     }
+    if return_type == "void" {
+        e = emit_line(e, "  call void @" + name + "(" + args + ")");
+        return e;
+    }
+    string reg = next_reg(e);
+    e = advance_reg(e);
     return emit_line(e, "  " + reg + " = call " + llvm_ret + " @" + name + "(" + args + ")");
 }
 

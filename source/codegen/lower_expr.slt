@@ -188,6 +188,12 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         if left.value.starts_with("@str") { op_type = "string"; }
         if right.value.starts_with("@str") { op_type = "string"; }
         if left.value.starts_with("%r") and node.value == "+" { op_type = "string"; }
+        # Detect bool comparison: left side is bool-returning method call or right is bool literal
+        if bin_children.get(0).kind == NodeKind.MethodCall {
+            string fn_name = remap_method_name(bin_children.get(0).value);
+            if builtin_return_type(fn_name) == "bool" { op_type = "bool"; }
+        }
+        if bin_children.get(1).kind == NodeKind.BoolLit { op_type = "bool"; }
         if node.value == "+" and op_type == "string" {
             string result_reg = next_reg(right.emitter);
             e = advance_reg(right.emitter);

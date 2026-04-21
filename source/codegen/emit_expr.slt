@@ -58,16 +58,22 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
         return emit_line(e, "  " + reg + " = srem " + llvm_t + " " + left + ", " + right);
     }
     if op == "==" {
-        if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp oeq " + llvm_t + " " + left + ", " + right);
+        if slate_type == "bool" {
+            return emit_line(e, "  " + reg + " = icmp eq i1 " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp eq " + llvm_t + " " + left + ", " + right);
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp oeq double " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp eq i64 " + left + ", " + right);
     }
     if op == "!=" {
-        if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp one " + llvm_t + " " + left + ", " + right);
+        if slate_type == "bool" {
+            return emit_line(e, "  " + reg + " = icmp ne i1 " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp ne " + llvm_t + " " + left + ", " + right);
+        if slate_type == "float" {
+            return emit_line(e, "  " + reg + " = fcmp one double " + left + ", " + right);
+        }
+        return emit_line(e, "  " + reg + " = icmp ne i64 " + left + ", " + right);
     }
     if op == "<" {
         if slate_type == "float" {

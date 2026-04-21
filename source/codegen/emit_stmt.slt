@@ -202,12 +202,14 @@ string escape_string(string s) {
     mutable int i = 0;
     while i < s.len() {
         string c = s.get(i);
-        if c == "\"" { result = result + "\\\""; }
+        if c == "\\" and i + 1 < s.len() {
+            string next = s.get(i + 1);
+            if next == "n" { result = result + "\\0A"; i += 1; }
+            else if next == "t" { result = result + "\\09"; i += 1; }
+            else { result = result + c; i += 1; continue; }
+        }
+        else if c == "\"" { result = result + "\\\""; }
         else if c == "\\" { result = result + "\\\\"; }
-        else if c == "
-" { result = result + "\\0A"; }
-        else if c == "
-" { result = result + "\\09"; }
         else { result = result + c; }
         i += 1;
     }

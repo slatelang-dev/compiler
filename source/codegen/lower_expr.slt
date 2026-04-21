@@ -62,6 +62,15 @@ string builtin_return_type(string name) {
     if name == "dim" { return "ptr"; }
     if name == "italic" { return "ptr"; }
     if name == "underline" { return "ptr"; }
+    # io functions
+    if name == "file" { return "ptr"; }
+    if name == "write" { return "void"; }
+    if name == "read" { return "ptr"; }
+    if name == "read_n" { return "ptr"; }
+    if name == "home" { return "ptr"; }
+    if name == "run" { return "void"; }
+    if name == "toml" { return "ptr"; }
+    if name == "json" { return "ptr"; }
     # default
     return "int";
 }

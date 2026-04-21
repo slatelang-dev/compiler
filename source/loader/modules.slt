@@ -119,14 +119,19 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            if module_already_loaded(visited, mod_name) == false {
+            print("[collect_module_asts] processing use: " + mod_name);
+            if module_already_loaded(visited, mod_name) {
+                print("[collect_module_asts] SKIPPING (already loaded): " + mod_name);
+            } else {
                 visited = visited.add(mod_name);
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
                 string mod_path = exports_path;
                 if file(exports_path).exists() == false {
                     mod_path = base_path + "/" + mod_name + ".slt";
                 }
+                print("[collect_module_asts] trying path: " + mod_path);
                 LoadedModule loaded = load_module(mod_name, mod_path);
+                print("[collect_module_asts] loaded: " + loaded.name + " success=" + loaded.loaded);
                 if loaded.loaded {
                     string sub_base = base_path + "/" + mod_name;
                     list(Node) sub = collect_module_asts(loaded.ast, sub_base, visited);
@@ -136,6 +141,8 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                         j += 1;
                     }
                     result = result.add(loaded.ast);
+                } else {
+                    print("[collect_module_asts] FAILED to load: " + mod_name + " error: " + loaded.load_error);
                 }
             }
         }

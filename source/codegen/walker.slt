@@ -121,7 +121,29 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         e = advance_label(e);
         e = emit_while_start(e, cond_label);
         EmitResult cond = walk_expr(stmt_children.get(0), e, locals);
-        e = emit_while_body(cond.emitter, cond.value, body_label, exit_label);
+        Node cond_node = stmt_children.get(0);
+        mutable string cond_value = cond.value;
+        mutable Emitter cur_emitter = cond.emitter;
+        if cond_node.kind == NodeKind.MethodCall {
+            string method = cond_node.value;
+            string fn_name = remap_method_name(method);
+            if builtin_return_type(fn_name) != "bool" {
+                string reg = next_reg(cur_emitter);
+                cur_emitter = advance_reg(cur_emitter);
+                cur_emitter = emit_line(cur_emitter, "  " + reg + " = icmp ne i64 " + cond_value + ", 0");
+                cond_value = reg;
+            }
+        }
+        if cond_node.kind == NodeKind.Call {
+            string call_name = remap_call_name(cond_node.value);
+            if builtin_return_type(call_name) != "bool" {
+                string reg = next_reg(cur_emitter);
+                cur_emitter = advance_reg(cur_emitter);
+                cur_emitter = emit_line(cur_emitter, "  " + reg + " = icmp ne i64 " + cond_value + ", 0");
+                cond_value = reg;
+            }
+        }
+        e = emit_while_body(cur_emitter, cond_value, body_label, exit_label);
         e = walk_block(stmt_children.get(1), e, locals, return_type);
         e = emit_while_end(e, cond_label, exit_label);
         return stmt_result(e, locals);

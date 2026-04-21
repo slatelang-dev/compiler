@@ -103,10 +103,27 @@ string emit_string_global(Emitter e, string value) {
 
 # Advance string counter and emit global constant
 
+string escape_ll_string(string s) {
+    mutable string result = "";
+    mutable int i = 0;
+    while i < s.len() {
+        string c = s.get(i);
+        if c == "\n" { result = result + "\\0A"; }
+        else if c == "\t" { result = result + "\\09"; }
+        else if c == "\r" { result = result + "\\0D"; }
+        else if c == "\\" { result = result + "\\\\"; }
+        else if c == "\"" { result = result + "\\22"; }
+        else { result = result + c; }
+        i += 1;
+    }
+    return result;
+}
+
 Emitter advance_str(Emitter e, string value) {
     string name = "@str" + string(e.str_count);
     int len = value.len() + 1;
-    string global = name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + value + "\\00\"\n";
+    string escaped = escape_ll_string(value);
+    string global = name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + escaped + "\\00\"\n";
     return Emitter(
         output: e.output,
         globals: e.globals + global,

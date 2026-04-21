@@ -181,7 +181,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         mutable string op_type = "int";
         if bin_children.get(0).kind == NodeKind.Ident {
             if locals.has(bin_children.get(0).value) {
-                op_type = locals.get(bin_children.get(0).value);
+                string lt = locals.get(bin_children.get(0).value);
+                if lt == "string" { op_type = "string"; }
             }
         }
         if bin_children.get(0).kind == NodeKind.StringLit { op_type = "string"; }
@@ -199,6 +200,24 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             e = advance_reg(right.emitter);
             e = emit_line(e, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left.value + ", ptr " + right.value + ")");
             return EmitResult(emitter: e, value: result_reg);
+        }
+        if op_type == "string" and node.value == "==" {
+            string cmp_reg = next_reg(right.emitter);
+            e = advance_reg(right.emitter);
+            e = emit_line(e, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left.value + ", ptr " + right.value + ")");
+            string eq_reg = next_reg(e);
+            e = advance_reg(e);
+            e = emit_line(e, "  " + eq_reg + " = icmp eq i32 " + cmp_reg + ", 0");
+            return EmitResult(emitter: e, value: eq_reg);
+        }
+        if op_type == "string" and node.value == "!=" {
+            string cmp_reg = next_reg(right.emitter);
+            e = advance_reg(right.emitter);
+            e = emit_line(e, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left.value + ", ptr " + right.value + ")");
+            string ne_reg = next_reg(e);
+            e = advance_reg(e);
+            e = emit_line(e, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
+            return EmitResult(emitter: e, value: ne_reg);
         }
         string result_reg = next_reg(right.emitter);
         e = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);

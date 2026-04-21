@@ -111,6 +111,14 @@ bool module_already_loaded(list(string) seen, string name) {
     return false;
 }
 
+string module_dir(string mod_path) {
+    int last_slash = mod_path.last_index_of("/");
+    if last_slash < 0 {
+        return ".";
+    }
+    return mod_path.substr(0, last_slash);
+}
+
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(Node) result = empty;
     mutable list(string) visited = seen;
@@ -128,7 +136,8 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                 }
                 LoadedModule loaded = load_module(mod_name, mod_path);
                 if loaded.loaded {
-                    list(Node) sub = collect_module_asts(loaded.ast, base_path, visited);
+                    string sub_base = module_dir(mod_path);
+                    list(Node) sub = collect_module_asts(loaded.ast, sub_base, visited);
                     mutable int j = 0;
                     while j < sub.len() {
                         result = result.add(sub.get(j));

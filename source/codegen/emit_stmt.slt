@@ -201,7 +201,7 @@ string escape_string(string s) {
     mutable string result = "";
     mutable int i = 0;
     while i < s.len() {
-        string c = s.get(i);
+        string c = string(s.chars().get(i));
         if c == "\n" { result = result + "\\0A"; }
         else if c == "\t" { result = result + "\\09"; }
         else if c == "\r" { result = result + "\\0D"; }

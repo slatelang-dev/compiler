@@ -129,11 +129,14 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
             if file(exports_path).exists() == false {
                 mod_path = base_path + "/" + mod_name + ".slt";
             }
+            print("[collect] trying " + mod_name + " at " + mod_path);
             if module_already_loaded(visited, mod_path) == false {
                 visited = visited.add(mod_path);
+                print("[collect] loading " + mod_path);
                 LoadedModule loaded = load_module(mod_name, mod_path);
                 if loaded.loaded {
                     string sub_base = base_path + "/" + mod_name;
+                    print("[collect] recursing into " + sub_base);
                     CollectResult sub = collect_module_asts(loaded.ast, sub_base, visited);
                     mutable int j = 0;
                     while j < sub.asts.len() {

@@ -124,32 +124,29 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            string exports_path = base_path + "/" + mod_name + "/exports.slt";
-            string mod_path = exports_path;
-            if file(exports_path).exists() == false {
-                mod_path = base_path + "/" + mod_name + ".slt";
-            }
-            print("[collect] trying " + mod_name + " at " + mod_path);
-            if module_already_loaded(visited, mod_path) == false {
-                visited = visited.add(mod_path);
-                print("[collect] loading " + mod_path);
-                LoadedModule loaded = load_module(mod_name, mod_path);
-                print("[collect] loaded: " + loaded.name + " success=");
-    print(loaded.loaded);
-    print(" path=" + loaded.path);
-                if loaded.loaded {
-                    string sub_base = base_path + "/" + mod_name;
-                    print("[collect] recursing into " + sub_base);
-                    CollectResult sub = collect_module_asts(loaded.ast, sub_base, visited);
-                    mutable int j = 0;
-                    while j < sub.asts.len() {
-                        result = result.add(sub.asts.get(j));
-                        j += 1;
+            if mod_name == "slate" or mod_name == "compiler" or mod_name == "commands"
+            or mod_name == "protocol" or mod_name == "handlers" {
+                # skip external dependencies
+            } else {
+                string exports_path = base_path + "/" + mod_name + "/exports.slt";
+                string mod_path = exports_path;
+                if file(exports_path).exists() == false {
+                    mod_path = base_path + "/" + mod_name + ".slt";
+                }
+                if module_already_loaded(visited, mod_path) == false {
+                    visited = visited.add(mod_path);
+                    LoadedModule loaded = load_module(mod_name, mod_path);
+                    if loaded.loaded {
+                        string sub_base = base_path + "/" + mod_name;
+                        CollectResult sub = collect_module_asts(loaded.ast, sub_base, visited);
+                        mutable int j = 0;
+                        while j < sub.asts.len() {
+                            result = result.add(sub.asts.get(j));
+                            j += 1;
+                        }
+                        result = result.add(loaded.ast);
+                        visited = sub.visited;
                     }
-                    result = result.add(loaded.ast);
-                    visited = sub.visited;
-                } else {
-                    print("[collect] FAILED: " + loaded.load_error);
                 }
             }
         }

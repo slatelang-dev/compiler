@@ -99,3 +99,42 @@ string first_module_error(list(LoadedModule) modules) {
     }
     return "";
 }
+
+bool module_already_loaded(list(string) seen, string name) {
+    mutable int i = 0;
+    while i < seen.len() {
+        if seen.get(i) == name {
+            return true;
+        }
+        i += 1;
+    }
+    return false;
+}
+
+list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
+    mutable list(Node) result = empty;
+    mutable list(string) visited = seen;
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.Use {
+            string mod_name = decl.value;
+            if module_already_loaded(visited, mod_name) == false {
+                visited = visited.add(mod_name);
+                string mod_path = base_path + "/" + mod_name + ".slt";
+                LoadedModule loaded = load_module(mod_name, mod_path);
+                if loaded.loaded {
+                    list(Node) sub = collect_module_asts(loaded.ast, base_path, visited);
+                    mutable int j = 0;
+                    while j < sub.len() {
+                        result = result.add(sub.get(j));
+                        j += 1;
+                    }
+                    result = result.add(loaded.ast);
+                }
+            }
+        }
+        i += 1;
+    }
+    return result;
+}

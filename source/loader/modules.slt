@@ -125,7 +125,7 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            if mod_name == "slate" or mod_name == "compiler" or mod_name == "commands"
+            if mod_name == "slate" or mod_name == "compiler"
             or mod_name == "protocol" or mod_name == "handlers" {
                 print("[collect] SKIP external: " + mod_name);
             } else {

@@ -112,11 +112,18 @@ bool module_already_loaded(list(string) seen, string name) {
 }
 
 string module_dir(string mod_path) {
-    int last_slash = mod_path.last_index_of("/");
-    if last_slash < 0 {
+    if mod_path.contains("/") == false {
         return ".";
     }
-    return mod_path.substr(0, last_slash);
+    int i = mod_path.len() - 1;
+    while i >= 0 {
+        string c = mod_path.substr(i, 1);
+        if c == "/" {
+            return mod_path.substr(0, i);
+        }
+        i -= 1;
+    }
+    return ".";
 }
 
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {

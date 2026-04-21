@@ -86,6 +86,23 @@ string builtin_return_type(string name) {
     # method calls (remapped)
     if name == "args" { return "ptr"; }
     if name == "read" { return "ptr"; }
+    # loader functions
+    if name == "load_project_file" { return "ptr"; }
+    if name == "load_project" { return "ptr"; }
+    if name == "load_entry" { return "ptr"; }
+    if name == "load_module" { return "ptr"; }
+    if name == "project_valid" { return "bool"; }
+    if name == "project_display" { return "ptr"; }
+    if name == "collect_module_asts" { return "ptr"; }
+    # analysis functions
+    if name == "analyse" { return "ptr"; }
+    if name == "analyse_bare" { return "ptr"; }
+    if name == "parse" { return "ptr"; }
+    # render functions
+    if name == "render_all" { return "ptr"; }
+    if name == "render_errors" { return "ptr"; }
+    if name == "render_warnings" { return "ptr"; }
+    if name == "render_summary" { return "ptr"; }
     # default
     return "int";
 }

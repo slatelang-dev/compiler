@@ -220,7 +220,7 @@ string escape_string(string s) {
 
 Emitter emit_global_string(Emitter e, string name, string value) {
     string escaped = escape_string(value);
-    int len = value.len() + 1;
+    int len = escaped.len() + 1;
     e = emit_line(e, "@" + name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + escaped + "\\00\"");
     return e;
 }

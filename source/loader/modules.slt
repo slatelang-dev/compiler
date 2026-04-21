@@ -114,18 +114,16 @@ bool module_already_loaded(list(string) seen, string name) {
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(Node) result = empty;
     mutable list(string) visited = seen;
-    print("[collect] START: base_path=" + base_path + ", children=" + program.children.len());
+    print("[collect] START: base_path=" + base_path);
     mutable int i = 0;
     while i < program.children.len() {
-        print("[collect] loop iteration " + i);
+        print("[collect] loop iteration");
         Node decl = program.children.get(i);
-        print("[collect]   child[" + i + "]: kind=" + decl.kind + ", value=" + decl.value);
+        print("[collect]   child: kind=" + decl.kind + ", value=" + decl.value);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
             print("[collect]   -> processing use: " + mod_name);
-            if module_already_loaded(visited, mod_name) {
-                print("[collect]   -> SKIP (already visited): " + mod_name);
-            } else {
+            if module_already_loaded(visited, mod_name) == false {
                 visited = visited.add(mod_name);
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
                 string mod_path = exports_path;

@@ -5,31 +5,6 @@ use emitter;
 use emit_types;
 use emit_expr;
 
-struct EscapeResult {
-    string text;
-    int byte_count;
-}
-
-EscapeResult escape_ll_string(string s) {
-    mutable string result = "";
-    mutable int byte_count = 0;
-    mutable int i = 0;
-    while i < s.chars().len() {
-        string c = string(s.chars().get(i));
-        if c == "\n" { result = result + "\\0A"; byte_count = byte_count + 1; }
-        else if c == "\t" { result = result + "\\09"; byte_count = byte_count + 1; }
-        else if c == "\r" { result = result + "\\0D"; byte_count = byte_count + 1; }
-        else if c == "\\" { result = result + "\\\\"; byte_count = byte_count + 1; }
-        else if c == "\"" { result = result + "\\22"; byte_count = byte_count + 1; }
-        else {
-            result = result + c;
-            byte_count = byte_count + c.len();
-        }
-        i += 1;
-    }
-    return EscapeResult(text: result, byte_count: byte_count);
-}
-
 # Emit a return statement
 
 Emitter emit_return(Emitter e, string value, string slate_type) {
@@ -219,14 +194,5 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     e = emit_line(e, "declare ptr @italic(ptr)");
     e = emit_line(e, "declare ptr @underline(ptr)");
     e = emit_line(e, "");
-    return e;
-}
-
-# Emit a global string constant
-
-Emitter emit_global_string(Emitter e, string name, string value) {
-    EscapeResult esc = escape_ll_string(value);
-    int len = esc.byte_count + 1;
-    e = emit_line(e, "@" + name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + esc.text + "\\00\"");
     return e;
 }

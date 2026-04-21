@@ -114,11 +114,13 @@ bool module_already_loaded(list(string) seen, string name) {
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(Node) result = empty;
     mutable list(string) visited = seen;
+    print("[collect] START base_path=", base_path);
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
+            print("[collect] processing use: ", mod_name);
             if module_already_loaded(visited, mod_name) == false {
                 visited = visited.add(mod_name);
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
@@ -126,9 +128,12 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                 if file(exports_path).exists() == false {
                     mod_path = base_path + "/" + mod_name + ".slt";
                 }
+                print("[collect] trying path: ", mod_path);
                 LoadedModule loaded = load_module(mod_name, mod_path);
+                print("[collect] loaded: ", loaded.name, " success=", loaded.loaded);
                 if loaded.loaded {
                     string sub_base = base_path + "/" + mod_name;
+                    print("[collect] recursing to: ", sub_base);
                     list(Node) sub = collect_module_asts(loaded.ast, sub_base, visited);
                     mutable int j = 0;
                     while j < sub.len() {
@@ -141,5 +146,6 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
         }
         i += 1;
     }
+    print("[collect] END for: ", base_path);
     return result;
 }

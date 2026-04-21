@@ -119,7 +119,7 @@ struct CollectResult {
 CollectResult collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(Node) result = empty;
     mutable list(string) visited = seen;
-    print("[collect] START base=", base_path);
+    print("[collect] START base=" + base_path);
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);

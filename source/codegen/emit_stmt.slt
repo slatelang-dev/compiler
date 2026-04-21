@@ -197,10 +197,30 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     return e;
 }
 
+string escape_string(string s) {
+    mutable string result = "";
+    mutable int i = 0;
+    while i < s.len() {
+        string c = "";
+        bool has = i < s.len();
+        if has {
+            c = s.get(i);
+        }
+        if c == "\"" { result = result + "\\\""; }
+        else if c == "\\" { result = result + "\\\\"; }
+        else if c == "\n" { result = result + "\\0A"; }
+        else if c == "\t" { result = result + "\\09"; }
+        else { result = result + c; }
+        i += 1;
+    }
+    return result;
+}
+
 # Emit a global string constant
 
 Emitter emit_global_string(Emitter e, string name, string value) {
+    string escaped = escape_string(value);
     int len = value.len() + 1;
-    e = emit_line(e, "@" + name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + value + "\\00\"");
+    e = emit_line(e, "@" + name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + escaped + "\\00\"");
     return e;
 }

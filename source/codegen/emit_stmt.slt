@@ -201,6 +201,14 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     e = emit_line(e, "declare void @run(ptr, ptr, ptr)");
     e = emit_line(e, "declare ptr @toml(ptr)");
     e = emit_line(e, "declare ptr @json(ptr)");
+    e = emit_line(e, "declare i1 @exists(ptr)");
+    e = emit_line(e, "declare i1 @contains(ptr, ptr)");
+    e = emit_line(e, "declare i1 @starts_with(ptr, ptr)");
+    e = emit_line(e, "declare i1 @ends_with(ptr, ptr)");
+    e = emit_line(e, "declare ptr @replace(ptr, ptr, ptr)");
+    e = emit_line(e, "declare ptr @split(ptr, ptr)");
+    e = emit_line(e, "declare ptr @path(ptr)");
+    e = emit_line(e, "declare ptr @parse(ptr)");
     e = emit_line(e, "");
     return e;
 }

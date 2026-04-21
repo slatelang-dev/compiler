@@ -71,6 +71,21 @@ string builtin_return_type(string name) {
     if name == "run" { return "void"; }
     if name == "toml" { return "ptr"; }
     if name == "json" { return "ptr"; }
+    # bool returns
+    if name == "exists" { return "bool"; }
+    if name == "contains" { return "bool"; }
+    if name == "starts_with" { return "bool"; }
+    if name == "ends_with" { return "bool"; }
+    # string functions
+    if name == "replace" { return "ptr"; }
+    if name == "split" { return "ptr"; }
+    if name == "path" { return "ptr"; }
+    if name == "parse" { return "ptr"; }
+    if name == "int" { return "int"; }
+    if name == "len" { return "int"; }
+    # method calls (remapped)
+    if name == "args" { return "ptr"; }
+    if name == "read" { return "ptr"; }
     # default
     return "int";
 }

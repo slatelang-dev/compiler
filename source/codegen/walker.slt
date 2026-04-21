@@ -70,13 +70,36 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
     if node.kind == NodeKind.If {
         list(Node) stmt_children = node.children;
         EmitResult cond = walk_expr(stmt_children.get(0), e, locals);
-        string then_label = next_label(cond.emitter);
-        e = advance_label(cond.emitter);
+        # Check if condition is a bool-returning call - use directly as i1
+        Node cond_node = stmt_children.get(0);
+        mutable string cond_value = cond.value;
+        mutable Emitter cur_emitter = cond.emitter;
+        if cond_node.kind == NodeKind.MethodCall {
+            string method = cond_node.value;
+            string fn_name = remap_method_name(method);
+            if builtin_return_type(fn_name) != "bool" {
+                string reg = next_reg(cur_emitter);
+                cur_emitter = advance_reg(cur_emitter);
+                cur_emitter = emit_line(cur_emitter, "  " + reg + " = icmp ne i64 " + cond_value + ", 0");
+                cond_value = reg;
+            }
+        }
+        if cond_node.kind == NodeKind.Call {
+            string call_name = remap_call_name(cond_node.value);
+            if builtin_return_type(call_name) != "bool" {
+                string reg = next_reg(cur_emitter);
+                cur_emitter = advance_reg(cur_emitter);
+                cur_emitter = emit_line(cur_emitter, "  " + reg + " = icmp ne i64 " + cond_value + ", 0");
+                cond_value = reg;
+            }
+        }
+        string then_label = next_label(cur_emitter);
+        e = advance_label(cur_emitter);
         string else_label = next_label(e);
         e = advance_label(e);
         string merge_label = next_label(e);
         e = advance_label(e);
-        e = emit_if(e, cond.value, then_label, else_label, merge_label);
+        e = emit_if(e, cond_value, then_label, else_label, merge_label);
         e = emit_then_block(e, then_label, merge_label);
         e = walk_block(stmt_children.get(1), e, locals, return_type);
         e = emit_jump(e, merge_label);

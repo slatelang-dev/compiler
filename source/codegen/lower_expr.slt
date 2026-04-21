@@ -272,6 +272,23 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             cur = arg.emitter;
             i += 1;
         }
+        # Force correct argument types for methods that take int/ptr arguments
+        if fn_name == "slate_get" and arg_types.len() > 1 {
+            mutable list(string) fixed = empty;
+            fixed = fixed.add(arg_types.get(0));
+            fixed = fixed.add("int");
+            arg_types = fixed;
+        }
+        if fn_name == "slate_string" and arg_types.len() > 0 {
+            mutable list(string) fixed = empty;
+            fixed = fixed.add("int");
+            arg_types = fixed;
+        }
+        if fn_name == "read_n" and arg_types.len() > 0 {
+            mutable list(string) fixed = empty;
+            fixed = fixed.add("int");
+            arg_types = fixed;
+        }
         string method_return_type = builtin_return_type(fn_name);
         string result_reg = next_reg(cur);
         cur = emit_call(cur, fn_name, method_return_type, arg_values, arg_types);

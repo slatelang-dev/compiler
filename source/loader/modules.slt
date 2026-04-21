@@ -134,7 +134,9 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
                 visited = visited.add(mod_path);
                 print("[collect] loading " + mod_path);
                 LoadedModule loaded = load_module(mod_name, mod_path);
-                print("[collect] loaded: " + loaded.name + " success=" + loaded.loaded + " path=" + loaded.path);
+                print("[collect] loaded: " + loaded.name + " success=");
+    print(loaded.loaded);
+    print(" path=" + loaded.path);
                 if loaded.loaded {
                     string sub_base = base_path + "/" + mod_name;
                     print("[collect] recursing into " + sub_base);

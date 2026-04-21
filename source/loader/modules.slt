@@ -119,6 +119,7 @@ struct CollectResult {
 CollectResult collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(Node) result = empty;
     mutable list(string) visited = seen;
+    print("[collect] START base=", base_path);
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
@@ -126,7 +127,7 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
             string mod_name = decl.value;
             if mod_name == "slate" or mod_name == "compiler" or mod_name == "commands"
             or mod_name == "protocol" or mod_name == "handlers" {
-                # skip external dependencies
+                print("[collect] SKIP external: " + mod_name);
             } else {
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
                 string mod_path = exports_path;
@@ -137,6 +138,7 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
                     visited = visited.add(mod_path);
                     LoadedModule loaded = load_module(mod_name, mod_path);
                     if loaded.loaded {
+                        print("[collect] ADD: " + mod_name + " (" + mod_path + ")");
                         string sub_base = base_path + "/" + mod_name;
                         CollectResult sub = collect_module_asts(loaded.ast, sub_base, visited);
                         mutable int j = 0;
@@ -152,5 +154,6 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
         }
         i += 1;
     }
+    print("[collect] END base=" + base_path);
     return CollectResult(asts: result, visited: visited);
 }

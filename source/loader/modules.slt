@@ -111,12 +111,12 @@ bool module_already_loaded(list(string) seen, string path) {
     return false;
 }
 
-struct CollectResult {
+struct ModuleCollectResult {
     list(Node) asts;
     list(string) visited;
 }
 
-CollectResult collect_module_asts(Node program, string base_path, list(string) seen) {
+ModuleCollectResult collect_modules_inner(Node program, string base_path, list(string) seen) {
     mutable list(Node) result = empty;
     mutable list(string) visited = seen;
     mutable int i = 0;
@@ -137,19 +137,24 @@ CollectResult collect_module_asts(Node program, string base_path, list(string) s
                     LoadedModule loaded = load_module(mod_name, mod_path);
                     if loaded.loaded {
                         string sub_base = base_path + "/" + mod_name;
-                        CollectResult sub = collect_module_asts(loaded.ast, sub_base, visited);
+                        ModuleCollectResult sub = collect_modules_inner(loaded.ast, sub_base, visited);
+                        visited = sub.visited;
                         mutable int j = 0;
                         while j < sub.asts.len() {
                             result = result.add(sub.asts.get(j));
                             j += 1;
                         }
                         result = result.add(loaded.ast);
-                        visited = sub.visited;
                     }
                 }
             }
         }
         i += 1;
     }
-    return CollectResult(asts: result, visited: visited);
+    return ModuleCollectResult(asts: result, visited: visited);
+}
+
+list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
+    ModuleCollectResult r = collect_modules_inner(program, base_path, seen);
+    return r.asts;
 }

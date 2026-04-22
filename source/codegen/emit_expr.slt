@@ -26,52 +26,53 @@ string emit_char_lit(string value) {
 # Emit a binary operation — returns result register
 
 Emitter emit_binary_op(Emitter e, string op, string left, string right, string slate_type) {
-    string reg = next_reg(e);
-    e = advance_reg(e);
+    mutable Emitter cur = e;
+    string reg = next_reg(cur);
+    cur = advance_reg(cur);
     string llvm_t = llvm_type(slate_type);
 
     if op == "+" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fadd " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fadd " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = add " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = add " + llvm_t + " " + left + ", " + right);
     }
     if op == "-" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fsub " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fsub " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = sub " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = sub " + llvm_t + " " + left + ", " + right);
     }
     if op == "*" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fmul " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fmul " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = mul " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = mul " + llvm_t + " " + left + ", " + right);
     }
     if op == "/" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fdiv " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fdiv " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = sdiv " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = sdiv " + llvm_t + " " + left + ", " + right);
     }
     if op == "%" {
-        return emit_line(e, "  " + reg + " = srem " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = srem " + llvm_t + " " + left + ", " + right);
     }
     if op == "==" {
         if slate_type == "bool" {
-            return emit_line(e, "  " + reg + " = icmp eq i1 " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = icmp eq i1 " + left + ", " + right);
         }
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp oeq double " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fcmp oeq double " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp eq i64 " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = icmp eq i64 " + left + ", " + right);
     }
     if op == "!=" {
         if slate_type == "bool" {
-            return emit_line(e, "  " + reg + " = icmp ne i1 " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = icmp ne i1 " + left + ", " + right);
         }
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp one double " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fcmp one double " + left + ", " + right);
         }
         return emit_line(e, "  " + reg + " = icmp ne i64 " + left + ", " + right);
     }
@@ -106,29 +107,31 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
         return emit_line(e, "  " + reg + " = or i1 " + left + ", " + right);
     }
 
-    return emit_error(e, "unknown binary op: " + op);
+    return emit_error(cur, "unknown binary op: " + op);
 }
 
 # Emit a unary operation
 
 Emitter emit_unary_op(Emitter e, string op, string operand, string slate_type) {
-    string reg = next_reg(e);
-    e = advance_reg(e);
+    mutable Emitter cur = e;
+    string reg = next_reg(cur);
+    cur = advance_reg(cur);
     if op == "not" {
-        return emit_line(e, "  " + reg + " = xor i1 " + operand + ", 1");
+        return emit_line(cur, "  " + reg + " = xor i1 " + operand + ", 1");
     }
     if op == "-" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fneg double " + operand);
+            return emit_line(cur, "  " + reg + " = fneg double " + operand);
         }
-        return emit_line(e, "  " + reg + " = sub i64 0, " + operand);
+        return emit_line(cur, "  " + reg + " = sub i64 0, " + operand);
     }
-    return emit_error(e, "unknown unary op: " + op);
+    return emit_error(cur, "unknown unary op: " + op);
 }
 
 # Emit a function call
 
 Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_values, list(string) arg_types) {
+    mutable Emitter cur = e;
     string llvm_ret = llvm_type(return_type);
     mutable string args = "";
     mutable int i = 0;
@@ -138,31 +141,34 @@ Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_v
         i += 1;
     }
     if return_type == "void" {
-        e = emit_line(e, "  call void @" + name + "(" + args + ")");
-        return e;
+        cur = emit_line(cur, "  call void @" + name + "(" + args + ")");
+        return cur;
     }
-    string reg = next_reg(e);
-    e = advance_reg(e);
-    return emit_line(e, "  " + reg + " = call " + llvm_ret + " @" + name + "(" + args + ")");
+    string reg = next_reg(cur);
+    cur = advance_reg(cur);
+    return emit_line(cur, "  " + reg + " = call " + llvm_ret + " @" + name + "(" + args + ")");
 }
 
 # Emit a variable load from alloca slot
 
 Emitter emit_load(Emitter e, string reg_dest, string slate_type, string alloca_reg) {
+    mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
-    return emit_line(e, "  " + reg_dest + " = load " + llvm_t + ", ptr " + alloca_reg);
+    return emit_line(cur, "  " + reg_dest + " = load " + llvm_t + ", ptr " + alloca_reg);
 }
 
 # Emit a variable store to alloca slot
 
 Emitter emit_store(Emitter e, string value, string slate_type, string alloca_reg) {
+    mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
-    return emit_line(e, "  store " + llvm_t + " " + value + ", ptr " + alloca_reg);
+    return emit_line(cur, "  store " + llvm_t + " " + value + ", ptr " + alloca_reg);
 }
 
 # Emit an alloca — stack slot for a variable
 
 Emitter emit_alloca(Emitter e, string reg, string slate_type) {
+    mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
-    return emit_line(e, "  " + reg + " = alloca " + llvm_t);
+    return emit_line(cur, "  " + reg + " = alloca " + llvm_t);
 }

@@ -18,40 +18,46 @@ Emitter emit_return(Emitter e, string value, string slate_type) {
 # Emit a variable declaration — alloca + store
 
 Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
+    mutable Emitter cur = e;
     string slot = "%" + name;
-    e = emit_alloca(e, slot, slate_type);
-    e = emit_store(e, value, slate_type, slot);
-    return e;
+    cur = emit_alloca(cur, slot, slate_type);
+    cur = emit_store(cur, value, slate_type, slot);
+    return cur;
 }
 
 # Emit an assignment — store into existing slot
 
 Emitter emit_assign(Emitter e, string name, string slate_type, string value) {
+    mutable Emitter cur = e;
     string slot = "%" + name;
-    e = emit_store(e, value, slate_type, slot);
-    return e;
+    cur = emit_store(cur, value, slate_type, slot);
+    return cur;
 }
 
 # Emit if/else — uses LLVM basic blocks
 
 Emitter emit_if(Emitter e, string cond_reg, string then_label, string else_label, string merge_label) {
-    e = emit_line(e, "  br i1 " + cond_reg + ", label %" + then_label + ", label %" + else_label);
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + then_label + ", label %" + else_label);
+    return cur;
 }
 
 Emitter emit_then_block(Emitter e, string then_label, string merge_label) {
-    e = emit_line(e, then_label + ":");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_line(cur, then_label + ":");
+    return cur;
 }
 
 Emitter emit_else_block(Emitter e, string else_label, string merge_label) {
-    e = emit_line(e, else_label + ":");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_line(cur, else_label + ":");
+    return cur;
 }
 
 Emitter emit_merge_block(Emitter e, string merge_label) {
-    e = emit_line(e, merge_label + ":");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_line(cur, merge_label + ":");
+    return cur;
 }
 
 Emitter emit_jump(Emitter e, string label) {
@@ -61,9 +67,67 @@ Emitter emit_jump(Emitter e, string label) {
 # Emit while loop — condition block, body block, exit block
 
 Emitter emit_while_start(Emitter e, string cond_label) {
-    e = emit_jump(e, cond_label);
-    e = emit_line(e, cond_label + ":");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_jump(cur, cond_label);
+    cur = emit_line(cur, cond_label + ":");
+    return cur;
+}
+
+Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
+    mutable Emitter cur = e;
+    cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
+    cur = emit_line(cur, body_label + ":");
+    return cur;
+}
+
+Emitter emit_while_end(Emitter e, string cond_label, string exit_label) {
+    mutable Emitter cur = e;
+    cur = emit_jump(cur, cond_label);
+    cur = emit_line(cur, exit_label + ":");
+    return cur;
+}
+
+# Emit for loop — range based
+
+Emitter emit_for_init(Emitter e, string var, string start_val) {
+    mutable Emitter cur = e;
+    string slot = "%" + var;
+    cur = emit_alloca(cur, slot, "int");
+    cur = emit_store(cur, start_val, "int", slot);
+    return cur;
+}
+
+Emitter emit_for_cond(Emitter e, string cond_label, string var, string end_val) {
+    mutable Emitter cur = e;
+    string slot = "%" + var;
+    string loaded = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_line(cur, cond_label + ":");
+    cur = emit_load(cur, loaded, "int", slot);
+    string cmp_reg = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_line(cur, "  " + cmp_reg + " = icmp slt i64 " + loaded + ", " + end_val);
+    return cur;
+}
+
+Emitter emit_for_increment(Emitter e, string var, string cond_label) {
+    mutable Emitter cur = e;
+    string slot = "%" + var;
+    string loaded = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_load(cur, loaded, "int", slot);
+    string incremented = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_line(cur, "  " + incremented + " = add i64 " + loaded + ", 1");
+    cur = emit_store(cur, incremented, "int", slot);
+    cur = emit_jump(cur, cond_label);
+    return cur;
+}
+
+# Emit a break — unconditional jump to exit label
+
+Emitter emit_break(Emitter e, string exit_label) {
+    return emit_jump(e, exit_label);
 }
 
 Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
@@ -123,6 +187,7 @@ Emitter emit_break(Emitter e, string exit_label) {
 # Emit a function declaration header
 
 Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) param_names, list(string) param_types) {
+    mutable Emitter cur = e;
     string llvm_ret = llvm_return_type(return_type);
     mutable string params = "";
     mutable int i = 0;
@@ -131,84 +196,87 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
         params = params + llvm_param_type(param_types.get(i)) + " %" + param_names.get(i);
         i += 1;
     }
-    e = emit_line(e, "define " + llvm_ret + " @" + name + "(" + params + ") {");
-    e = emit_line(e, "entry:");
-    return e;
+    cur = emit_line(cur, "define " + llvm_ret + " @" + name + "(" + params + ") {");
+    cur = emit_line(cur, "entry:");
+    return cur;
 }
 
 # Emit a function footer
 
 Emitter emit_fn_footer(Emitter e, string return_type) {
+    mutable Emitter cur = e;
     if return_type == "void" {
-        e = emit_line(e, "  ret void");
+        cur = emit_line(cur, "  ret void");
     }
-    e = emit_line(e, "}");
-    return e;
+    cur = emit_line(cur, "}");
+    return cur;
 }
 
 # Emit the LLVM IR file header — target triple and data layout
 
 Emitter emit_file_header(Emitter e, string target_triple) {
-    e = emit_line(e, "; Slate compiled output");
-    e = emit_line(e, "target triple = \"" + target_triple + "\"");
-    e = emit_line(e, "");
-    e = emit_line(e, "declare ptr @malloc(i64)");
-    e = emit_line(e, "declare void @free(ptr)");
-    e = emit_line(e, "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)");
-    e = emit_line(e, "declare i64 @strlen(ptr)");
-    e = emit_line(e, "declare i32 @strcmp(ptr, ptr)");
-    e = emit_line(e, "declare i32 @puts(ptr)");
-    e = emit_line(e, "");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_line(cur, "; Slate compiled output");
+    cur = emit_line(cur, "target triple = \"" + target_triple + "\"");
+    cur = emit_line(cur, "");
+    cur = emit_line(cur, "declare ptr @malloc(i64)");
+    cur = emit_line(cur, "declare void @free(ptr)");
+    cur = emit_line(cur, "declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)");
+    cur = emit_line(cur, "declare i64 @strlen(ptr)");
+    cur = emit_line(cur, "declare i32 @strcmp(ptr, ptr)");
+    cur = emit_line(cur, "declare i32 @puts(ptr)");
+    cur = emit_line(cur, "");
+    return cur;
 }
 
 Emitter emit_file_header_full(Emitter e, string target_triple) {
-    e = emit_file_header(e, target_triple);
-    e = emit_line(e, "declare ptr @slate_input()");
-    e = emit_line(e, "declare ptr @slate_args(ptr)");
-    e = emit_line(e, "declare i64 @slate_len(ptr)");
-    e = emit_line(e, "declare ptr @slate_get(ptr, i64)");
-    e = emit_line(e, "declare ptr @slate_add(ptr, ptr)");
-    e = emit_line(e, "declare i1 @slate_has(ptr, ptr)");
-    e = emit_line(e, "declare ptr @slate_set(ptr, ptr, ptr)");
-    e = emit_line(e, "declare void @slate_print(ptr)");
-    e = emit_line(e, "declare ptr @slate_keys(ptr)");
-    e = emit_line(e, "declare ptr @slate_values(ptr)");
-    e = emit_line(e, "declare ptr @slate_string(i64)");
-    e = emit_line(e, "declare ptr @slate_string_concat(ptr, ptr)");
-    e = emit_line(e, "declare ptr @bold_slate(ptr)");
-    e = emit_line(e, "declare ptr @bold_red(ptr)");
-    e = emit_line(e, "declare ptr @bold_green(ptr)");
-    e = emit_line(e, "declare ptr @bold_yellow(ptr)");
-    e = emit_line(e, "declare ptr @bold_blue(ptr)");
-    e = emit_line(e, "declare ptr @bold(ptr)");
-    e = emit_line(e, "declare ptr @red(ptr)");
-    e = emit_line(e, "declare ptr @green(ptr)");
-    e = emit_line(e, "declare ptr @blue(ptr)");
-    e = emit_line(e, "declare ptr @yellow(ptr)");
-    e = emit_line(e, "declare ptr @orange(ptr)");
-    e = emit_line(e, "declare ptr @purple(ptr)");
-    e = emit_line(e, "declare ptr @gray(ptr)");
-    e = emit_line(e, "declare ptr @white(ptr)");
-    e = emit_line(e, "declare ptr @dim(ptr)");
-    e = emit_line(e, "declare ptr @italic(ptr)");
-    e = emit_line(e, "declare ptr @underline(ptr)");
-    e = emit_line(e, "declare ptr @file(ptr)");
-    e = emit_line(e, "declare void @write(ptr, ptr)");
-    e = emit_line(e, "declare ptr @read()");
-    e = emit_line(e, "declare ptr @read_n(i64)");
-    e = emit_line(e, "declare ptr @home()");
-    e = emit_line(e, "declare void @run(ptr, ptr, ptr)");
-    e = emit_line(e, "declare ptr @toml(ptr)");
-    e = emit_line(e, "declare ptr @json(ptr)");
-    e = emit_line(e, "declare i1 @exists(ptr)");
-    e = emit_line(e, "declare i1 @contains(ptr, ptr)");
-    e = emit_line(e, "declare i1 @starts_with(ptr, ptr)");
-    e = emit_line(e, "declare i1 @ends_with(ptr, ptr)");
-    e = emit_line(e, "declare ptr @replace(ptr, ptr, ptr)");
-    e = emit_line(e, "declare ptr @split(ptr, ptr)");
-    e = emit_line(e, "declare ptr @path(ptr)");
-    e = emit_line(e, "declare ptr @parse(ptr)");
-    e = emit_line(e, "");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_file_header(cur, target_triple);
+    cur = emit_line(cur, "declare ptr @slate_input()");
+    cur = emit_line(cur, "declare ptr @slate_args(ptr)");
+    cur = emit_line(cur, "declare i64 @slate_len(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_get(ptr, i64)");
+    cur = emit_line(cur, "declare ptr @slate_add(ptr, ptr)");
+    cur = emit_line(cur, "declare i1 @slate_has(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_set(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare void @slate_print(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_keys(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_values(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_string(i64)");
+    cur = emit_line(cur, "declare ptr @slate_string_concat(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @bold_slate(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_red(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_green(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_yellow(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_blue(ptr)");
+    cur = emit_line(cur, "declare ptr @bold(ptr)");
+    cur = emit_line(cur, "declare ptr @red(ptr)");
+    cur = emit_line(cur, "declare ptr @green(ptr)");
+    cur = emit_line(cur, "declare ptr @blue(ptr)");
+    cur = emit_line(cur, "declare ptr @yellow(ptr)");
+    cur = emit_line(cur, "declare ptr @orange(ptr)");
+    cur = emit_line(cur, "declare ptr @purple(ptr)");
+    cur = emit_line(cur, "declare ptr @gray(ptr)");
+    cur = emit_line(cur, "declare ptr @white(ptr)");
+    cur = emit_line(cur, "declare ptr @dim(ptr)");
+    cur = emit_line(cur, "declare ptr @italic(ptr)");
+    cur = emit_line(cur, "declare ptr @underline(ptr)");
+    cur = emit_line(cur, "declare ptr @file(ptr)");
+    cur = emit_line(cur, "declare void @write(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @read()");
+    cur = emit_line(cur, "declare ptr @read_n(i64)");
+    cur = emit_line(cur, "declare ptr @home()");
+    cur = emit_line(cur, "declare void @run(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @toml(ptr)");
+    cur = emit_line(cur, "declare ptr @json(ptr)");
+    cur = emit_line(cur, "declare i1 @exists(ptr)");
+    cur = emit_line(cur, "declare i1 @contains(ptr, ptr)");
+    cur = emit_line(cur, "declare i1 @starts_with(ptr, ptr)");
+    cur = emit_line(cur, "declare i1 @ends_with(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @replace(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @split(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @path(ptr)");
+    cur = emit_line(cur, "declare ptr @parse(ptr)");
+    cur = emit_line(cur, "");
+    return cur;
 }

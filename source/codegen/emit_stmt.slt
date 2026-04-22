@@ -131,15 +131,17 @@ Emitter emit_break(Emitter e, string exit_label) {
 }
 
 Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
-    e = emit_line(e, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
-    e = emit_line(e, body_label + ":");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
+    cur = emit_line(cur, body_label + ":");
+    return cur;
 }
 
 Emitter emit_while_end(Emitter e, string cond_label, string exit_label) {
-    e = emit_jump(e, cond_label);
-    e = emit_line(e, exit_label + ":");
-    return e;
+    mutable Emitter cur = e;
+    cur = emit_jump(cur, cond_label);
+    cur = emit_line(cur, exit_label + ":");
+    return cur;
 }
 
 # Emit for loop — range based
@@ -147,35 +149,38 @@ Emitter emit_while_end(Emitter e, string cond_label, string exit_label) {
 # cond block, body block, increment, exit block
 
 Emitter emit_for_init(Emitter e, string var, string start_val) {
+    mutable Emitter cur = e;
     string slot = "%" + var;
-    e = emit_alloca(e, slot, "int");
-    e = emit_store(e, start_val, "int", slot);
-    return e;
+    cur = emit_alloca(cur, slot, "int");
+    cur = emit_store(cur, start_val, "int", slot);
+    return cur;
 }
 
 Emitter emit_for_cond(Emitter e, string cond_label, string var, string end_val) {
+    mutable Emitter cur = e;
     string slot = "%" + var;
-    string loaded = next_reg(e);
-    e = advance_reg(e);
-    e = emit_line(e, cond_label + ":");
-    e = emit_load(e, loaded, "int", slot);
-    string cmp_reg = next_reg(e);
-    e = advance_reg(e);
-    e = emit_line(e, "  " + cmp_reg + " = icmp slt i64 " + loaded + ", " + end_val);
-    return e;
+    string loaded = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_line(cur, cond_label + ":");
+    cur = emit_load(cur, loaded, "int", slot);
+    string cmp_reg = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_line(cur, "  " + cmp_reg + " = icmp slt i64 " + loaded + ", " + end_val);
+    return cur;
 }
 
 Emitter emit_for_increment(Emitter e, string var, string cond_label) {
+    mutable Emitter cur = e;
     string slot = "%" + var;
-    string loaded = next_reg(e);
-    e = advance_reg(e);
-    e = emit_load(e, loaded, "int", slot);
-    string incremented = next_reg(e);
-    e = advance_reg(e);
-    e = emit_line(e, "  " + incremented + " = add i64 " + loaded + ", 1");
-    e = emit_store(e, incremented, "int", slot);
-    e = emit_jump(e, cond_label);
-    return e;
+    string loaded = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_load(cur, loaded, "int", slot);
+    string incremented = next_reg(cur);
+    cur = advance_reg(cur);
+    cur = emit_line(cur, "  " + incremented + " = add i64 " + loaded + ", 1");
+    cur = emit_store(cur, incremented, "int", slot);
+    cur = emit_jump(cur, cond_label);
+    return cur;
 }
 
 # Emit a break — unconditional jump to exit label

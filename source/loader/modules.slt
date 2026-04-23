@@ -128,7 +128,7 @@ ModuleCollectResult collect_modules_inner(Node program, string base_path, list(s
             or mod_name == "protocol" or mod_name == "handlers" {
             } else {
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
-                string mod_path = exports_path;
+                mutable string mod_path = exports_path;
                 if file(exports_path).exists() == false {
                     mod_path = base_path + "/" + mod_name + ".slt";
                 }

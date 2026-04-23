@@ -182,10 +182,11 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
 }
 
 Emitter walk_fn(Node fn_node, Emitter e) {
+    mutable Emitter cur = e;
     string fn_name = fn_node.value;
     list(Node) fn_children = fn_node.children;
     if fn_children.len() == 0 {
-        return e;
+        return cur;
     }
     Node return_type_node = fn_children.get(0);
     string return_type = return_type_node.value;
@@ -203,12 +204,12 @@ Emitter walk_fn(Node fn_node, Emitter e) {
         locals = locals.set(param.value, "param_" + param_type);
         i += 1;
     }
-    e = set_fn(e, fn_name);
-    e = emit_fn_header(e, fn_name, return_type, param_names, param_types);
-    e = walk_block(body, e, locals, return_type);
-    e = emit_fn_footer(e, return_type);
-    e = emit_line(e, "");
-    return e;
+    cur = set_fn(cur, fn_name);
+    cur = emit_fn_header(cur, fn_name, return_type, param_names, param_types);
+    cur = walk_block(body, cur, locals, return_type);
+    cur = emit_fn_footer(cur, return_type);
+    cur = emit_line(cur, "");
+    return cur;
 }
 
 string walk_program(Node program, string target_triple, bool full_header) {

@@ -107,25 +107,6 @@ string builtin_return_type(string name) {
     return "int";
 }
 
-string remap_call_name(string name) {
-    if name == "print" { return "slate_print"; }
-    if name == "input" { return "slate_input"; }
-    if name == "string" { return "slate_string"; }
-    return name;
-}
-
-string remap_method_name(string name) {
-    if name == "len" { return "slate_len"; }
-    if name == "get" { return "slate_get"; }
-    if name == "add" { return "slate_add"; }
-    if name == "has" { return "slate_has"; }
-    if name == "set" { return "slate_set"; }
-    if name == "keys" { return "slate_keys"; }
-    if name == "values" { return "slate_values"; }
-    if name == "args" { return "slate_args"; }
-    return name;
-}
-
 EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
     if name == "alloc" {
         string reg = next_reg(e);
@@ -178,7 +159,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         return EmitResult(emitter: e, value: name);
     }
     if node.kind == NodeKind.Ident {
-        string slate_type = "int";
+        mutable string slate_type = "int";
         if locals.has(node.value) {
             slate_type = locals.get(node.value);
         }

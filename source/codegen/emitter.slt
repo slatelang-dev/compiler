@@ -161,3 +161,24 @@ Emitter emit_error(Emitter e, string message) {
 bool emitter_has_errors(Emitter e) {
     return e.errors.len() > 0;
 }
+
+# Remap method names to runtime functions
+
+string remap_call_name(string name) {
+    if name == "print" { return "slate_print"; }
+    if name == "input" { return "slate_input"; }
+    if name == "string" { return "slate_string"; }
+    return name;
+}
+
+string remap_method_name(string name) {
+    if name == "len" { return "slate_len"; }
+    if name == "get" { return "slate_get"; }
+    if name == "add" { return "slate_add"; }
+    if name == "has" { return "slate_has"; }
+    if name == "set" { return "slate_set"; }
+    if name == "keys" { return "slate_keys"; }
+    if name == "values" { return "slate_values"; }
+    if name == "args" { return "slate_args"; }
+    return name;
+}

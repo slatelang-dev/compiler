@@ -31,6 +31,8 @@ Emitter walk_block(Node block, Emitter e, table(string, string) locals, string r
 }
 
 StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string return_type) {
+    mutable Emitter cur = e;
+    mutable table(string, string) cur_locals = locals;
     if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
     or node.kind == NodeKind.ConstDecl {
         list(Node) stmt_children = node.children;
@@ -42,55 +44,54 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         if type_node.kind == NodeKind.TypeOption { slate_type = "option"; }
         if type_node.kind == NodeKind.TypeResult { slate_type = "result"; }
         if slate_type == "" { slate_type = "int"; }
-        locals = locals.set(var_name, slate_type);
-        EmitResult init = walk_expr(stmt_children.get(1), e, locals);
-        e = emit_var_decl(init.emitter, var_name, slate_type, init.value);
-        return stmt_result(e, locals);
+        cur_locals = cur_locals.set(var_name, slate_type);
+        EmitResult init = walk_expr(stmt_children.get(1), cur, cur_locals);
+        cur = emit_var_decl(init.emitter, var_name, slate_type, init.value);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.AssignOp {
         list(Node) stmt_children = node.children;
         list(string) parts = node.value.split(" ");
         string var_name = parts.get(0);
         string op = parts.get(1);
-        string slate_type = "int";
-        if locals.has(var_name) {
-            slate_type = locals.get(var_name);
+        mutable string slate_type = "int";
+        if cur_locals.has(var_name) {
+            slate_type = cur_locals.get(var_name);
         }
         string slot = "%" + var_name;
-        string loaded = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + loaded + " = load " + llvm_type(slate_type) + ", ptr " + slot);
-        EmitResult val = walk_expr(stmt_children.get(0), e, locals);
+        string loaded = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + loaded + " = load " + llvm_type(slate_type) + ", ptr " + slot);
+        EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals);
         string result_reg = next_reg(val.emitter);
-        e = emit_binary_op(val.emitter, op, loaded, val.value, slate_type);
-        e = advance_reg(e);
-        e = emit_store(e, result_reg, slate_type, slot);
-        return stmt_result(e, locals);
+        cur = emit_binary_op(val.emitter, op, loaded, val.value, slate_type);
+        cur = advance_reg(cur);
+        cur = emit_store(cur, result_reg, slate_type, slot);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Assign {
         list(Node) stmt_children = node.children;
         string var_name = node.value;
-        string slate_type = "int";
-        if locals.has(var_name) {
-            slate_type = locals.get(var_name);
+        mutable string slate_type = "int";
+        if cur_locals.has(var_name) {
+            slate_type = cur_locals.get(var_name);
         }
-        EmitResult val = walk_expr(stmt_children.get(0), e, locals);
-        e = emit_assign(val.emitter, var_name, slate_type, val.value);
-        return stmt_result(e, locals);
+        EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals);
+        cur = emit_assign(val.emitter, var_name, slate_type, val.value);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Return {
         list(Node) stmt_children = node.children;
         if stmt_children.len() == 0 {
-            return stmt_result(emit_return(e, "", "void"), locals);
+            return stmt_result(emit_return(cur, "", "void"), cur_locals);
         }
-        EmitResult val = walk_expr(stmt_children.get(0), e, locals);
-        e = emit_return(val.emitter, val.value, return_type);
-        return stmt_result(e, locals);
+        EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals);
+        cur = emit_return(val.emitter, val.value, return_type);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.If {
         list(Node) stmt_children = node.children;
-        EmitResult cond = walk_expr(stmt_children.get(0), e, locals);
-        # Check if condition is a bool-returning call - use directly as i1
+        EmitResult cond = walk_expr(stmt_children.get(0), cur, cur_locals);
         Node cond_node = stmt_children.get(0);
         mutable string cond_value = cond.value;
         mutable Emitter cur_emitter = cond.emitter;
@@ -114,33 +115,33 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
             }
         }
         string then_label = next_label(cur_emitter);
-        e = advance_label(cur_emitter);
-        string else_label = next_label(e);
-        e = advance_label(e);
-        string merge_label = next_label(e);
-        e = advance_label(e);
-        e = emit_if(e, cond_value, then_label, else_label, merge_label);
-        e = emit_then_block(e, then_label, merge_label);
-        e = walk_block(stmt_children.get(1), e, locals, return_type);
-        e = emit_jump(e, merge_label);
-        e = emit_else_block(e, else_label, merge_label);
+        cur = advance_label(cur_emitter);
+        string else_label = next_label(cur);
+        cur = advance_label(cur);
+        string merge_label = next_label(cur);
+        cur = advance_label(cur);
+        cur = emit_if(cur, cond_value, then_label, else_label, merge_label);
+        cur = emit_then_block(cur, then_label, merge_label);
+        cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type);
+        cur = emit_jump(cur, merge_label);
+        cur = emit_else_block(cur, else_label, merge_label);
         if stmt_children.len() > 2 {
-            e = walk_block(stmt_children.get(2), e, locals, return_type);
+            cur = walk_block(stmt_children.get(2), cur, cur_locals, return_type);
         }
-        e = emit_jump(e, merge_label);
-        e = emit_merge_block(e, merge_label);
-        return stmt_result(e, locals);
+        cur = emit_jump(cur, merge_label);
+        cur = emit_merge_block(cur, merge_label);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.While {
         list(Node) stmt_children = node.children;
-        string cond_label = next_label(e);
-        e = advance_label(e);
-        string body_label = next_label(e);
-        e = advance_label(e);
-        string exit_label = next_label(e);
-        e = advance_label(e);
-        e = emit_while_start(e, cond_label);
-        EmitResult cond = walk_expr(stmt_children.get(0), e, locals);
+        string cond_label = next_label(cur);
+        cur = advance_label(cur);
+        string body_label = next_label(cur);
+        cur = advance_label(cur);
+        string exit_label = next_label(cur);
+        cur = advance_label(cur);
+        cur = emit_while_start(cur, cond_label);
+        EmitResult cond = walk_expr(stmt_children.get(0), cur, cur_locals);
         Node cond_node = stmt_children.get(0);
         mutable string cond_value = cond.value;
         mutable Emitter cur_emitter = cond.emitter;
@@ -163,21 +164,21 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 cond_value = reg;
             }
         }
-        e = emit_while_body(cur_emitter, cond_value, body_label, exit_label);
-        e = walk_block(stmt_children.get(1), e, locals, return_type);
-        e = emit_while_end(e, cond_label, exit_label);
-        return stmt_result(e, locals);
+        cur = emit_while_body(cur_emitter, cond_value, body_label, exit_label);
+        cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type);
+        cur = emit_while_end(cur, cond_label, exit_label);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Block {
-        e = walk_block(node, e, locals, return_type);
-        return stmt_result(e, locals);
+        cur = walk_block(node, cur, cur_locals, return_type);
+        return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Call or node.kind == NodeKind.MethodCall {
-        EmitResult expr = walk_expr(node, e, locals);
-        return stmt_result(expr.emitter, locals);
+        EmitResult expr = walk_expr(node, cur, cur_locals);
+        return stmt_result(expr.emitter, cur_locals);
     }
-    e = emit_line(e, "  ; unimplemented stmt");
-    return stmt_result(e, locals);
+    cur = emit_line(cur, "  ; unimplemented stmt");
+    return stmt_result(cur, cur_locals);
 }
 
 Emitter walk_fn(Node fn_node, Emitter e) {

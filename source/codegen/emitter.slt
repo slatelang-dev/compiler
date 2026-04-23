@@ -109,23 +109,23 @@ string emit_string_global(Emitter e, string value) {
 # Advance string counter and emit global constant
 
 EscapeResult escape_ll_string(string s) {
-    mutable string result = "";
+    mutable string result_str = "";
     mutable int byte_count = 0;
     mutable int i = 0;
     while i < s.chars().len() {
         string c = string(s.chars().get(i));
-        if c == "\n" { result = result + "\\0A"; byte_count = byte_count + 1; }
-        else if c == "\t" { result = result + "\\09"; byte_count = byte_count + 1; }
-        else if c == "\r" { result = result + "\\0D"; byte_count = byte_count + 1; }
-        else if c == "\\" { result = result + "\\\\"; byte_count = byte_count + 1; }
-        else if c == "\"" { result = result + "\\22"; byte_count = byte_count + 1; }
+        if c == "\n" { result_str = result_str + "\\0A"; byte_count = byte_count + 1; }
+        else if c == "\t" { result_str = result_str + "\\09"; byte_count = byte_count + 1; }
+        else if c == "\r" { result_str = result_str + "\\0D"; byte_count = byte_count + 1; }
+        else if c == "\\" { result_str = result_str + "\\\\"; byte_count = byte_count + 1; }
+        else if c == "\"" { result_str = result_str + "\\22"; byte_count = byte_count + 1; }
         else {
-            result = result + c;
+            result_str = result_str + c;
             byte_count = byte_count + c.len();
         }
         i += 1;
     }
-    return EscapeResult(text: result, byte_count: byte_count);
+    return EscapeResult(text: result_str, byte_count: byte_count);
 }
 
 Emitter advance_str(Emitter e, string value) {

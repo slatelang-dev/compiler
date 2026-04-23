@@ -117,7 +117,7 @@ struct ModuleCollectResult {
 }
 
 ModuleCollectResult collect_modules_inner(Node program, string base_path, list(string) seen) {
-    mutable list(Node) result = empty;
+    mutable list(Node) result_list = empty;
     mutable list(string) visited = seen;
     mutable int i = 0;
     while i < program.children.len() {
@@ -141,17 +141,17 @@ ModuleCollectResult collect_modules_inner(Node program, string base_path, list(s
                         visited = sub.visited;
                         mutable int j = 0;
                         while j < sub.asts.len() {
-                            result = result.add(sub.asts.get(j));
+                            result_list = result_list.add(sub.asts.get(j));
                             j += 1;
                         }
-                        result = result.add(loaded.ast);
+                        result_list = result_list.add(loaded.ast);
                     }
                 }
             }
         }
         i += 1;
     }
-    return ModuleCollectResult(asts: result, visited: visited);
+    return ModuleCollectResult(asts: result_list, visited: visited);
 }
 
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {

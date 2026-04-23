@@ -108,55 +108,57 @@ string builtin_return_type(string name) {
 }
 
 EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
+    mutable Emitter cur = e;
     if name == "alloc" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call ptr @malloc(i64 " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: reg);
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = call ptr @malloc(i64 " + arg_values.get(0) + ")");
+        return EmitResult(emitter: cur, value: reg);
     }
     if name == "free" {
-        e = emit_line(e, "  call void @free(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: "");
+        cur = emit_line(cur, "  call void @free(ptr " + arg_values.get(0) + ")");
+        return EmitResult(emitter: cur, value: "");
     }
     if name == "memcpy" {
-        e = emit_line(e, "  call void @llvm.memcpy.p0.p0.i64(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ", i64 " + arg_values.get(2) + ", i1 false)");
-        return EmitResult(emitter: e, value: "");
+        cur = emit_line(cur, "  call void @llvm.memcpy.p0.p0.i64(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ", i64 " + arg_values.get(2) + ", i1 false)");
+        return EmitResult(emitter: cur, value: "");
     }
     if name == "strlen" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call i64 @strlen(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: reg);
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = call i64 @strlen(ptr " + arg_values.get(0) + ")");
+        return EmitResult(emitter: cur, value: reg);
     }
     if name == "strcmp" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call i32 @strcmp(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ")");
-        return EmitResult(emitter: e, value: reg);
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = call i32 @strcmp(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ")");
+        return EmitResult(emitter: cur, value: reg);
     }
     if name == "puts" {
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = call i32 @puts(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: e, value: reg);
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = call i32 @puts(ptr " + arg_values.get(0) + ")");
+        return EmitResult(emitter: cur, value: reg);
     }
-    return EmitResult(emitter: e, value: "");
+    return EmitResult(emitter: cur, value: "");
 }
 
 EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
+    mutable Emitter cur = e;
     if node.kind == NodeKind.IntLit {
-        return EmitResult(emitter: e, value: emit_int_lit(node.value));
+        return EmitResult(emitter: cur, value: emit_int_lit(node.value));
     }
     if node.kind == NodeKind.FloatLit {
-        return EmitResult(emitter: e, value: emit_float_lit(node.value));
+        return EmitResult(emitter: cur, value: emit_float_lit(node.value));
     }
     if node.kind == NodeKind.BoolLit {
-        return EmitResult(emitter: e, value: emit_bool_lit(node.value));
+        return EmitResult(emitter: cur, value: emit_bool_lit(node.value));
     }
     if node.kind == NodeKind.StringLit {
-        string name = emit_string_global(e, node.value);
-        e = advance_str(e, node.value);
-        return EmitResult(emitter: e, value: name);
+        string name = emit_string_global(cur, node.value);
+        cur = advance_str(cur, node.value);
+        return EmitResult(emitter: cur, value: name);
     }
     if node.kind == NodeKind.Ident {
         mutable string slate_type = "int";
@@ -164,17 +166,17 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             slate_type = locals.get(node.value);
         }
         if slate_type.starts_with("param_") {
-            return EmitResult(emitter: e, value: "%" + node.value);
+            return EmitResult(emitter: cur, value: "%" + node.value);
         }
         string llvm_t = llvm_type(slate_type);
-        string reg = next_reg(e);
-        e = advance_reg(e);
-        e = emit_line(e, "  " + reg + " = load " + llvm_t + ", ptr %" + node.value);
-        return EmitResult(emitter: e, value: reg);
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = load " + llvm_t + ", ptr %" + node.value);
+        return EmitResult(emitter: cur, value: reg);
     }
     if node.kind == NodeKind.BinaryOp {
         list(Node) bin_children = node.children;
-        EmitResult left = walk_expr(bin_children.get(0), e, locals);
+        EmitResult left = walk_expr(bin_children.get(0), cur, locals);
         EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
         mutable string op_type = "int";
         if bin_children.get(0).kind == NodeKind.Ident {
@@ -195,38 +197,38 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         if bin_children.get(1).kind == NodeKind.BoolLit { op_type = "bool"; }
         if node.value == "+" and op_type == "string" {
             string result_reg = next_reg(right.emitter);
-            e = advance_reg(right.emitter);
-            e = emit_line(e, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left.value + ", ptr " + right.value + ")");
-            return EmitResult(emitter: e, value: result_reg);
+            cur = advance_reg(right.emitter);
+            cur = emit_line(cur, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left.value + ", ptr " + right.value + ")");
+            return EmitResult(emitter: cur, value: result_reg);
         }
         if op_type == "string" and node.value == "==" {
             string cmp_reg = next_reg(right.emitter);
-            e = advance_reg(right.emitter);
-            e = emit_line(e, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left.value + ", ptr " + right.value + ")");
-            string eq_reg = next_reg(e);
-            e = advance_reg(e);
-            e = emit_line(e, "  " + eq_reg + " = icmp eq i32 " + cmp_reg + ", 0");
-            return EmitResult(emitter: e, value: eq_reg);
+            cur = advance_reg(right.emitter);
+            cur = emit_line(cur, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left.value + ", ptr " + right.value + ")");
+            string eq_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + eq_reg + " = icmp eq i32 " + cmp_reg + ", 0");
+            return EmitResult(emitter: cur, value: eq_reg);
         }
         if op_type == "string" and node.value == "!=" {
             string cmp_reg = next_reg(right.emitter);
-            e = advance_reg(right.emitter);
-            e = emit_line(e, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left.value + ", ptr " + right.value + ")");
-            string ne_reg = next_reg(e);
-            e = advance_reg(e);
-            e = emit_line(e, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
-            return EmitResult(emitter: e, value: ne_reg);
+            cur = advance_reg(right.emitter);
+            cur = emit_line(cur, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left.value + ", ptr " + right.value + ")");
+            string ne_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
+            return EmitResult(emitter: cur, value: ne_reg);
         }
         string result_reg = next_reg(right.emitter);
-        e = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
-        return EmitResult(emitter: e, value: result_reg);
+        cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
+        return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.UnaryOp {
         list(Node) un_children = node.children;
-        EmitResult operand = walk_expr(un_children.get(0), e, locals);
+        EmitResult operand = walk_expr(un_children.get(0), cur, locals);
         string result_reg = next_reg(operand.emitter);
-        e = emit_unary_op(operand.emitter, node.value, operand.value, "int");
-        return EmitResult(emitter: e, value: result_reg);
+        cur = emit_unary_op(operand.emitter, node.value, operand.value, "int");
+        return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.Call {
         list(Node) call_children = node.children;

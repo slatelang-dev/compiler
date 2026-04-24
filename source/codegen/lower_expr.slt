@@ -20,6 +20,11 @@ EmitResult make_result_typed(Emitter e, string value, string vt) {
     return EmitResult(emitter: e, value: value, value_type: vt);
 }
 
+bool is_primitive_call(string name) {
+    return name == "alloc" or name == "free" 
+        or name == "strlen" or name == "strcmp" or name == "puts";
+}
+
 EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
     mutable Emitter cur = e;
     if name == "alloc" {
@@ -115,7 +120,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             string eq_reg = next_reg(cur);
             cur = advance_reg(cur);
             cur = emit_line(cur, "  " + eq_reg + " = icmp eq i32 " + cmp_reg + ", 0");
-            return EmitResult(emitter: cur, value: eq_reg);
+            return EmitResult(emitter: cur, value: eq_reg, value_type: "bool");
         }
         if op_type == "string" and node.value == "!=" {
             string cmp_reg = next_reg(right.emitter);
@@ -124,18 +129,24 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             string ne_reg = next_reg(cur);
             cur = advance_reg(cur);
             cur = emit_line(cur, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
-            return EmitResult(emitter: cur, value: ne_reg);
+            return EmitResult(emitter: cur, value: ne_reg, value_type: "bool");
         }
         string result_reg = next_reg(right.emitter);
         cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
-        return make_result(cur, result_reg);
+        bool is_comparison = node.value == "==" or node.value == "!=" 
+            or node.value == "<" or node.value == ">" 
+            or node.value == "<=" or node.value == ">=" 
+            or node.value == "and" or node.value == "or";
+        string result_type = is_comparison ? "bool" : op_type;
+        return make_result_typed(cur, result_reg, result_type);
     }
     if node.kind == NodeKind.UnaryOp {
         list(Node) un_children = node.children;
         EmitResult operand = walk_expr(un_children.get(0), cur, locals, reg);
         string result_reg = next_reg(operand.emitter);
         cur = emit_unary_op(operand.emitter, node.value, operand.value, "int");
-        return make_result(cur, result_reg);
+        string result_type = node.value == "not" ? "bool" : "int";
+        return make_result_typed(cur, result_reg, result_type);
     }
     if node.kind == NodeKind.Call {
         list(Node) call_children = node.children;

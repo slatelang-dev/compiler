@@ -80,10 +80,14 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         if slate_type.starts_with("param_") {
             return EmitResult(emitter: cur, value: "%" + node.value, value_type: slate_type);
         }
+        string slot = "%" + node.value;
+        if locals.has(node.value + "_slot") {
+            slot = locals.get(node.value + "_slot");
+        }
         string llvm_t = llvm_type(slate_type);
         string reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = load " + llvm_t + ", ptr %" + node.value);
+        cur = emit_line(cur, "  " + reg + " = load " + llvm_t + ", ptr " + slot);
         return EmitResult(emitter: cur, value: reg, value_type: slate_type);
     }
     if node.kind == NodeKind.BinaryOp {

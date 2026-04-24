@@ -48,6 +48,8 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         if slate_type == "" { slate_type = "int"; }
         cur_locals = cur_locals.set(var_name, slate_type);
         EmitResult init = walk_expr(stmt_children.get(1), cur, cur_locals, reg);
+        string unique_slot = var_name + "_" + string(init.emitter.reg);
+        cur_locals = cur_locals.set(var_name + "_slot", "%" + unique_slot);
         cur = emit_var_decl(init.emitter, var_name, slate_type, init.value);
         return stmt_result(cur, cur_locals);
     }
@@ -61,6 +63,9 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
             slate_type = cur_locals.get(var_name);
         }
         string slot = "%" + var_name;
+        if cur_locals.has(var_name + "_slot") {
+            slot = cur_locals.get(var_name + "_slot");
+        }
         string loaded = next_reg(cur);
         cur = advance_reg(cur);
         cur = emit_line(cur, "  " + loaded + " = load " + llvm_type(slate_type) + ", ptr " + slot);
@@ -78,8 +83,12 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         if cur_locals.has(var_name) {
             slate_type = cur_locals.get(var_name);
         }
+        string slot = "%" + var_name;
+        if cur_locals.has(var_name + "_slot") {
+            slot = cur_locals.get(var_name + "_slot");
+        }
         EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals, reg);
-        cur = emit_assign(val.emitter, var_name, slate_type, val.value);
+        cur = emit_assign(val.emitter, slot, slate_type, val.value);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Return {

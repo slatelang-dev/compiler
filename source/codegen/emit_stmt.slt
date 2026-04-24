@@ -19,7 +19,8 @@ Emitter emit_return(Emitter e, string value, string slate_type) {
 
 Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
     mutable Emitter cur = e;
-    string slot = "%" + name;
+    string unique_name = name + "_" + string(cur.reg);
+    string slot = "%" + unique_name;
     cur = emit_alloca(cur, slot, slate_type);
     cur = emit_store(cur, value, slate_type, slot);
     return cur;
@@ -27,9 +28,8 @@ Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
 
 # Emit an assignment — store into existing slot
 
-Emitter emit_assign(Emitter e, string name, string slate_type, string value) {
+Emitter emit_assign(Emitter e, string slot, string slate_type, string value) {
     mutable Emitter cur = e;
-    string slot = "%" + name;
     cur = emit_store(cur, value, slate_type, slot);
     return cur;
 }

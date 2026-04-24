@@ -167,6 +167,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             EmitResult arg = walk_expr(call_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
             mutable string arg_type = arg.value_type;
+            if arg.value == "null" {
+                arg_type = "ptr";
+            }
             arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
@@ -194,6 +197,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             EmitResult arg = walk_expr(method_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
             mutable string arg_type = arg.value_type;
+            if arg.value == "null" {
+                arg_type = "ptr";
+            }
             arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
@@ -232,8 +238,11 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);
         return make_result_typed(inner.emitter, inner.value, inner.value_type);
     }
+    if node.kind == NodeKind.Empty {
+        return EmitResult(emitter: e, value: "null", value_type: "ptr");
+    }
     if node.kind == NodeKind.None {
-        return make_result_typed(e, "0", "void");
+        return EmitResult(emitter: e, value: "null", value_type: "ptr");
     }
     if node.kind == NodeKind.Interp {
         EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);

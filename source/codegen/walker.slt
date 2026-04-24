@@ -124,6 +124,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = advance_label(cur);
         cur = emit_if(cur, cond_value, then_label, else_label, merge_label);
         cur = emit_then_block(cur, then_label, merge_label);
+        cur = emit_line(cur, "  ; DEBUG reg=" + string(cur.reg));
         cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, reg);
         cur = emit_jump(cur, merge_label);
         cur = emit_else_block(cur, else_label, merge_label);

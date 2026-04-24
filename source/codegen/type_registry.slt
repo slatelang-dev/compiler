@@ -17,10 +17,13 @@ struct Registry {
 }
 
 Registry new_registry() {
+    mutable table(string, string) fn_ret = empty;
+    mutable table(string, string) field_typ = empty;
+    mutable table(string, string) field_idx = empty;
     return Registry(
-        fn_returns: empty,
-        field_types: empty,
-        field_indices: empty
+        fn_returns: fn_ret,
+        field_types: field_typ,
+        field_indices: field_idx
     );
 }
 

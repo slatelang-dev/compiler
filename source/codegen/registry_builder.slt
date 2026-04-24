@@ -160,10 +160,26 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "analyse", "ptr");
     reg = register_fn(reg, "analyse_bare", "ptr");
     reg = register_fn(reg, "parse", "ptr");
-    # Render functions
+# Render functions
     reg = register_fn(reg, "render_all", "ptr");
-    reg = register_fn(reg, "render_errors", "ptr");
-    reg = register_fn(reg, "render_warnings", "ptr");
-    reg = register_fn(reg, "render_summary", "ptr");
+    # Known struct fields
+    reg = register_field(reg, "ParseResult", "node", "ptr", 0);
+    reg = register_field(reg, "ParseResult", "pos", "int", 1);
+    reg = register_field(reg, "ParseResult", "success", "bool", 2);
+    reg = register_field(reg, "ParseResult", "message", "ptr", 3);
+    reg = register_field(reg, "AnalysisResult", "errors", "ptr", 0);
+    reg = register_field(reg, "AnalysisResult", "warnings", "ptr", 1);
+    reg = register_field(reg, "LoadedModule", "name", "ptr", 0);
+    reg = register_field(reg, "LoadedModule", "path", "ptr", 1);
+    reg = register_field(reg, "LoadedModule", "source", "ptr", 2);
+    reg = register_field(reg, "LoadedModule", "ast", "ptr", 3);
+    reg = register_field(reg, "LoadedModule", "loaded", "bool", 4);
+    reg = register_field(reg, "LoadedModule", "load_error", "ptr", 5);
+    reg = register_field(reg, "Project", "name", "ptr", 0);
+    reg = register_field(reg, "Project", "version", "ptr", 1);
+    reg = register_field(reg, "Project", "description", "ptr", 2);
+    reg = register_field(reg, "Project", "entry", "ptr", 3);
+    reg = register_field(reg, "Project", "bin", "ptr", 4);
+    reg = register_field(reg, "Project", "bare", "bool", 5);
     return reg;
 }

@@ -130,8 +130,6 @@ Emitter emit_break(Emitter e, string exit_label) {
     return emit_jump(e, exit_label);
 }
 
-Emitter emit_fn_header
-
 Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) param_names, list(string) param_types) {
     mutable Emitter cur = e;
     string llvm_ret = llvm_return_type(return_type);

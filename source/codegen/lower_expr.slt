@@ -4,107 +4,11 @@ use node;
 use emitter;
 use emit_types;
 use emit_expr;
+use type_registry;
 
 bool is_primitive_call(string name) {
     return name == "alloc" or name == "free" or name == "memcpy"
         or name == "strlen" or name == "strcmp" or name == "puts";
-}
-
-string builtin_return_type(string name) {
-    # primitive functions
-    if name == "alloc" { return "ptr"; }
-    if name == "gc_alloc" { return "ptr"; }
-    # slate runtime functions
-    if name == "slate_input" { return "ptr"; }
-    if name == "slate_args" { return "ptr"; }
-    if name == "slate_string" { return "ptr"; }
-    if name == "slate_string_new" { return "ptr"; }
-    if name == "slate_string_concat" { return "ptr"; }
-    if name == "slate_string_data" { return "ptr"; }
-    if name == "slate_list_new" { return "ptr"; }
-    if name == "slate_list_get" { return "ptr"; }
-    if name == "slate_table_new" { return "ptr"; }
-    if name == "slate_table_get" { return "ptr"; }
-    if name == "slate_get" { return "ptr"; }
-    if name == "slate_add" { return "ptr"; }
-    if name == "slate_set" { return "ptr"; }
-    if name == "slate_keys" { return "ptr"; }
-    if name == "slate_values" { return "ptr"; }
-    if name == "slate_alloc" { return "ptr"; }
-    # bool returns
-    if name == "slate_has" { return "bool"; }
-    if name == "slate_string_eq" { return "bool"; }
-    if name == "slate_table_has" { return "bool"; }
-    # int returns
-    if name == "slate_len" { return "int"; }
-    if name == "slate_string_len" { return "int"; }
-    if name == "slate_list_len" { return "int"; }
-    if name == "slate_table_len" { return "int"; }
-    if name == "strlen" { return "int"; }
-    if name == "strcmp" { return "int"; }
-    # void returns
-    if name == "slate_print" { return "void"; }
-    if name == "bold_slate" { return "ptr"; }
-    if name == "bold_red" { return "ptr"; }
-    if name == "bold_green" { return "ptr"; }
-    if name == "bold_yellow" { return "ptr"; }
-    if name == "bold_blue" { return "ptr"; }
-    if name == "bold" { return "ptr"; }
-    if name == "red" { return "ptr"; }
-    if name == "green" { return "ptr"; }
-    if name == "blue" { return "ptr"; }
-    if name == "yellow" { return "ptr"; }
-    if name == "orange" { return "ptr"; }
-    if name == "purple" { return "ptr"; }
-    if name == "slate_color" { return "ptr"; }
-    if name == "gray" { return "ptr"; }
-    if name == "white" { return "ptr"; }
-    if name == "dim" { return "ptr"; }
-    if name == "italic" { return "ptr"; }
-    if name == "underline" { return "ptr"; }
-    # io functions
-    if name == "file" { return "ptr"; }
-    if name == "write" { return "void"; }
-    if name == "read" { return "ptr"; }
-    if name == "read_n" { return "ptr"; }
-    if name == "home" { return "ptr"; }
-    if name == "run" { return "void"; }
-    if name == "toml" { return "ptr"; }
-    if name == "json" { return "ptr"; }
-    # bool returns
-    if name == "exists" { return "bool"; }
-    if name == "contains" { return "bool"; }
-    if name == "starts_with" { return "bool"; }
-    if name == "ends_with" { return "bool"; }
-    # string functions
-    if name == "replace" { return "ptr"; }
-    if name == "split" { return "ptr"; }
-    if name == "path" { return "ptr"; }
-    if name == "parse" { return "ptr"; }
-    if name == "int" { return "int"; }
-    if name == "len" { return "int"; }
-    # method calls (remapped)
-    if name == "args" { return "ptr"; }
-    if name == "read" { return "ptr"; }
-    # loader functions
-    if name == "load_project_file" { return "ptr"; }
-    if name == "load_project" { return "ptr"; }
-    if name == "load_entry" { return "ptr"; }
-    if name == "load_module" { return "ptr"; }
-    if name == "project_valid" { return "bool"; }
-    if name == "project_display" { return "ptr"; }
-    if name == "collect_module_asts" { return "ptr"; }
-    # analysis functions
-    if name == "analyse" { return "ptr"; }
-    if name == "analyse_bare" { return "ptr"; }
-    if name == "parse" { return "ptr"; }
-    # render functions
-    if name == "render_all" { return "ptr"; }
-    if name == "render_errors" { return "ptr"; }
-    if name == "render_warnings" { return "ptr"; }
-    if name == "render_summary" { return "ptr"; }
-    # default
-    return "int";
 }
 
 EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
@@ -144,7 +48,7 @@ EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) 
     return EmitResult(emitter: cur, value: "");
 }
 
-EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
+EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registry reg) {
     mutable Emitter cur = e;
     if node.kind == NodeKind.IntLit {
         return EmitResult(emitter: cur, value: emit_int_lit(node.value));
@@ -176,8 +80,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
     }
     if node.kind == NodeKind.BinaryOp {
         list(Node) bin_children = node.children;
-        EmitResult left = walk_expr(bin_children.get(0), cur, locals);
-        EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals);
+        EmitResult left = walk_expr(bin_children.get(0), cur, locals, reg);
+        EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals, reg);
         mutable string op_type = "int";
         if bin_children.get(0).kind == NodeKind.Ident {
             if locals.has(bin_children.get(0).value) {
@@ -192,7 +96,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         # Detect bool comparison: left side is bool-returning method call or right is bool literal
         if bin_children.get(0).kind == NodeKind.MethodCall {
             string fn_name = remap_method_name(bin_children.get(0).value);
-            if builtin_return_type(fn_name) == "bool" { op_type = "bool"; }
+            if lookup_fn_return(reg, fn_name) == "bool" { op_type = "bool"; }
         }
         if bin_children.get(1).kind == NodeKind.BoolLit { op_type = "bool"; }
         if node.value == "+" and op_type == "string" {
@@ -225,7 +129,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
     }
     if node.kind == NodeKind.UnaryOp {
         list(Node) un_children = node.children;
-        EmitResult operand = walk_expr(un_children.get(0), cur, locals);
+        EmitResult operand = walk_expr(un_children.get(0), cur, locals, reg);
         string result_reg = next_reg(operand.emitter);
         cur = emit_unary_op(operand.emitter, node.value, operand.value, "int");
         return EmitResult(emitter: cur, value: result_reg);
@@ -237,7 +141,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         mutable list(string) arg_types = empty;
         mutable int i = 0;
         while i < call_children.len() {
-            EmitResult arg = walk_expr(call_children.get(i), cur, locals);
+            EmitResult arg = walk_expr(call_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
             mutable string arg_type = "int";
             if arg.value.starts_with("@str") { arg_type = "ptr"; }
@@ -261,7 +165,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
         string call_name = remap_call_name(node.value);
-        string call_return_type = builtin_return_type(call_name);
+        string call_return_type = lookup_fn_return(reg, call_name);
         string result_reg = next_reg(cur);
         cur = emit_call(cur, call_name, call_return_type, arg_values, arg_types);
         return EmitResult(emitter: cur, value: result_reg);
@@ -269,7 +173,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
     if node.kind == NodeKind.MethodCall {
         list(Node) method_children = node.children;
         string method = node.value;
-        EmitResult receiver = walk_expr(method_children.get(0), e, locals);
+        EmitResult receiver = walk_expr(method_children.get(0), e, locals, reg);
         string fn_name = remap_method_name(method);
         mutable list(string) arg_values = empty;
         arg_values = arg_values.add(receiver.value);
@@ -277,7 +181,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
         mutable Emitter cur = receiver.emitter;
         mutable int i = 1;
         while i < method_children.len() {
-            EmitResult arg = walk_expr(method_children.get(i), cur, locals);
+            EmitResult arg = walk_expr(method_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
             mutable string arg_type = "int";
             if arg.value.starts_with("@str") { arg_type = "ptr"; }
@@ -314,24 +218,43 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals) {
             fixed = fixed.add("int");
             arg_types = fixed;
         }
-        string method_return_type = builtin_return_type(fn_name);
+        string method_return_type = lookup_fn_return(reg, fn_name);
         string result_reg = next_reg(cur);
         cur = emit_call(cur, fn_name, method_return_type, arg_values, arg_types);
         return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.FieldAccess {
-        EmitResult receiver = walk_expr(node.children.get(0), e, locals);
+        EmitResult receiver = walk_expr(node.children.get(0), e, locals, reg);
+        string field_name = node.value;
+        string struct_type = "unknown";
+        if node.children.get(0).kind == NodeKind.Ident {
+            if locals.has(node.children.get(0).value) {
+                struct_type = locals.get(node.children.get(0).value);
+            }
+        }
+        int field_idx = lookup_field_index(reg, struct_type, field_name);
+        if field_idx >= 0 {
+            string field_type = lookup_field_type(reg, struct_type, field_name);
+            string llvm_field_type = llvm_type(field_type);
+            string gep_reg = next_reg(receiver.emitter);
+            e = advance_reg(receiver.emitter);
+            e = emit_line(e, "  " + gep_reg + " = getelementptr inbounds %struct." + struct_type + ", ptr " + receiver.value + ", i32 0, i32 " + string(field_idx));
+            string load_reg = next_reg(e);
+            e = advance_reg(e);
+            e = emit_line(e, "  " + load_reg + " = load " + llvm_field_type + ", ptr " + gep_reg);
+            return EmitResult(emitter: e, value: load_reg);
+        }
         return EmitResult(emitter: receiver.emitter, value: receiver.value);
     }
     if node.kind == NodeKind.Some {
-        EmitResult inner = walk_expr(node.children.get(0), e, locals);
+        EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);
         return EmitResult(emitter: inner.emitter, value: inner.value);
     }
     if node.kind == NodeKind.None {
         return EmitResult(emitter: e, value: "0");
     }
     if node.kind == NodeKind.Interp {
-        EmitResult inner = walk_expr(node.children.get(0), e, locals);
+        EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);
         return EmitResult(emitter: inner.emitter, value: inner.value);
     }
     return EmitResult(emitter: e, value: "0");

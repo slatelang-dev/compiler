@@ -77,19 +77,34 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "strlen", "int");
     reg = register_fn(reg, "strcmp", "int");
     reg = register_fn(reg, "puts", "void");
+    # Alloc
+    reg = register_fn(reg, "alloc", "ptr");
+    reg = register_fn(reg, "gc_alloc", "ptr");
+    reg = register_fn(reg, "slate_alloc", "ptr");
     # Slate runtime
     reg = register_fn(reg, "slate_print", "void");
-    reg = register_fn(reg, "slate_string_concat", "ptr");
     reg = register_fn(reg, "slate_string", "ptr");
+    reg = register_fn(reg, "slate_string_new", "ptr");
+    reg = register_fn(reg, "slate_string_concat", "ptr");
+    reg = register_fn(reg, "slate_string_data", "ptr");
+    reg = register_fn(reg, "slate_string_eq", "bool");
+    reg = register_fn(reg, "slate_string_len", "int");
     reg = register_fn(reg, "slate_len", "int");
+    reg = register_fn(reg, "slate_list_new", "ptr");
+    reg = register_fn(reg, "slate_list_get", "ptr");
+    reg = register_fn(reg, "slate_list_len", "int");
+    reg = register_fn(reg, "slate_table_new", "ptr");
+    reg = register_fn(reg, "slate_table_get", "ptr");
+    reg = register_fn(reg, "slate_table_has", "bool");
+    reg = register_fn(reg, "slate_table_len", "int");
     reg = register_fn(reg, "slate_get", "ptr");
     reg = register_fn(reg, "slate_add", "ptr");
     reg = register_fn(reg, "slate_has", "bool");
     reg = register_fn(reg, "slate_set", "ptr");
-    reg = register_fn(reg, "slate_input", "ptr");
-    reg = register_fn(reg, "slate_args", "ptr");
     reg = register_fn(reg, "slate_keys", "ptr");
     reg = register_fn(reg, "slate_values", "ptr");
+    reg = register_fn(reg, "slate_input", "ptr");
+    reg = register_fn(reg, "slate_args", "ptr");
     # IO builtins
     reg = register_fn(reg, "file", "ptr");
     reg = register_fn(reg, "home", "ptr");
@@ -100,6 +115,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "parse", "ptr");
     reg = register_fn(reg, "toml", "ptr");
     reg = register_fn(reg, "json", "ptr");
+    reg = register_fn(reg, "path", "ptr");
     # Bool returns
     reg = register_fn(reg, "exists", "bool");
     reg = register_fn(reg, "contains", "bool");
@@ -108,7 +124,11 @@ Registry seed_c_runtime(Registry r) {
     # String operations
     reg = register_fn(reg, "replace", "ptr");
     reg = register_fn(reg, "split", "ptr");
-    reg = register_fn(reg, "path", "ptr");
+    # Casts / builtins
+    reg = register_fn(reg, "int", "int");
+    reg = register_fn(reg, "len", "int");
+    # args method
+    reg = register_fn(reg, "args", "ptr");
     # Ink colors
     reg = register_fn(reg, "bold", "ptr");
     reg = register_fn(reg, "red", "ptr");
@@ -128,5 +148,22 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "bold_blue", "ptr");
     reg = register_fn(reg, "bold_slate", "ptr");
     reg = register_fn(reg, "slate_color", "ptr");
+    # Loader functions
+    reg = register_fn(reg, "load_project_file", "ptr");
+    reg = register_fn(reg, "load_project", "ptr");
+    reg = register_fn(reg, "load_entry", "ptr");
+    reg = register_fn(reg, "load_module", "ptr");
+    reg = register_fn(reg, "project_valid", "bool");
+    reg = register_fn(reg, "project_display", "ptr");
+    reg = register_fn(reg, "collect_module_asts", "ptr");
+    # Analysis functions
+    reg = register_fn(reg, "analyse", "ptr");
+    reg = register_fn(reg, "analyse_bare", "ptr");
+    reg = register_fn(reg, "parse", "ptr");
+    # Render functions
+    reg = register_fn(reg, "render_all", "ptr");
+    reg = register_fn(reg, "render_errors", "ptr");
+    reg = register_fn(reg, "render_warnings", "ptr");
+    reg = register_fn(reg, "render_summary", "ptr");
     return reg;
 }

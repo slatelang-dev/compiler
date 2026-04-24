@@ -237,6 +237,11 @@ Emitter emit_file_header(Emitter e, string target_triple) {
 Emitter emit_file_header_full(Emitter e, string target_triple) {
     mutable Emitter cur = e;
     cur = emit_file_header(cur, target_triple);
+    cur = emit_line(cur, "%struct.ParseResult = type { ptr, i64, i1, ptr }");
+    cur = emit_line(cur, "%struct.AnalysisResult = type { ptr, ptr }");
+    cur = emit_line(cur, "%struct.LoadedModule = type { ptr, ptr, ptr, ptr, i1, ptr }");
+    cur = emit_line(cur, "%struct.Project = type { ptr, ptr, ptr, ptr, ptr, i1 }");
+    cur = emit_line(cur, "");
     cur = emit_line(cur, "declare ptr @slate_input()");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
     cur = emit_line(cur, "declare i64 @slate_len(ptr)");

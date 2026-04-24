@@ -1,0 +1,66 @@
+module type_registry;
+
+struct FnSignature {
+    string return_type;
+    list(string) param_types;
+}
+
+struct FieldInfo {
+    string field_type;
+    int index;
+}
+
+struct Registry {
+    table(string, string) fn_returns;
+    table(string, string) field_types;
+    table(string, string) field_indices;
+}
+
+Registry new_registry() {
+    return Registry(
+        fn_returns: empty,
+        field_types: empty,
+        field_indices: empty
+    );
+}
+
+Registry register_fn(Registry r, string name, string return_type) {
+    return Registry(
+        fn_returns: r.fn_returns.set(name, return_type),
+        field_types: r.field_types,
+        field_indices: r.field_indices
+    );
+}
+
+Registry register_field(Registry r, string struct_name, string field_name, string field_type, int index) {
+    string type_key = struct_name + "." + field_name;
+    string index_key = struct_name + "." + field_name + ".idx";
+    return Registry(
+        fn_returns: r.fn_returns,
+        field_types: r.field_types.set(type_key, field_type),
+        field_indices: r.field_indices.set(index_key, string(index))
+    );
+}
+
+string lookup_fn_return(Registry r, string name) {
+    if r.fn_returns.has(name) {
+        return r.fn_returns.get(name);
+    }
+    return "ptr";
+}
+
+string lookup_field_type(Registry r, string struct_name, string field_name) {
+    string key = struct_name + "." + field_name;
+    if r.field_types.has(key) {
+        return r.field_types.get(key);
+    }
+    return "ptr";
+}
+
+int lookup_field_index(Registry r, string struct_name, string field_name) {
+    string key = struct_name + "." + field_name + ".idx";
+    if r.field_indices.has(key) {
+        return int(r.field_indices.get(key));
+    }
+    return -1;
+}

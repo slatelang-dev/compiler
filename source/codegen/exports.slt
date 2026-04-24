@@ -6,3 +6,5 @@ use emit_expr;
 use emit_stmt;
 use lower_expr;
 use walker;
+use type_registry;
+use registry_builder;

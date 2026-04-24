@@ -101,6 +101,7 @@ Emitter set_fn(Emitter e, string name) {
 }
 
 Emitter reset_fn_state(Emitter e) {
+    print("[RESET] reset_fn_state called");
     return Emitter(
         output: e.output,
         globals: e.globals,

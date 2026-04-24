@@ -12,10 +12,6 @@ struct EmitResult {
     string value_type;
 }
 
-EmitResult make_result(Emitter e, string value) {
-    return EmitResult(emitter: e, value: value, value_type: "ptr");
-}
-
 EmitResult make_result_typed(Emitter e, string value, string vt) {
     return EmitResult(emitter: e, value: value, value_type: vt);
 }
@@ -133,7 +129,13 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         }
         string result_reg = next_reg(right.emitter);
         cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
-        string result_type = op_type;
+        mutable string result_type = op_type;
+        if node.value == "==" or node.value == "!=" 
+            or node.value == "<" or node.value == ">" 
+            or node.value == "<=" or node.value == ">=" 
+            or node.value == "and" or node.value == "or" {
+            result_type = "bool";
+        }
         return make_result_typed(cur, result_reg, result_type);
     }
     if node.kind == NodeKind.UnaryOp {
@@ -141,7 +143,10 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         EmitResult operand = walk_expr(un_children.get(0), cur, locals, reg);
         string result_reg = next_reg(operand.emitter);
         cur = emit_unary_op(operand.emitter, node.value, operand.value, "int");
-        string result_type = "int";
+        mutable string result_type = "int";
+        if node.value == "not" {
+            result_type = "bool";
+        }
         return make_result_typed(cur, result_reg, result_type);
     }
     if node.kind == NodeKind.Call {

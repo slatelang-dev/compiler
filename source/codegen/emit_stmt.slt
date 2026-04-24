@@ -43,19 +43,19 @@ Emitter emit_if(Emitter e, string cond_reg, string then_label, string else_label
 }
 
 Emitter emit_then_block(Emitter e, string then_label, string merge_label) {
-    mutable Emitter cur = reset_fn_state(e);
+    mutable Emitter cur = e;
     cur = emit_line(cur, then_label + ":");
     return cur;
 }
 
 Emitter emit_else_block(Emitter e, string else_label, string merge_label) {
-    mutable Emitter cur = reset_fn_state(e);
+    mutable Emitter cur = e;
     cur = emit_line(cur, else_label + ":");
     return cur;
 }
 
 Emitter emit_merge_block(Emitter e, string merge_label) {
-    mutable Emitter cur = reset_fn_state(e);
+    mutable Emitter cur = e;
     cur = emit_line(cur, merge_label + ":");
     return cur;
 }

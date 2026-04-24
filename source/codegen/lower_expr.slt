@@ -123,8 +123,9 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             cur = emit_line(cur, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
             return EmitResult(emitter: cur, value: ne_reg);
         }
+        string result_reg = next_reg(right.emitter);
         cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
-        return EmitResult(emitter: cur, value: next_reg(cur));
+        return EmitResult(emitter: cur, value: result_reg);
     }
     if node.kind == NodeKind.UnaryOp {
         list(Node) un_children = node.children;

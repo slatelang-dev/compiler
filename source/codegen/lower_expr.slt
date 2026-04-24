@@ -133,11 +133,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         }
         string result_reg = next_reg(right.emitter);
         cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
-        bool is_comparison = node.value == "==" or node.value == "!=" 
-            or node.value == "<" or node.value == ">" 
-            or node.value == "<=" or node.value == ">=" 
-            or node.value == "and" or node.value == "or";
-        string result_type = is_comparison ? "bool" : op_type;
+        string result_type = op_type;
         return make_result_typed(cur, result_reg, result_type);
     }
     if node.kind == NodeKind.UnaryOp {
@@ -145,7 +141,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         EmitResult operand = walk_expr(un_children.get(0), cur, locals, reg);
         string result_reg = next_reg(operand.emitter);
         cur = emit_unary_op(operand.emitter, node.value, operand.value, "int");
-        string result_type = node.value == "not" ? "bool" : "int";
+        string result_type = "int";
         return make_result_typed(cur, result_reg, result_type);
     }
     if node.kind == NodeKind.Call {

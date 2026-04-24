@@ -6,9 +6,18 @@ use emit_types;
 use emit_expr;
 use type_registry;
 
-bool is_primitive_call(string name) {
-    return name == "alloc" or name == "free" or name == "memcpy"
-        or name == "strlen" or name == "strcmp" or name == "puts";
+struct EmitResult {
+    Emitter emitter;
+    string value;
+    string value_type;
+}
+
+EmitResult make_result(Emitter e, string value) {
+    return EmitResult(emitter: e, value: value, value_type: "ptr");
+}
+
+EmitResult make_result_typed(Emitter e, string value, string vt) {
+    return EmitResult(emitter: e, value: value, value_type: vt);
 }
 
 EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) {
@@ -17,35 +26,29 @@ EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) 
         string reg = next_reg(cur);
         cur = advance_reg(cur);
         cur = emit_line(cur, "  " + reg + " = call ptr @malloc(i64 " + arg_values.get(0) + ")");
-        return EmitResult(emitter: cur, value: reg);
+        return EmitResult(emitter: cur, value: reg, value_type: "ptr");
     }
     if name == "free" {
         cur = emit_line(cur, "  call void @free(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: cur, value: "");
-    }
-    if name == "memcpy" {
-        cur = emit_line(cur, "  call void @llvm.memcpy.p0.p0.i64(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ", i64 " + arg_values.get(2) + ", i1 false)");
-        return EmitResult(emitter: cur, value: "");
+        return EmitResult(emitter: cur, value: "", value_type: "void");
     }
     if name == "strlen" {
         string reg = next_reg(cur);
         cur = advance_reg(cur);
         cur = emit_line(cur, "  " + reg + " = call i64 @strlen(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: cur, value: reg);
+        return EmitResult(emitter: cur, value: reg, value_type: "int");
     }
     if name == "strcmp" {
         string reg = next_reg(cur);
         cur = advance_reg(cur);
         cur = emit_line(cur, "  " + reg + " = call i32 @strcmp(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ")");
-        return EmitResult(emitter: cur, value: reg);
+        return EmitResult(emitter: cur, value: reg, value_type: "int");
     }
     if name == "puts" {
-        string reg = next_reg(cur);
-        cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = call i32 @puts(ptr " + arg_values.get(0) + ")");
-        return EmitResult(emitter: cur, value: reg);
+        cur = emit_line(cur, "  call i32 @puts(ptr " + arg_values.get(0) + ")");
+        return EmitResult(emitter: cur, value: "", value_type: "void");
     }
-    return EmitResult(emitter: cur, value: "");
+    return EmitResult(emitter: cur, value: "", value_type: "void");
 }
 
 EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registry reg) {

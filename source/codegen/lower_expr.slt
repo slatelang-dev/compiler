@@ -12,6 +12,10 @@ struct EmitResult {
     string value_type;
 }
 
+EmitResult make_result(Emitter e, string value) {
+    return EmitResult(emitter: e, value: value, value_type: "ptr");
+}
+
 EmitResult make_result_typed(Emitter e, string value, string vt) {
     return EmitResult(emitter: e, value: value, value_type: vt);
 }

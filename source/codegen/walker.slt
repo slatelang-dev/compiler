@@ -97,6 +97,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         Node cond_node = stmt_children.get(0);
         mutable string cond_value = cond.value;
         mutable Emitter cur_emitter = cond.emitter;
+        cur = emit_line(cur_emitter, "  ; DEBUG after cond reg=" + string(cur_emitter.reg));
         if cond_node.kind == NodeKind.MethodCall {
             string method = cond_node.value;
             string fn_name = remap_method_name(method);

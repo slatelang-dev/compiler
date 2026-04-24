@@ -19,7 +19,6 @@ StmtResult stmt_result(Emitter e, table(string, string) locals) {
 }
 
 Emitter walk_block(Node block, Emitter e, table(string, string) locals, string return_type, Registry reg) {
-    print("[WALK_BLOCK] entering block, reg=" + string(e.reg));
     mutable Emitter cur = e;
     mutable table(string, string) cur_locals = locals;
     list(Node) block_children = block.children;
@@ -95,6 +94,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
     if node.kind == NodeKind.If {
         list(Node) stmt_children = node.children;
         EmitResult cond = walk_expr(stmt_children.get(0), cur, cur_locals, reg);
+        print("[IF-COND] reg after cond=" + string(cond.emitter.reg));
         Node cond_node = stmt_children.get(0);
         mutable string cond_value = cond.value;
         mutable Emitter cur_emitter = cond.emitter;
@@ -187,7 +187,6 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
 
 Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
     mutable Emitter cur = reset_fn_state(e);
-    print("[WALK_FN] " + fn_node.value + " starting reg=" + string(cur.reg));
     string fn_name = fn_node.value;
     list(Node) fn_children = fn_node.children;
     if fn_children.len() == 0 {

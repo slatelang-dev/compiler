@@ -162,7 +162,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         while i < call_children.len() {
             EmitResult arg = walk_expr(call_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
-            mutable string arg_type = llvm_type(arg.value_type);
+            mutable string arg_type = arg.value_type;
             arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
@@ -189,7 +189,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         while i < method_children.len() {
             EmitResult arg = walk_expr(method_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
-            mutable string arg_type = llvm_type(arg.value_type);
+            mutable string arg_type = arg.value_type;
             arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;

@@ -54,18 +54,18 @@ EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) 
 EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registry reg) {
     mutable Emitter cur = e;
     if node.kind == NodeKind.IntLit {
-        return EmitResult(emitter: cur, value: emit_int_lit(node.value));
+        return EmitResult(emitter: cur, value: emit_int_lit(node.value), value_type: "int");
     }
     if node.kind == NodeKind.FloatLit {
-        return EmitResult(emitter: cur, value: emit_float_lit(node.value));
+        return EmitResult(emitter: cur, value: emit_float_lit(node.value), value_type: "float");
     }
     if node.kind == NodeKind.BoolLit {
-        return EmitResult(emitter: cur, value: emit_bool_lit(node.value));
+        return EmitResult(emitter: cur, value: emit_bool_lit(node.value), value_type: "bool");
     }
     if node.kind == NodeKind.StringLit {
         string name = emit_string_global(cur, node.value);
         cur = advance_str(cur, node.value);
-        return EmitResult(emitter: cur, value: name);
+        return EmitResult(emitter: cur, value: name, value_type: "string");
     }
     if node.kind == NodeKind.Ident {
         mutable string slate_type = "int";
@@ -73,13 +73,13 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             slate_type = locals.get(node.value);
         }
         if slate_type.starts_with("param_") {
-            return EmitResult(emitter: cur, value: "%" + node.value);
+            return EmitResult(emitter: cur, value: "%" + node.value, value_type: slate_type);
         }
         string llvm_t = llvm_type(slate_type);
         string reg = next_reg(cur);
         cur = advance_reg(cur);
         cur = emit_line(cur, "  " + reg + " = load " + llvm_t + ", ptr %" + node.value);
-        return EmitResult(emitter: cur, value: reg);
+        return EmitResult(emitter: cur, value: reg, value_type: slate_type);
     }
     if node.kind == NodeKind.BinaryOp {
         list(Node) bin_children = node.children;
@@ -106,7 +106,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             string result_reg = next_reg(right.emitter);
             cur = advance_reg(right.emitter);
             cur = emit_line(cur, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left.value + ", ptr " + right.value + ")");
-            return EmitResult(emitter: cur, value: result_reg);
+            return make_result(cur, result_reg);
         }
         if op_type == "string" and node.value == "==" {
             string cmp_reg = next_reg(right.emitter);
@@ -128,14 +128,14 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         }
         string result_reg = next_reg(right.emitter);
         cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
-        return EmitResult(emitter: cur, value: result_reg);
+        return make_result(cur, result_reg);
     }
     if node.kind == NodeKind.UnaryOp {
         list(Node) un_children = node.children;
         EmitResult operand = walk_expr(un_children.get(0), cur, locals, reg);
         string result_reg = next_reg(operand.emitter);
         cur = emit_unary_op(operand.emitter, node.value, operand.value, "int");
-        return EmitResult(emitter: cur, value: result_reg);
+        return make_result(cur, result_reg);
     }
     if node.kind == NodeKind.Call {
         list(Node) call_children = node.children;
@@ -146,20 +146,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         while i < call_children.len() {
             EmitResult arg = walk_expr(call_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
-            mutable string arg_type = "int";
-            if arg.value.starts_with("@str") { arg_type = "ptr"; }
-            if arg.value.starts_with("%r") { arg_type = "ptr"; }
-            if arg.value.starts_with("%") {
-                string ident_name = arg.value.replace("%", "");
-                if locals.has(ident_name) {
-                    string local_type = locals.get(ident_name);
-                    if local_type == "string" or local_type == "ptr"
-                    or local_type == "param_ptr" or local_type == "param_string"
-                    or local_type == "list" or local_type == "table" {
-                        arg_type = "ptr";
-                    }
-                }
-            }
+            mutable string arg_type = llvm_type(arg.value_type);
             arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
@@ -171,7 +158,7 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         string call_return_type = lookup_fn_return(reg, call_name);
         string result_reg = next_reg(cur);
         cur = emit_call(cur, call_name, call_return_type, arg_values, arg_types);
-        return EmitResult(emitter: cur, value: result_reg);
+        return make_result_typed(cur, result_reg, call_return_type);
     }
     if node.kind == NodeKind.MethodCall {
         list(Node) method_children = node.children;
@@ -186,45 +173,15 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         while i < method_children.len() {
             EmitResult arg = walk_expr(method_children.get(i), cur, locals, reg);
             arg_values = arg_values.add(arg.value);
-            mutable string arg_type = "int";
-            if arg.value.starts_with("@str") { arg_type = "ptr"; }
-            if arg.value.starts_with("%r") { arg_type = "ptr"; }
-            if arg.value.starts_with("%") {
-                string ident_name = arg.value.replace("%", "");
-                if locals.has(ident_name) {
-                    string local_type = locals.get(ident_name);
-                    if local_type == "string" or local_type == "ptr"
-                    or local_type == "param_ptr" or local_type == "param_string"
-                    or local_type == "list" or local_type == "table" {
-                        arg_type = "ptr";
-                    }
-                }
-            }
+            mutable string arg_type = llvm_type(arg.value_type);
             arg_types = arg_types.add(arg_type);
             cur = arg.emitter;
             i += 1;
         }
-        # Force correct argument types for methods that take int/ptr arguments
-        if fn_name == "slate_get" and arg_types.len() > 1 {
-            mutable list(string) fixed = empty;
-            fixed = fixed.add(arg_types.get(0));
-            fixed = fixed.add("int");
-            arg_types = fixed;
-        }
-        if fn_name == "slate_string" and arg_types.len() > 0 {
-            mutable list(string) fixed = empty;
-            fixed = fixed.add("int");
-            arg_types = fixed;
-        }
-        if fn_name == "read_n" and arg_types.len() > 0 {
-            mutable list(string) fixed = empty;
-            fixed = fixed.add("int");
-            arg_types = fixed;
-        }
         string method_return_type = lookup_fn_return(reg, fn_name);
         string result_reg = next_reg(cur);
         cur = emit_call(cur, fn_name, method_return_type, arg_values, arg_types);
-        return EmitResult(emitter: cur, value: result_reg);
+        return make_result_typed(cur, result_reg, method_return_type);
     }
     if node.kind == NodeKind.FieldAccess {
         EmitResult receiver = walk_expr(node.children.get(0), e, locals, reg);
@@ -245,20 +202,20 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             string load_reg = next_reg(e);
             e = advance_reg(e);
             e = emit_line(e, "  " + load_reg + " = load " + llvm_field_type + ", ptr " + gep_reg);
-            return EmitResult(emitter: e, value: load_reg);
+            return make_result_typed(e, load_reg, field_type);
         }
-        return EmitResult(emitter: receiver.emitter, value: receiver.value);
+        return make_result_typed(receiver.emitter, receiver.value, struct_type);
     }
     if node.kind == NodeKind.Some {
         EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);
-        return EmitResult(emitter: inner.emitter, value: inner.value);
+        return make_result_typed(inner.emitter, inner.value, inner.value_type);
     }
     if node.kind == NodeKind.None {
-        return EmitResult(emitter: e, value: "0");
+        return make_result_typed(e, "0", "void");
     }
     if node.kind == NodeKind.Interp {
         EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);
-        return EmitResult(emitter: inner.emitter, value: inner.value);
+        return make_result_typed(inner.emitter, inner.value, inner.value_type);
     }
-    return EmitResult(emitter: e, value: "0");
+    return make_result_typed(e, "0", "void");
 }

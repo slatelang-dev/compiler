@@ -45,17 +45,12 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         if type_node.kind == NodeKind.TypeTable { slate_type = "table"; }
         if type_node.kind == NodeKind.TypeOption { slate_type = "option"; }
         if type_node.kind == NodeKind.TypeResult { slate_type = "result"; }
-        if type_node.kind == NodeKind.Ident {
-            if type_node.value == "bool" { slate_type = "bool"; }
-            if type_node.value == "int" { slate_type = "int"; }
-            if type_node.value == "float" { slate_type = "float"; }
-        }
         if slate_type == "" { slate_type = "int"; }
         cur_locals = cur_locals.set(var_name, slate_type);
+        string unique_slot = var_name + "_" + string(cur.reg);
         EmitResult init = walk_expr(stmt_children.get(1), cur, cur_locals, reg);
-        string unique_slot = var_name + "_" + string(init.emitter.reg);
         cur_locals = cur_locals.set(var_name + "_slot", "%" + unique_slot);
-        cur = emit_var_decl(init.emitter, var_name, slate_type, init.value);
+        cur = emit_var_decl(init.emitter, unique_slot, slate_type, init.value);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.AssignOp {

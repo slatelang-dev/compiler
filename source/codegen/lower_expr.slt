@@ -104,7 +104,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         if bin_children.get(0).kind == NodeKind.StringLit { op_type = "string"; }
         if left.value.starts_with("@str") { op_type = "string"; }
         if right.value.starts_with("@str") { op_type = "string"; }
-        if left.value.starts_with("%r") and node.value == "+" { op_type = "string"; }
+        if left.value_type == "string" and node.value == "+" { op_type = "string"; }
+        if right.value_type == "string" and node.value == "+" { op_type = "string"; }
         # Detect bool comparison: left side is bool-returning method call or right is bool literal
         if bin_children.get(0).kind == NodeKind.MethodCall {
             string fn_name = remap_method_name(bin_children.get(0).value);

@@ -74,37 +74,37 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
         if slate_type == "float" {
             return emit_line(cur, "  " + reg + " = fcmp one double " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp ne i64 " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = icmp ne i64 " + left + ", " + right);
     }
     if op == "<" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp olt " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fcmp olt " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp slt " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = icmp slt " + llvm_t + " " + left + ", " + right);
     }
     if op == ">" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp ogt " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fcmp ogt " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp sgt " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = icmp sgt " + llvm_t + " " + left + ", " + right);
     }
     if op == "<=" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp ole " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fcmp ole " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp sle " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = icmp sle " + llvm_t + " " + left + ", " + right);
     }
     if op == ">=" {
         if slate_type == "float" {
-            return emit_line(e, "  " + reg + " = fcmp oge " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  " + reg + " = fcmp oge " + llvm_t + " " + left + ", " + right);
         }
-        return emit_line(e, "  " + reg + " = icmp sge " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = icmp sge " + llvm_t + " " + left + ", " + right);
     }
     if op == "and" {
-        return emit_line(e, "  " + reg + " = and i1 " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = and i1 " + left + ", " + right);
     }
     if op == "or" {
-        return emit_line(e, "  " + reg + " = or i1 " + left + ", " + right);
+        return emit_line(cur, "  " + reg + " = or i1 " + left + ", " + right);
     }
 
     return emit_error(cur, "unknown binary op: " + op);

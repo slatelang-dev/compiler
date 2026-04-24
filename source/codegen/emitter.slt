@@ -100,6 +100,18 @@ Emitter set_fn(Emitter e, string name) {
     );
 }
 
+Emitter reset_fn_state(Emitter e) {
+    return Emitter(
+        output: e.output,
+        globals: e.globals,
+        reg: 0,
+        label: 0,
+        str_count: e.str_count,
+        fn_name: e.fn_name,
+        errors: e.errors
+    );
+}
+
 # Get string global name
 
 string emit_string_global(Emitter e, string value) {

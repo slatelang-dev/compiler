@@ -184,8 +184,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
 }
 
 Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
-    mutable Emitter cur = e;
-    cur.reg = 0;
+    mutable Emitter cur = reset_fn_state(e);
     string fn_name = fn_node.value;
     list(Node) fn_children = fn_node.children;
     if fn_children.len() == 0 {

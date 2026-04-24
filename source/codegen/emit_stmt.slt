@@ -130,66 +130,7 @@ Emitter emit_break(Emitter e, string exit_label) {
     return emit_jump(e, exit_label);
 }
 
-Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
-    mutable Emitter cur = e;
-    cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
-    cur = emit_line(cur, body_label + ":");
-    return cur;
-}
-
-Emitter emit_while_end(Emitter e, string cond_label, string exit_label) {
-    mutable Emitter cur = e;
-    cur = emit_jump(cur, cond_label);
-    cur = emit_line(cur, exit_label + ":");
-    return cur;
-}
-
-# Emit for loop — range based
-# Emits: alloca for loop var, init store, jump to cond,
-# cond block, body block, increment, exit block
-
-Emitter emit_for_init(Emitter e, string var, string start_val) {
-    mutable Emitter cur = e;
-    string slot = "%" + var;
-    cur = emit_alloca(cur, slot, "int");
-    cur = emit_store(cur, start_val, "int", slot);
-    return cur;
-}
-
-Emitter emit_for_cond(Emitter e, string cond_label, string var, string end_val) {
-    mutable Emitter cur = e;
-    string slot = "%" + var;
-    string loaded = next_reg(cur);
-    cur = advance_reg(cur);
-    cur = emit_line(cur, cond_label + ":");
-    cur = emit_load(cur, loaded, "int", slot);
-    string cmp_reg = next_reg(cur);
-    cur = advance_reg(cur);
-    cur = emit_line(cur, "  " + cmp_reg + " = icmp slt i64 " + loaded + ", " + end_val);
-    return cur;
-}
-
-Emitter emit_for_increment(Emitter e, string var, string cond_label) {
-    mutable Emitter cur = e;
-    string slot = "%" + var;
-    string loaded = next_reg(cur);
-    cur = advance_reg(cur);
-    cur = emit_load(cur, loaded, "int", slot);
-    string incremented = next_reg(cur);
-    cur = advance_reg(cur);
-    cur = emit_line(cur, "  " + incremented + " = add i64 " + loaded + ", 1");
-    cur = emit_store(cur, incremented, "int", slot);
-    cur = emit_jump(cur, cond_label);
-    return cur;
-}
-
-# Emit a break — unconditional jump to exit label
-
-Emitter emit_break(Emitter e, string exit_label) {
-    return emit_jump(e, exit_label);
-}
-
-# Emit a function declaration header
+Emitter emit_fn_header
 
 Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) param_names, list(string) param_types) {
     mutable Emitter cur = e;

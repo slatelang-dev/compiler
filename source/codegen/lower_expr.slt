@@ -94,7 +94,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         list(Node) bin_children = node.children;
         EmitResult left = walk_expr(bin_children.get(0), cur, locals, reg);
         EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals, reg);
-        mutable string op_type = "int";
+        mutable string op_type = left.value_type;
+        if op_type == "" { op_type = "int"; }
         if bin_children.get(0).kind == NodeKind.Ident {
             if locals.has(bin_children.get(0).value) {
                 string lt = locals.get(bin_children.get(0).value);
@@ -109,14 +110,16 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         # Detect bool comparison: left side is bool-returning method call or right is bool literal
         if bin_children.get(0).kind == NodeKind.MethodCall {
             string fn_name = remap_method_name(bin_children.get(0).value);
-            if lookup_fn_return(reg, fn_name) == "bool" { op_type = "bool"; }
+            string fn_return = lookup_fn_return(reg, fn_name);
+            if fn_return == "bool" { op_type = "bool"; }
+            if fn_return == "string" { op_type = "string"; }
         }
         if bin_children.get(1).kind == NodeKind.BoolLit { op_type = "bool"; }
         if node.value == "+" and op_type == "string" {
             string result_reg = next_reg(right.emitter);
             cur = advance_reg(right.emitter);
             cur = emit_line(cur, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left.value + ", ptr " + right.value + ")");
-            return make_result(cur, result_reg);
+            return make_result_typed(cur, result_reg, "string");
         }
         if op_type == "string" and node.value == "==" {
             string cmp_reg = next_reg(right.emitter);

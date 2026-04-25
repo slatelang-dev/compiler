@@ -85,7 +85,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_print", "void");
     reg = register_fn(reg, "slate_string", "ptr");
     reg = register_fn(reg, "slate_string_new", "ptr");
-    reg = register_fn(reg, "slate_string_concat", "string");
+    reg = register_fn(reg, "slate_string_concat", "ptr");
     reg = register_fn(reg, "slate_string_data", "ptr");
     reg = register_fn(reg, "slate_string_eq", "bool");
     reg = register_fn(reg, "slate_string_len", "int");

@@ -237,6 +237,7 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare i1 @project_valid(ptr)");
     cur = emit_line(cur, "declare ptr @project_display(ptr)");
 cur = emit_line(cur, "declare ptr @load_module(ptr)");
+    cur = emit_line(cur, "declare ptr @render_all(ptr, ptr)");
     cur = emit_line(cur, "");
     return cur;
 }

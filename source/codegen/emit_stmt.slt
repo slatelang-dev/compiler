@@ -19,8 +19,7 @@ Emitter emit_return(Emitter e, string value, string slate_type) {
 
 Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
     mutable Emitter cur = e;
-    string unique_name = name + "_" + string(cur.reg);
-    string slot = "%" + unique_name;
+    string slot = "%" + name;
     cur = emit_alloca(cur, slot, slate_type);
     cur = emit_store(cur, value, slate_type, slot);
     return cur;

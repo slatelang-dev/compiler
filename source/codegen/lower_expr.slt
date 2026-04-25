@@ -94,8 +94,11 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         list(Node) bin_children = node.children;
         EmitResult left = walk_expr(bin_children.get(0), cur, locals, reg);
         EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals, reg);
-        mutable string op_type = left.value_type;
-        if op_type == "" { op_type = "int"; }
+        mutable string op_type = "int";
+        if left.value_type == "string" { op_type = "string"; }
+        if right.value_type == "string" { op_type = "string"; }
+        if left.value.starts_with("@str") { op_type = "string"; }
+        if right.value.starts_with("@str") { op_type = "string"; }
         if bin_children.get(0).kind == NodeKind.Ident {
             if locals.has(bin_children.get(0).value) {
                 string lt = locals.get(bin_children.get(0).value);

@@ -223,15 +223,11 @@ Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
     return cur;
 }
 
-string walk_program(Node program, string target_triple, bool full_header) {
+string walk_program(Node program, string target_triple) {
     list(Node) programs = (program);
     Registry reg = build_registry(programs);
     mutable Emitter e = new_emitter();
-    if full_header {
-        e = emit_file_header_full(e, target_triple);
-    } else {
-        e = emit_file_header(e, target_triple);
-    }
+    e = emit_file_header(e, target_triple);
     string header = e.output;
     e = new_emitter();
     list(Node) program_children = program.children;
@@ -246,14 +242,10 @@ string walk_program(Node program, string target_triple, bool full_header) {
     return header + e.globals + e.output;
 }
 
-string walk_all(list(Node) programs, string target_triple, bool full_header) {
+string walk_all(list(Node) programs, string target_triple) {
     Registry reg = build_registry(programs);
     mutable Emitter e = new_emitter();
-    if full_header {
-        e = emit_file_header_full(e, target_triple);
-    } else {
-        e = emit_file_header(e, target_triple);
-    }
+    e = emit_file_header(e, target_triple);
     string header = e.output;
     e = new_emitter();
     mutable int i = 0;

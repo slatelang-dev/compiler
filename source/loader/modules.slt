@@ -124,28 +124,31 @@ ModuleCollectResult collect_modules_inner(Node program, string base_path, list(s
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            if mod_name == "slate" or mod_name == "compiler"
-            or mod_name == "protocol" or mod_name == "handlers" {
+            string mod_path = "";
+            string sub_base = "";
+            if mod_name == "slate" {
+                mod_path = home() + "/.slate/deps/slate/source/lib.slt";
+                sub_base = home() + "/.slate/deps/slate/source/";
             } else {
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
-                mutable string mod_path = exports_path;
+                mod_path = exports_path;
+                sub_base = base_path + "/" + mod_name;
                 if file(exports_path).exists() == false {
                     mod_path = base_path + "/" + mod_name + ".slt";
                 }
-                if module_already_loaded(visited, mod_path) == false {
-                    visited = visited.add(mod_path);
-                    LoadedModule loaded = load_module(mod_name, mod_path);
-                    if loaded.loaded {
-                        string sub_base = base_path + "/" + mod_name;
-                        ModuleCollectResult sub = collect_modules_inner(loaded.ast, sub_base, visited);
-                        visited = sub.visited;
-                        mutable int j = 0;
-                        while j < sub.asts.len() {
-                            result_list = result_list.add(sub.asts.get(j));
-                            j += 1;
-                        }
-                        result_list = result_list.add(loaded.ast);
+            }
+            if module_already_loaded(visited, mod_path) == false {
+                visited = visited.add(mod_path);
+                LoadedModule loaded = load_module(mod_name, mod_path);
+                if loaded.loaded {
+                    ModuleCollectResult sub = collect_modules_inner(loaded.ast, sub_base, visited);
+                    visited = sub.visited;
+                    mutable int j = 0;
+                    while j < sub.asts.len() {
+                        result_list = result_list.add(sub.asts.get(j));
+                        j += 1;
                     }
+                    result_list = result_list.add(loaded.ast);
                 }
             }
         }

@@ -181,6 +181,7 @@ string remap_call_name(string name) {
     if name == "input" { return "slate_input"; }
     if name == "string" { return "slate_string"; }
     if name == "int" { return "slate_int"; }
+    if name == "float" { return "slate_float"; }
     return name;
 }
 

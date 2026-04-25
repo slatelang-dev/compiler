@@ -146,6 +146,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "split", "ptr");
     # Builtin functions
     reg = register_fn(reg, "slate_int", "int");
+    reg = register_fn(reg, "slate_float", "float");
     reg = register_fn(reg, "len", "int");
     # Render functions
     reg = register_fn(reg, "render_all", "ptr");

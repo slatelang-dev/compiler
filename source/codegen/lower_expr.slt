@@ -277,5 +277,22 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         EmitResult inner = walk_expr(node.children.get(0), e, locals, reg);
         return make_result_typed(inner.emitter, inner.value, inner.value_type);
     }
+    if node.kind == NodeKind.Block {
+        string list_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + list_reg + " = call ptr @slate_list_new()");
+        mutable string acc = list_reg;
+        mutable int i = 0;
+        while i < node.children.len() {
+            EmitResult item = walk_expr(node.children.get(i), cur, locals, reg);
+            cur = item.emitter;
+            string add_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + add_reg + " = call ptr @slate_add(ptr " + acc + ", ptr " + item.value + ")");
+            acc = add_reg;
+            i += 1;
+        }
+        return make_result_typed(cur, acc, "list");
+    }
     return make_result_typed(e, "0", "void");
 }

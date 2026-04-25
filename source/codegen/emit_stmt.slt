@@ -168,5 +168,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare i32 @strcmp(ptr, ptr)");
     cur = emit_line(cur, "declare i32 @puts(ptr)");
     cur = emit_line(cur, "declare void @memcpy(ptr, ptr, i64)");
+    cur = emit_line(cur, "declare ptr @slate_list_new()");
+    cur = emit_line(cur, "declare ptr @slate_add(ptr, ptr)");
     return cur;
 }

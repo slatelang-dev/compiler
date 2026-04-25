@@ -180,6 +180,7 @@ string remap_call_name(string name) {
     if name == "print" { return "slate_print"; }
     if name == "input" { return "slate_input"; }
     if name == "string" { return "slate_string"; }
+    if name == "int" { return "slate_int"; }
     return name;
 }
 

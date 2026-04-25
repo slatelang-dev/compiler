@@ -184,6 +184,28 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         if is_primitive_call(node.value) {
             return emit_primitive_call(cur, node.value, arg_values);
         }
+        # Builtin casts
+        if node.value == "int" {
+            EmitResult arg = walk_expr(call_children.get(0), cur, locals, reg);
+            string cast_reg = next_reg(arg.emitter);
+            cur = advance_reg(arg.emitter);
+            cur = emit_line(cur, "  " + cast_reg + " = ptrtoint ptr " + arg.value + " to i64");
+            return make_result_typed(cur, cast_reg, "int");
+        }
+        if node.value == "float" {
+            EmitResult arg = walk_expr(call_children.get(0), cur, locals, reg);
+            string cast_reg = next_reg(arg.emitter);
+            cur = advance_reg(arg.emitter);
+            cur = emit_line(cur, "  " + cast_reg + " = sitofp i64 " + arg.value + " to double");
+            return make_result_typed(cur, cast_reg, "float");
+        }
+        if node.value == "bool" {
+            EmitResult arg = walk_expr(call_children.get(0), cur, locals, reg);
+            string cast_reg = next_reg(arg.emitter);
+            cur = advance_reg(arg.emitter);
+            cur = emit_line(cur, "  " + cast_reg + " = trunc i64 " + arg.value + " to i1");
+            return make_result_typed(cur, cast_reg, "bool");
+        }
         string call_name = remap_call_name(node.value);
         string call_return_type = lookup_fn_return(reg, call_name);
         string result_reg = next_reg(cur);

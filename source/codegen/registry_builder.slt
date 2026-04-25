@@ -144,9 +144,12 @@ Registry seed_c_runtime(Registry r) {
     # String operations
     reg = register_fn(reg, "replace", "ptr");
     reg = register_fn(reg, "split", "ptr");
-    # Casts / builtins
-    reg = register_fn(reg, "int", "int");
+    # Builtin functions
+    reg = register_fn(reg, "slate_int", "int");
     reg = register_fn(reg, "len", "int");
+    # Render functions
+    reg = register_fn(reg, "render_all", "ptr");
+    # Known struct fields
     # args method
     reg = register_fn(reg, "args", "ptr");
     # Ink colors

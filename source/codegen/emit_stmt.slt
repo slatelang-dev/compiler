@@ -226,6 +226,7 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @split(ptr, ptr)");
     cur = emit_line(cur, "declare ptr @path(ptr)");
     cur = emit_line(cur, "declare ptr @parse(ptr)");
+    cur = emit_line(cur, "declare i64 @slate_int(ptr)");
     cur = emit_line(cur, "declare ptr @analyse(ptr, ptr)");
     cur = emit_line(cur, "declare ptr @analyse_bare(ptr, ptr, i1)");
     cur = emit_line(cur, "declare ptr @collect_module_asts(ptr, ptr, ptr)");

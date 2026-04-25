@@ -236,24 +236,7 @@ Emitter emit_file_header_full(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @load_project(ptr)");
     cur = emit_line(cur, "declare i1 @project_valid(ptr)");
     cur = emit_line(cur, "declare ptr @project_display(ptr)");
-    cur = emit_line(cur, "declare ptr @load_module(ptr)");
-    cur = emit_line(cur, "declare ptr @home()");
-    cur = emit_line(cur, "declare ptr @read()");
-    cur = emit_line(cur, "declare ptr @read_n(i64)");
-    cur = emit_line(cur, "declare void @write(ptr, ptr)");
-    cur = emit_line(cur, "declare void @run(ptr, ptr, ptr)");
-    cur = emit_line(cur, "declare ptr @toml(ptr)");
-    cur = emit_line(cur, "declare ptr @json(ptr)");
-    cur = emit_line(cur, "declare i1 @exists(ptr)");
-    cur = emit_line(cur, "declare i1 @contains(ptr, ptr)");
-    cur = emit_line(cur, "declare i1 @starts_with(ptr, ptr)");
-    cur = emit_line(cur, "declare i1 @ends_with(ptr, ptr)");
-    cur = emit_line(cur, "declare ptr @replace(ptr, ptr, ptr)");
-    cur = emit_line(cur, "declare ptr @split(ptr, ptr)");
-    cur = emit_line(cur, "declare ptr @path(ptr)");
-    cur = emit_line(cur, "declare ptr @parse(ptr)");
-    cur = emit_line(cur, "declare i64 @slate_int(ptr)");
-    cur = emit_line(cur, "declare double @slate_float(ptr)");
+cur = emit_line(cur, "declare ptr @load_module(ptr)");
     cur = emit_line(cur, "");
     return cur;
 }

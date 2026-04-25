@@ -67,16 +67,6 @@ string node_type_to_slate(Node type_node) {
     if val == "char"   { return "int"; }
     return "ptr";
 }
-    if val == "int"    { return "int"; }
-    if val == "float"  { return "float"; }
-    if val == "bool"   { return "bool"; }
-    if val == "string" { return "ptr"; }
-    if val == "ptr"    { return "ptr"; }
-    if val == "void"   { return "void"; }
-    if val == "char"   { return "int"; }
-    # User-defined struct — pointer
-    return "ptr";
-}
 
 Registry seed_c_runtime(Registry r) {
     mutable Registry reg = r;

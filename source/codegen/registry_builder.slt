@@ -22,7 +22,7 @@ Registry register_program(Registry r, Node program) {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.FnDecl {
             Node return_type_node = decl.children.get(0);
-            string return_type = node_type_to_llvm(return_type_node);
+            string return_type = node_type_to_slate(return_type_node);
             reg = register_fn(reg, decl.value, return_type);
         }
         if decl.kind == NodeKind.StructDecl {

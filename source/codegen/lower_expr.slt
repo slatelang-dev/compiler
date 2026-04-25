@@ -94,7 +94,6 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         list(Node) bin_children = node.children;
         EmitResult left = walk_expr(bin_children.get(0), cur, locals, reg);
         EmitResult right = walk_expr(bin_children.get(1), left.emitter, locals, reg);
-        print("[BOP] op=" + node.value + " left_type=" + left.value_type + " right_type=" + right.value_type);
         mutable string op_type = "int";
         if left.value_type == "string" { op_type = "string"; }
         if right.value_type == "string" { op_type = "string"; }

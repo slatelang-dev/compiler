@@ -3,21 +3,31 @@ module emit_types;
 # Map Slate types to LLVM IR type strings
 # These are emitted directly into the .ll file
 
+# Strip "param_" prefix from a type stored in locals
+# e.g. "param_int" -> "int", "param_list" -> "list", "int" -> "int"
+
+string strip_param_prefix(string t) {
+    if t.starts_with("param_") {
+        return t.replace("param_", "");
+    }
+    return t;
+}
+
 string llvm_type(string slate_type) {
-    if slate_type == "int"    { return "i64"; }
-    if slate_type == "float"  { return "double"; }
-    if slate_type == "bool"   { return "i1"; }
-    if slate_type == "char"   { return "i32"; }
-    if slate_type == "string" { return "ptr"; }
-    if slate_type == "ptr"    { return "ptr"; }
-    if slate_type == "void"   { return "void"; }
+    string t = strip_param_prefix(slate_type);
+    if t == "int"    { return "i64"; }
+    if t == "float"  { return "double"; }
+    if t == "bool"   { return "i1"; }
+    if t == "char"   { return "i32"; }
+    if t == "string" { return "ptr"; }
+    if t == "ptr"    { return "ptr"; }
+    if t == "void"   { return "void"; }
     # Heap allocated — all represented as pointers for now
-    if slate_type == "option" { return "ptr"; }
-    if slate_type == "result" { return "ptr"; }
-    if slate_type == "list"   { return "ptr"; }
-    if slate_type == "table"  { return "ptr"; }
+    if t == "option" { return "ptr"; }
+    if t == "result" { return "ptr"; }
+    if t == "list"   { return "ptr"; }
+    if t == "table"  { return "ptr"; }
     # Structs and enums — represented as pointers to heap objects
-    # The actual struct layout is defined by the compiler at emit time
     return "ptr";
 }
 
@@ -36,20 +46,22 @@ string llvm_param_type(string slate_type) {
 # Check if a type is heap allocated
 
 bool is_heap_type(string slate_type) {
-    return slate_type == "string"
-        or slate_type == "list"
-        or slate_type == "table"
-        or slate_type == "option"
-        or slate_type == "result";
+    string t = strip_param_prefix(slate_type);
+    return t == "string"
+        or t == "list"
+        or t == "table"
+        or t == "option"
+        or t == "result";
 }
 
 # Check if a type is a primitive
 
 bool is_primitive(string slate_type) {
-    return slate_type == "int"
-        or slate_type == "float"
-        or slate_type == "bool"
-        or slate_type == "char";
+    string t = strip_param_prefix(slate_type);
+    return t == "int"
+        or t == "float"
+        or t == "bool"
+        or t == "char";
 }
 
 # Check if a type needs GC tracking
@@ -61,9 +73,10 @@ bool needs_gc(string slate_type) {
 # Default zero value in LLVM IR for a given type
 
 string llvm_zero(string slate_type) {
-    if slate_type == "int"   { return "0"; }
-    if slate_type == "float" { return "0.0"; }
-    if slate_type == "bool"  { return "false"; }
-    if slate_type == "char"  { return "0"; }
+    string t = strip_param_prefix(slate_type);
+    if t == "int"   { return "0"; }
+    if t == "float" { return "0.0"; }
+    if t == "bool"  { return "false"; }
+    if t == "char"  { return "0"; }
     return "null";
 }

@@ -50,7 +50,8 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         string unique_slot = var_name + "_" + string(cur.reg);
         EmitResult init = walk_expr(stmt_children.get(1), cur, cur_locals, reg);
         cur_locals = cur_locals.set(var_name + "_slot", "%" + unique_slot);
-        cur = emit_var_decl(init.emitter, unique_slot, slate_type, init.value);
+        # Use typed variant to coerce init.value from init.value_type to slate_type
+        cur = emit_var_decl_typed(init.emitter, unique_slot, slate_type, init.value, init.value_type);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.AssignOp {
@@ -70,8 +71,10 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = advance_reg(cur);
         cur = emit_line(cur, "  " + loaded + " = load " + llvm_type(slate_type) + ", ptr " + slot);
         EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals, reg);
-        string result_reg = next_reg(val.emitter);
-        cur = emit_binary_op(val.emitter, op, loaded, val.value, slate_type);
+        # Coerce val to slate_type before binary op
+        CoerceResult coerced_val = coerce_value(val.emitter, val.value, val.value_type, slate_type);
+        string result_reg = next_reg(coerced_val.emitter);
+        cur = emit_binary_op(coerced_val.emitter, op, loaded, coerced_val.value, slate_type);
         cur = advance_reg(cur);
         cur = emit_store(cur, result_reg, slate_type, slot);
         return stmt_result(cur, cur_locals);
@@ -88,16 +91,17 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
             slot = cur_locals.get(var_name + "_slot");
         }
         EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals, reg);
-        cur = emit_assign(val.emitter, slot, slate_type, val.value);
+        cur = emit_assign_typed(val.emitter, slot, slate_type, val.value, val.value_type);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Return {
         list(Node) stmt_children = node.children;
         if stmt_children.len() == 0 {
-            return stmt_result(emit_return(cur, "", "void"), cur_locals);
+            return stmt_result(emit_return(cur, "", "void", "void"), cur_locals);
         }
         EmitResult val = walk_expr(stmt_children.get(0), cur, cur_locals, reg);
-        cur = emit_return(val.emitter, val.value, return_type);
+        # Pass both value_type and return_type so emit_return can coerce
+        cur = emit_return(val.emitter, val.value, val.value_type, return_type);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.If {
@@ -106,24 +110,11 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         Node cond_node = stmt_children.get(0);
         mutable string cond_value = cond.value;
         mutable Emitter cur_emitter = cond.emitter;
-        if cond_node.kind == NodeKind.MethodCall {
-            string method = cond_node.value;
-            string fn_name = remap_method_name(method);
-            if lookup_fn_return(reg, fn_name) != "bool" {
-                string reg_out = next_reg(cur_emitter);
-                cur_emitter = advance_reg(cur_emitter);
-                cur_emitter = emit_line(cur_emitter, "  " + reg_out + " = icmp ne i64 " + cond_value + ", 0");
-                cond_value = reg_out;
-            }
-        }
-        if cond_node.kind == NodeKind.Call {
-            string call_name = remap_call_name(cond_node.value);
-            if lookup_fn_return(reg, call_name) != "bool" {
-                string reg_out = next_reg(cur_emitter);
-                cur_emitter = advance_reg(cur_emitter);
-                cur_emitter = emit_line(cur_emitter, "  " + reg_out + " = icmp ne i64 " + cond_value + ", 0");
-                cond_value = reg_out;
-            }
+        # Normalize condition to i1
+        if cond.value_type != "bool" {
+            CoerceResult cond_coerced = coerce_value(cur_emitter, cond_value, cond.value_type, "bool");
+            cur_emitter = cond_coerced.emitter;
+            cond_value = cond_coerced.value;
         }
         string then_label = next_label(cur_emitter);
         cur = advance_label(cur_emitter);
@@ -153,27 +144,13 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = advance_label(cur);
         cur = emit_while_start(cur, cond_label);
         EmitResult cond = walk_expr(stmt_children.get(0), cur, cur_locals, reg);
-        Node cond_node = stmt_children.get(0);
         mutable string cond_value = cond.value;
         mutable Emitter cur_emitter = cond.emitter;
-        if cond_node.kind == NodeKind.MethodCall {
-            string method = cond_node.value;
-            string fn_name = remap_method_name(method);
-            if lookup_fn_return(reg, fn_name) != "bool" {
-                string reg_out = next_reg(cur_emitter);
-                cur_emitter = advance_reg(cur_emitter);
-                cur_emitter = emit_line(cur_emitter, "  " + reg_out + " = icmp ne i64 " + cond_value + ", 0");
-                cond_value = reg_out;
-            }
-        }
-        if cond_node.kind == NodeKind.Call {
-            string call_name = remap_call_name(cond_node.value);
-            if lookup_fn_return(reg, call_name) != "bool" {
-                string reg_out = next_reg(cur_emitter);
-                cur_emitter = advance_reg(cur_emitter);
-                cur_emitter = emit_line(cur_emitter, "  " + reg_out + " = icmp ne i64 " + cond_value + ", 0");
-                cond_value = reg_out;
-            }
+        # Normalize condition to i1
+        if cond.value_type != "bool" {
+            CoerceResult cond_coerced = coerce_value(cur_emitter, cond_value, cond.value_type, "bool");
+            cur_emitter = cond_coerced.emitter;
+            cond_value = cond_coerced.value;
         }
         cur = emit_while_body(cur_emitter, cond_value, body_label, exit_label);
         cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, reg);
@@ -224,7 +201,7 @@ Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
 }
 
 string walk_program(Node program, string target_triple) {
-    list(Node) programs = (program);
+    list(Node) programs = (program,);
     Registry reg = build_registry(programs);
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);

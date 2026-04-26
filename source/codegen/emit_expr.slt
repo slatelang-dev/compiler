@@ -23,6 +23,60 @@ string emit_char_lit(string value) {
     return string(value.chars().get(0));
 }
 
+# Coerce a value from actual_type to expected_type if needed.
+# Returns updated emitter and the (possibly new) register holding the coerced value.
+# Handles: ptr -> i64 (ptrtoint), i64 -> ptr (inttoptr), ptr -> i1 (ptrtoint + trunc)
+
+struct CoerceResult {
+    Emitter emitter;
+    string value;
+}
+
+CoerceResult coerce_value(Emitter e, string val, string actual_type, string expected_type) {
+    string actual = strip_param_prefix(actual_type);
+    string expected = strip_param_prefix(expected_type);
+    if actual == expected {
+        return CoerceResult(emitter: e, value: val);
+    }
+    # ptr -> int: ptrtoint
+    if expected == "int" and actual == "ptr" {
+        mutable Emitter cur = e;
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = ptrtoint ptr " + val + " to i64");
+        return CoerceResult(emitter: cur, value: reg);
+    }
+    # int -> ptr: inttoptr
+    if expected == "ptr" and actual == "int" {
+        mutable Emitter cur = e;
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = inttoptr i64 " + val + " to ptr");
+        return CoerceResult(emitter: cur, value: reg);
+    }
+    # ptr -> bool: ptrtoint + trunc
+    if expected == "bool" and actual == "ptr" {
+        mutable Emitter cur = e;
+        string int_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + int_reg + " = ptrtoint ptr " + val + " to i64");
+        string bool_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + bool_reg + " = trunc i64 " + int_reg + " to i1");
+        return CoerceResult(emitter: cur, value: bool_reg);
+    }
+    # int -> bool: trunc
+    if expected == "bool" and actual == "int" {
+        mutable Emitter cur = e;
+        string reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + reg + " = trunc i64 " + val + " to i1");
+        return CoerceResult(emitter: cur, value: reg);
+    }
+    # No coercion needed or known
+    return CoerceResult(emitter: e, value: val);
+}
+
 # Emit a binary operation — returns result register
 
 Emitter emit_binary_op(Emitter e, string op, string left, string right, string slate_type) {
@@ -129,6 +183,7 @@ Emitter emit_unary_op(Emitter e, string op, string operand, string slate_type) {
 }
 
 # Emit a function call
+# arg_types are Slate semantic types (int, string, ptr, list, etc.) — not LLVM types
 
 Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_values, list(string) arg_types) {
     mutable Emitter cur = e;
@@ -137,7 +192,8 @@ Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_v
     mutable int i = 0;
     while i < arg_values.len() {
         if i > 0 { args = args + ", "; }
-        args = args + llvm_type(arg_types.get(i)) + " " + arg_values.get(i);
+        string arg_llvm_t = llvm_type(arg_types.get(i));
+        args = args + arg_llvm_t + " " + arg_values.get(i);
         i += 1;
     }
     if return_type == "void" {
@@ -171,4 +227,16 @@ Emitter emit_alloca(Emitter e, string reg, string slate_type) {
     mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
     return emit_line(cur, "  " + reg + " = alloca " + llvm_t);
+}
+
+# Emit a return statement
+
+Emitter emit_return(Emitter e, string value, string value_type, string return_type) {
+    if return_type == "void" {
+        return emit_line(e, "  ret void");
+    }
+    # Coerce the value to the declared return type if needed
+    CoerceResult coerced = coerce_value(e, value, value_type, return_type);
+    string llvm_t = llvm_type(return_type);
+    return emit_line(coerced.emitter, "  ret " + llvm_t + " " + coerced.value);
 }

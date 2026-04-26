@@ -5,17 +5,22 @@ use emitter;
 use emit_types;
 use emit_expr;
 
-# Emit a return statement
+# emit_return has moved to emit_expr — do not redeclare it here.
 
-Emitter emit_return(Emitter e, string value, string slate_type) {
-    if slate_type == "void" {
-        return emit_line(e, "  ret void");
-    }
-    string llvm_t = llvm_type(slate_type);
-    return emit_line(e, "  ret " + llvm_t + " " + value);
+# Emit a variable declaration — alloca + store with type coercion
+# value_type is the actual type of the value being stored
+# slate_type is the declared type of the variable
+
+Emitter emit_var_decl_typed(Emitter e, string name, string slate_type, string value, string value_type) {
+    mutable Emitter cur = e;
+    string slot = "%" + name;
+    cur = emit_alloca(cur, slot, slate_type);
+    CoerceResult coerced = coerce_value(cur, value, value_type, slate_type);
+    cur = emit_store(coerced.emitter, coerced.value, slate_type, slot);
+    return cur;
 }
 
-# Emit a variable declaration — alloca + store
+# Untyped variant — assumes value_type matches slate_type (no coercion)
 
 Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
     mutable Emitter cur = e;
@@ -25,7 +30,14 @@ Emitter emit_var_decl(Emitter e, string name, string slate_type, string value) {
     return cur;
 }
 
-# Emit an assignment — store into existing slot
+# Emit an assignment — store into existing slot with type coercion
+
+Emitter emit_assign_typed(Emitter e, string slot, string slate_type, string value, string value_type) {
+    mutable Emitter cur = e;
+    CoerceResult coerced = coerce_value(cur, value, value_type, slate_type);
+    cur = emit_store(coerced.emitter, coerced.value, slate_type, slot);
+    return cur;
+}
 
 Emitter emit_assign(Emitter e, string slot, string slate_type, string value) {
     mutable Emitter cur = e;
@@ -155,7 +167,7 @@ Emitter emit_fn_footer(Emitter e, string return_type) {
     return cur;
 }
 
-# Emit the LLVM IR file header — target triple and data layout
+# Emit the LLVM IR file header — target triple and runtime declarations
 
 Emitter emit_file_header(Emitter e, string target_triple) {
     mutable Emitter cur = e;
@@ -170,5 +182,35 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @memcpy(ptr, ptr, i64)");
     cur = emit_line(cur, "declare ptr @slate_list_new()");
     cur = emit_line(cur, "declare ptr @slate_add(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_get(ptr, i64)");
+    cur = emit_line(cur, "declare i64 @slate_len(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_set(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare i8 @slate_has(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_table_new()");
+    cur = emit_line(cur, "declare ptr @slate_string_concat(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_string(i64)");
+    cur = emit_line(cur, "declare i64 @slate_int(ptr)");
+    cur = emit_line(cur, "declare double @slate_float(ptr)");
+    cur = emit_line(cur, "declare void @slate_print(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_input()");
+    cur = emit_line(cur, "declare ptr @slate_args(ptr)");
+    cur = emit_line(cur, "declare ptr @bold(ptr)");
+    cur = emit_line(cur, "declare ptr @dim(ptr)");
+    cur = emit_line(cur, "declare ptr @italic(ptr)");
+    cur = emit_line(cur, "declare ptr @underline(ptr)");
+    cur = emit_line(cur, "declare ptr @red(ptr)");
+    cur = emit_line(cur, "declare ptr @green(ptr)");
+    cur = emit_line(cur, "declare ptr @blue(ptr)");
+    cur = emit_line(cur, "declare ptr @yellow(ptr)");
+    cur = emit_line(cur, "declare ptr @orange(ptr)");
+    cur = emit_line(cur, "declare ptr @purple(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_color(ptr)");
+    cur = emit_line(cur, "declare ptr @gray(ptr)");
+    cur = emit_line(cur, "declare ptr @white(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_red(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_green(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_yellow(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_blue(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_slate(ptr)");
     return cur;
 }

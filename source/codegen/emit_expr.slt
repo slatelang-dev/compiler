@@ -141,6 +141,9 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
         if slate_type == "ptr" {
             return emit_line(cur, "  " + reg + " = icmp eq ptr " + left + ", " + right);
         }
+        if right.starts_with("%") {
+            return emit_line(cur, "  " + reg + " = icmp eq ptr " + left + ", " + right);
+        }
         return emit_line(cur, "  " + reg + " = icmp eq i64 " + left + ", " + right);
     }
     if op == "!=" {
@@ -151,6 +154,9 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
             return emit_line(cur, "  " + reg + " = fcmp one double " + left + ", " + right);
         }
         if slate_type == "ptr" {
+            return emit_line(cur, "  " + reg + " = icmp ne ptr " + left + ", " + right);
+        }
+        if right.starts_with("%") {
             return emit_line(cur, "  " + reg + " = icmp ne ptr " + left + ", " + right);
         }
         return emit_line(cur, "  " + reg + " = icmp ne i64 " + left + ", " + right);

@@ -122,7 +122,8 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         if (node.value == "==" or node.value == "!=") {
             mutable string left_type = strip_param_prefix(left.value_type);
             mutable string right_type = strip_param_prefix(right.value_type);
-            if left_type == "ptr" or right_type == "ptr" {
+            if left_type == "ptr" or right_type == "ptr"
+            or left_type == "" or right_type == "" {
                 op_type = "ptr";
             }
         }

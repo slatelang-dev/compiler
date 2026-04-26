@@ -165,6 +165,65 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         EmitResult expr = walk_expr(node, cur, cur_locals, reg);
         return stmt_result(expr.emitter, cur_locals);
     }
+    if node.kind == NodeKind.Match {
+        list(Node) match_children = node.children;
+        EmitResult subject = walk_expr(match_children.get(0), cur, cur_locals, reg);
+        mutable Emitter cur_emitter = subject.emitter;
+        mutable string subject_val = subject.value;
+        mutable string subject_type = subject.value_type;
+        mutable int arm_count = match_children.len() - 1;
+        mutable string exit_label = next_label(cur_emitter);
+        cur_emitter = advance_label(cur_emitter);
+
+        mutable int i = 1;
+        while i <= arm_count {
+            Node arm = match_children.get(i);
+            string pattern_kind = arm.value;
+            Node arm_body = arm.children.get(arm.children.len() - 1);
+            string body_label = next_label(cur_emitter);
+            cur_emitter = advance_label(cur_emitter);
+            mutable string fallthrough_label = exit_label;
+            if i < arm_count {
+                fallthrough_label = next_label(cur_emitter);
+                cur_emitter = advance_label(cur_emitter);
+            }
+
+            if pattern_kind == "else" or pattern_kind == "none" or pattern_kind == "some"
+            or pattern_kind == "ok" or pattern_kind == "error" {
+                cur_emitter = emit_jump(cur_emitter, body_label);
+                cur_emitter = emit_line(cur_emitter, body_label + ":");
+                cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, reg);
+                cur_emitter = emit_jump(cur_emitter, exit_label);
+            } else {
+                Node pattern_expr = arm.children.get(0);
+                EmitResult pattern = walk_expr(pattern_expr, cur_emitter, cur_locals, reg);
+                cur_emitter = pattern.emitter;
+                mutable string cmp_reg = next_reg(cur_emitter);
+                cur_emitter = advance_reg(cur_emitter);
+                if subject_type == "string" or subject_type == "ptr" {
+                    cur_emitter = emit_line(cur_emitter, "  " + cmp_reg + " = call i32 @strcmp(ptr " + subject_val + ", ptr " + pattern.value + ")");
+                    string eq_reg = next_reg(cur_emitter);
+                    cur_emitter = advance_reg(cur_emitter);
+                    cur_emitter = emit_line(cur_emitter, "  " + eq_reg + " = icmp eq i32 " + cmp_reg + ", 0");
+                    cur_emitter = emit_line(cur_emitter, "  br i1 " + eq_reg + ", label %" + body_label + ", label %" + fallthrough_label);
+                } else {
+                    CoerceResult coerced = coerce_value(cur_emitter, pattern.value, pattern.value_type, subject_type);
+                    cur_emitter = coerced.emitter;
+                    cur_emitter = emit_line(cur_emitter, "  " + cmp_reg + " = icmp eq " + llvm_type(subject_type) + " " + subject_val + ", " + coerced.value);
+                    cur_emitter = emit_line(cur_emitter, "  br i1 " + cmp_reg + ", label %" + body_label + ", label %" + fallthrough_label);
+                }
+                cur_emitter = emit_line(cur_emitter, body_label + ":");
+                cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, reg);
+                cur_emitter = emit_jump(cur_emitter, exit_label);
+                if i < arm_count {
+                    cur_emitter = emit_line(cur_emitter, fallthrough_label + ":");
+                }
+            }
+            i += 1;
+        }
+        cur_emitter = emit_line(cur_emitter, exit_label + ":");
+        return stmt_result(cur_emitter, cur_locals);
+    }
     cur = emit_line(cur, "  ; unimplemented stmt");
     return stmt_result(cur, cur_locals);
 }

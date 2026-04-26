@@ -118,6 +118,14 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             if fn_return == "string" { op_type = "string"; }
         }
         if bin_children.get(1).kind == NodeKind.BoolLit { op_type = "bool"; }
+        # For pointer/enum comparisons, use ptr type for == and !=
+        if (node.value == "==" or node.value == "!=") {
+            mutable string left_type = strip_param_prefix(left.value_type);
+            mutable string right_type = strip_param_prefix(right.value_type);
+            if left_type == "ptr" or right_type == "ptr" {
+                op_type = "ptr";
+            }
+        }
         if node.value == "+" and op_type == "string" {
             string result_reg = next_reg(right.emitter);
             cur = advance_reg(right.emitter);

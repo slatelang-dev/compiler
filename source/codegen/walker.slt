@@ -18,13 +18,13 @@ StmtResult stmt_result(Emitter e, table(string, string) locals) {
     return StmtResult(emitter: e, locals: locals);
 }
 
-Emitter walk_block(Node block, Emitter e, table(string, string) locals, string return_type, Registry reg) {
+Emitter walk_block(Node block, Emitter e, table(string, string) locals, string return_type, string break_target, Registry reg) {
     mutable Emitter cur = e;
     mutable table(string, string) cur_locals = locals;
     list(Node) block_children = block.children;
     mutable int i = 0;
     while i < block_children.len() {
-        StmtResult sr = walk_stmt(block_children.get(i), cur, cur_locals, return_type, reg);
+        StmtResult sr = walk_stmt(block_children.get(i), cur, cur_locals, return_type, break_target, reg);
         cur = sr.emitter;
         cur_locals = sr.locals;
         i += 1;
@@ -32,7 +32,7 @@ Emitter walk_block(Node block, Emitter e, table(string, string) locals, string r
     return cur;
 }
 
-StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string return_type, Registry reg) {
+StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string return_type, string break_target, Registry reg) {
     mutable Emitter cur = e;
     mutable table(string, string) cur_locals = locals;
     if node.kind == NodeKind.VarDecl or node.kind == NodeKind.MutableDecl
@@ -124,11 +124,11 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = advance_label(cur);
         cur = emit_if(cur, cond_value, then_label, else_label, merge_label);
         cur = emit_then_block(cur, then_label, merge_label);
-        cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, reg);
+        cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, break_target, reg);
         cur = emit_jump(cur, merge_label);
         cur = emit_else_block(cur, else_label, merge_label);
         if stmt_children.len() > 2 {
-            cur = walk_block(stmt_children.get(2), cur, cur_locals, return_type, reg);
+            cur = walk_block(stmt_children.get(2), cur, cur_locals, return_type, break_target, reg);
         }
         cur = emit_jump(cur, merge_label);
         cur = emit_merge_block(cur, merge_label);
@@ -153,12 +153,12 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
             cond_value = cond_coerced.value;
         }
         cur = emit_while_body(cur_emitter, cond_value, body_label, exit_label);
-        cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, reg);
+        cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, exit_label, reg);
         cur = emit_while_end(cur, cond_label, exit_label);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Block {
-        cur = walk_block(node, cur, cur_locals, return_type, reg);
+        cur = walk_block(node, cur, cur_locals, return_type, break_target, reg);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.Call or node.kind == NodeKind.MethodCall {
@@ -193,7 +193,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
             or pattern_kind == "ok" or pattern_kind == "error" {
                 cur_emitter = emit_jump(cur_emitter, body_label);
                 cur_emitter = emit_line(cur_emitter, body_label + ":");
-                cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, reg);
+                cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, exit_label, reg);
                 string last_out = cur_emitter.output;
                 bool already_terminated = last_out.ends_with("  ret void\n")
                     or last_out.contains("\n  ret ");
@@ -219,7 +219,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                     cur_emitter = emit_line(cur_emitter, "  br i1 " + cmp_reg + ", label %" + body_label + ", label %" + fallthrough_label);
                 }
                 cur_emitter = emit_line(cur_emitter, body_label + ":");
-                cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, reg);
+                cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, exit_label, reg);
                 string last_out = cur_emitter.output;
                 bool already_terminated = last_out.ends_with("  ret void\n")
                     or last_out.contains("\n  ret ");
@@ -236,7 +236,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         return stmt_result(cur_emitter, cur_locals);
     }
     if node.kind == NodeKind.Break {
-        cur = emit_jump(cur, exit_label);
+        cur = emit_jump(cur, break_target);
         return stmt_result(cur, cur_locals);
     }
     cur = emit_line(cur, "  ; unimplemented stmt");
@@ -268,7 +268,7 @@ Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
     }
     cur = set_fn(cur, fn_name);
     cur = emit_fn_header(cur, fn_name, return_type, param_names, param_types);
-    cur = walk_block(body, cur, locals, return_type, reg);
+    cur = walk_block(body, cur, locals, return_type, "", reg);
     cur = emit_fn_footer(cur, return_type);
     cur = emit_line(cur, "");
     return cur;

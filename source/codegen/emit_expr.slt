@@ -35,6 +35,16 @@ struct CoerceResult {
 CoerceResult coerce_value(Emitter e, string val, string actual_type, string expected_type) {
     string actual = strip_param_prefix(actual_type);
     string expected = strip_param_prefix(expected_type);
+    if actual != "int" and actual != "float" and actual != "bool" and actual != "char"
+    and actual != "ptr" and actual != "void" and actual != "string"
+    and actual != "list" and actual != "table" and actual != "option" and actual != "result" {
+        actual = "ptr";
+    }
+    if expected != "int" and expected != "float" and expected != "bool" and expected != "char"
+    and expected != "ptr" and expected != "void" and expected != "string"
+    and expected != "list" and expected != "table" and expected != "option" and expected != "result" {
+        expected = "ptr";
+    }
     if actual == expected {
         return CoerceResult(emitter: e, value: val);
     }

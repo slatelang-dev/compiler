@@ -286,9 +286,16 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         while i < node.children.len() {
             EmitResult item = walk_expr(node.children.get(i), cur, locals, reg);
             cur = item.emitter;
+            string add_arg = item.value;
+            if item.value_type == "int" {
+                string cast_reg = next_reg(cur);
+                cur = advance_reg(cur);
+                cur = emit_line(cur, "  " + cast_reg + " = inttoptr i64 " + add_arg + " to ptr");
+                add_arg = cast_reg;
+            }
             string add_reg = next_reg(cur);
             cur = advance_reg(cur);
-            cur = emit_line(cur, "  " + add_reg + " = call ptr @slate_add(ptr " + acc + ", ptr " + item.value + ")");
+            cur = emit_line(cur, "  " + add_reg + " = call ptr @slate_add(ptr " + acc + ", ptr " + add_arg + ")");
             acc = add_reg;
             i += 1;
         }

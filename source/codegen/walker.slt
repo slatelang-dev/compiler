@@ -128,7 +128,14 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = emit_jump(cur, merge_label);
         cur = emit_else_block(cur, else_label, merge_label);
         if stmt_children.len() > 2 {
-            cur = walk_block(stmt_children.get(2), cur, cur_locals, return_type, break_target, reg);
+            Node else_child = stmt_children.get(2);
+            if else_child.kind == NodeKind.Block {
+                cur = walk_block(else_child, cur, cur_locals, return_type, break_target, reg);
+            } else {
+                StmtResult else_sr = walk_stmt(else_child, cur, cur_locals, return_type, break_target, reg);
+                cur = else_sr.emitter;
+                cur_locals = else_sr.locals;
+            }
         }
         cur = emit_jump(cur, merge_label);
         cur = emit_merge_block(cur, merge_label);
@@ -233,6 +240,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
             i += 1;
         }
         cur_emitter = emit_line(cur_emitter, exit_label + ":");
+        cur_emitter = emit_line(cur_emitter, "  unreachable");
         return stmt_result(cur_emitter, cur_locals);
     }
     if node.kind == NodeKind.Break {

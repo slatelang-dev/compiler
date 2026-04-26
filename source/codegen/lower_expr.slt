@@ -120,10 +120,16 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         if bin_children.get(1).kind == NodeKind.BoolLit { op_type = "bool"; }
         # For pointer/enum comparisons, use ptr type for == and !=
         if (node.value == "==" or node.value == "!=") {
-            mutable string left_type = strip_param_prefix(left.value_type);
-            mutable string right_type = strip_param_prefix(right.value_type);
-            if left_type == "ptr" or right_type == "ptr"
-            or left_type == "" or right_type == "" {
+            mutable string left_norm = strip_param_prefix(left.value_type);
+            mutable string right_norm = strip_param_prefix(right.value_type);
+            bool left_is_prim = left_norm == "int" or left_norm == "float" or left_norm == "bool"
+                or left_norm == "char" or left_norm == "string" or left_norm == "list"
+                or left_norm == "table" or left_norm == "option" or left_norm == "result" or left_norm == "void";
+            bool right_is_prim = right_norm == "int" or right_norm == "float" or right_norm == "bool"
+                or right_norm == "char" or right_norm == "string" or right_norm == "list"
+                or right_norm == "table" or right_norm == "option" or right_norm == "result" or right_norm == "void";
+            if left_norm == "ptr" or right_norm == "ptr"
+            or left_is_prim == false or right_is_prim == false {
                 op_type = "ptr";
             }
         }

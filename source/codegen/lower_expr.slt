@@ -239,15 +239,10 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         return make_result_typed(cur, result_reg, method_return_type);
     }
     if node.kind == NodeKind.FieldAccess {
-        EmitResult receiver = walk_expr(node.children.get(0), e, locals, reg);
         string field_name = node.value;
-        string struct_type = "unknown";
         string receiver_name = "";
         if node.children.get(0).kind == NodeKind.Ident {
             receiver_name = node.children.get(0).value;
-            if locals.has(node.children.get(0).value) {
-                struct_type = locals.get(node.children.get(0).value);
-            }
         }
 
         bool is_enum_access = receiver_name.len() > 0
@@ -256,24 +251,30 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         if is_enum_access {
             int variant_idx = lookup_enum_variant(reg, receiver_name, field_name);
             if variant_idx >= 0 {
-                return make_result_typed(receiver.emitter, string(variant_idx), "int");
+                return make_result_typed(e, string(variant_idx), "int");
             }
-            return make_result_typed(receiver.emitter, "0", "int");
         }
 
+        EmitResult receiver = walk_expr(node.children.get(0), e, locals, reg);
+        mutable string struct_type = "unknown";
+        if receiver_name.len() > 0 and locals.has(receiver_name) {
+            struct_type = locals.get(receiver_name);
+        }
+
+        struct_type = strip_param_prefix(struct_type);
         int field_idx = lookup_field_index(reg, struct_type, field_name);
         if field_idx >= 0 {
             string field_type = lookup_field_type(reg, struct_type, field_name);
             string llvm_field_type = llvm_type(field_type);
             string gep_reg = next_reg(receiver.emitter);
-            e = advance_reg(receiver.emitter);
+            mutable Emitter cur = advance_reg(receiver.emitter);
             string gep_instr = "  " + gep_reg + " = getelementptr inbounds %struct." + struct_type + ", ptr ";
             gep_instr = gep_instr + receiver.value + ", i32 0, i32 " + string(field_idx);
-            e = emit_line(e, gep_instr);
-            string load_reg = next_reg(e);
-            e = advance_reg(e);
-            e = emit_line(e, "  " + load_reg + " = load " + llvm_field_type + ", ptr " + gep_reg);
-            return make_result_typed(e, load_reg, field_type);
+            cur = emit_line(cur, gep_instr);
+            string load_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + load_reg + " = load " + llvm_field_type + ", ptr " + gep_reg);
+            return make_result_typed(cur, load_reg, field_type);
         }
         return make_result_typed(receiver.emitter, receiver.value, struct_type);
     }

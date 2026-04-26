@@ -41,18 +41,27 @@ CoerceResult coerce_value(Emitter e, string val, string actual_type, string expe
     # ptr -> int: ptrtoint
     if expected == "int" and actual == "ptr" {
         mutable Emitter cur = e;
-        string reg = next_reg(cur);
-        cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = ptrtoint ptr " + val + " to i64");
-        return CoerceResult(emitter: cur, value: reg);
+        if val == "null" {
+            return CoerceResult(emitter: cur, value: "0");
+        }
+        if val.starts_with("%") or val.starts_with("@") {
+            string reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + reg + " = ptrtoint ptr " + val + " to i64");
+            return CoerceResult(emitter: cur, value: reg);
+        }
+        return CoerceResult(emitter: cur, value: val);
     }
     # int -> ptr: inttoptr
     if expected == "ptr" and actual == "int" {
         mutable Emitter cur = e;
-        string reg = next_reg(cur);
-        cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = inttoptr i64 " + val + " to ptr");
-        return CoerceResult(emitter: cur, value: reg);
+        if val.starts_with("%") or val.starts_with("@") {
+            string reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + reg + " = inttoptr i64 " + val + " to ptr");
+            return CoerceResult(emitter: cur, value: reg);
+        }
+        return CoerceResult(emitter: cur, value: "inttoptr (i64 " + val + " to ptr)");
     }
     # ptr -> bool: ptrtoint + trunc
     if expected == "bool" and actual == "ptr" {

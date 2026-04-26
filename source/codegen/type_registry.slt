@@ -14,16 +14,19 @@ struct Registry {
     table(string, string) fn_returns;
     table(string, string) field_types;
     table(string, string) field_indices;
+    table(string, string) enum_variants;
 }
 
 Registry new_registry() {
     mutable table(string, string) fn_ret = empty;
     mutable table(string, string) field_typ = empty;
     mutable table(string, string) field_idx = empty;
+    mutable table(string, string) enum_vars = empty;
     return Registry(
         fn_returns: fn_ret,
         field_types: field_typ,
-        field_indices: field_idx
+        field_indices: field_idx,
+        enum_variants: enum_vars
     );
 }
 
@@ -32,7 +35,8 @@ Registry register_fn(Registry r, string name, string return_type) {
     return Registry(
         fn_returns: new_fn_returns,
         field_types: r.field_types,
-        field_indices: r.field_indices
+        field_indices: r.field_indices,
+        enum_variants: r.enum_variants
     );
 }
 
@@ -44,8 +48,28 @@ Registry register_field(Registry r, string struct_name, string field_name, strin
     return Registry(
         fn_returns: r.fn_returns,
         field_types: new_field_types,
-        field_indices: new_field_indices
+        field_indices: new_field_indices,
+        enum_variants: r.enum_variants
     );
+}
+
+Registry register_enum_variant(Registry r, string enum_name, string variant_name, int index) {
+    string key = enum_name + "." + variant_name;
+    table(string, string) new_variants = r.enum_variants.set(key, string(index));
+    return Registry(
+        fn_returns: r.fn_returns,
+        field_types: r.field_types,
+        field_indices: r.field_indices,
+        enum_variants: new_variants
+    );
+}
+
+int lookup_enum_variant(Registry r, string enum_name, string variant_name) {
+    string key = enum_name + "." + variant_name;
+    if r.enum_variants.has(key) {
+        return int(r.enum_variants.get(key));
+    }
+    return -1;
 }
 
 string lookup_fn_return(Registry r, string name) {

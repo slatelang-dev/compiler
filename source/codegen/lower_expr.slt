@@ -242,11 +242,25 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
         EmitResult receiver = walk_expr(node.children.get(0), e, locals, reg);
         string field_name = node.value;
         string struct_type = "unknown";
+        string receiver_name = "";
         if node.children.get(0).kind == NodeKind.Ident {
+            receiver_name = node.children.get(0).value;
             if locals.has(node.children.get(0).value) {
                 struct_type = locals.get(node.children.get(0).value);
             }
         }
+
+        bool is_enum_access = receiver_name.len() > 0
+            and locals.has(receiver_name) == false
+            and locals.has(receiver_name + "_slot") == false;
+        if is_enum_access {
+            int variant_idx = lookup_enum_variant(reg, receiver_name, field_name);
+            if variant_idx >= 0 {
+                return make_result_typed(receiver.emitter, string(variant_idx), "int");
+            }
+            return make_result_typed(receiver.emitter, "0", "int");
+        }
+
         int field_idx = lookup_field_index(reg, struct_type, field_name);
         if field_idx >= 0 {
             string field_type = lookup_field_type(reg, struct_type, field_name);

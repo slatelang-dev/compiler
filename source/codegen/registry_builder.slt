@@ -28,6 +28,16 @@ Registry register_program(Registry r, Node program) {
         if decl.kind == NodeKind.StructDecl {
             reg = register_struct(reg, decl);
         }
+        if decl.kind == NodeKind.EnumDecl {
+            mutable int variant_idx = 0;
+            mutable int vi = 0;
+            while vi < decl.children.len() {
+                Node variant = decl.children.get(vi);
+                reg = register_enum_variant(reg, decl.value, variant.value, variant_idx);
+                variant_idx = variant_idx + 1;
+                vi = vi + 1;
+            }
+        }
         i += 1;
     }
     return reg;

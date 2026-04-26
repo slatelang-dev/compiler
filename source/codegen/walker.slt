@@ -171,6 +171,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         mutable Emitter cur_emitter = subject.emitter;
         mutable string subject_val = subject.value;
         mutable string subject_type = subject.value_type;
+        subject_type = strip_param_prefix(subject_type);
         mutable int arm_count = match_children.len() - 1;
         mutable string exit_label = next_label(cur_emitter);
         cur_emitter = advance_label(cur_emitter);

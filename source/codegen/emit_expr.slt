@@ -144,6 +144,12 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
         if right.starts_with("%") {
             return emit_line(cur, "  " + reg + " = icmp eq ptr " + left + ", " + right);
         }
+        if left.starts_with("%") and right.starts_with("%") == false and right.starts_with("@") == false {
+            cur = emit_line(cur, "  " + reg + " = ptrtoint ptr " + left + " to i64");
+            string cmp_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            return emit_line(cur, "  " + cmp_reg + " = icmp eq i64 " + reg + ", " + right);
+        }
         return emit_line(cur, "  " + reg + " = icmp eq i64 " + left + ", " + right);
     }
     if op == "!=" {
@@ -158,6 +164,12 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
         }
         if right.starts_with("%") {
             return emit_line(cur, "  " + reg + " = icmp ne ptr " + left + ", " + right);
+        }
+        if left.starts_with("%") and right.starts_with("%") == false and right.starts_with("@") == false {
+            cur = emit_line(cur, "  " + reg + " = ptrtoint ptr " + left + " to i64");
+            string cmp_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            return emit_line(cur, "  " + cmp_reg + " = icmp ne i64 " + reg + ", " + right);
         }
         return emit_line(cur, "  " + reg + " = icmp ne i64 " + left + ", " + right);
     }

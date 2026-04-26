@@ -194,7 +194,12 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 cur_emitter = emit_jump(cur_emitter, body_label);
                 cur_emitter = emit_line(cur_emitter, body_label + ":");
                 cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, reg);
-                cur_emitter = emit_jump(cur_emitter, exit_label);
+                string last_out = cur_emitter.output;
+                bool already_terminated = last_out.ends_with("  ret void\n")
+                    or last_out.contains("\n  ret ");
+                if already_terminated == false {
+                    cur_emitter = emit_jump(cur_emitter, exit_label);
+                }
             } else {
                 Node pattern_expr = arm.children.get(0);
                 EmitResult pattern = walk_expr(pattern_expr, cur_emitter, cur_locals, reg);
@@ -215,7 +220,12 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 }
                 cur_emitter = emit_line(cur_emitter, body_label + ":");
                 cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, reg);
-                cur_emitter = emit_jump(cur_emitter, exit_label);
+                string last_out = cur_emitter.output;
+                bool already_terminated = last_out.ends_with("  ret void\n")
+                    or last_out.contains("\n  ret ");
+                if already_terminated == false {
+                    cur_emitter = emit_jump(cur_emitter, exit_label);
+                }
                 if i < arm_count {
                     cur_emitter = emit_line(cur_emitter, fallthrough_label + ":");
                 }
@@ -224,6 +234,10 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         }
         cur_emitter = emit_line(cur_emitter, exit_label + ":");
         return stmt_result(cur_emitter, cur_locals);
+    }
+    if node.kind == NodeKind.Break {
+        cur = emit_jump(cur, exit_label);
+        return stmt_result(cur, cur_locals);
     }
     cur = emit_line(cur, "  ; unimplemented stmt");
     return stmt_result(cur, cur_locals);

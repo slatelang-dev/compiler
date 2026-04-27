@@ -220,6 +220,8 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare i8 @slate_ends_with(ptr, ptr)");
     cur = emit_line(cur, "declare ptr @slate_replace(ptr, ptr, ptr)");
     cur = emit_line(cur, "declare ptr @slate_split(ptr, ptr)");
+    cur = emit_line(cur, "declare i1 @exists(ptr)");
+    cur = emit_line(cur, "declare i1 @file(ptr)");
     cur = emit_line(cur, "declare ptr @collect_module_asts(ptr, ptr, ptr)");
     cur = emit_line(cur, "declare ptr @walk_all(ptr, ptr)");
     return cur;

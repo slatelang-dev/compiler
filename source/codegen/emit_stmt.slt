@@ -214,23 +214,5 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @slate_print(ptr)");
     cur = emit_line(cur, "declare ptr @slate_input()");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
-    cur = emit_line(cur, "declare ptr @bold(ptr)");
-    cur = emit_line(cur, "declare ptr @dim(ptr)");
-    cur = emit_line(cur, "declare ptr @italic(ptr)");
-    cur = emit_line(cur, "declare ptr @underline(ptr)");
-    cur = emit_line(cur, "declare ptr @red(ptr)");
-    cur = emit_line(cur, "declare ptr @green(ptr)");
-    cur = emit_line(cur, "declare ptr @blue(ptr)");
-    cur = emit_line(cur, "declare ptr @yellow(ptr)");
-    cur = emit_line(cur, "declare ptr @orange(ptr)");
-    cur = emit_line(cur, "declare ptr @purple(ptr)");
-    cur = emit_line(cur, "declare ptr @slate_color(ptr)");
-    cur = emit_line(cur, "declare ptr @gray(ptr)");
-    cur = emit_line(cur, "declare ptr @white(ptr)");
-    cur = emit_line(cur, "declare ptr @bold_red(ptr)");
-    cur = emit_line(cur, "declare ptr @bold_green(ptr)");
-    cur = emit_line(cur, "declare ptr @bold_yellow(ptr)");
-    cur = emit_line(cur, "declare ptr @bold_blue(ptr)");
-    cur = emit_line(cur, "declare ptr @bold_slate(ptr)");
     return cur;
 }

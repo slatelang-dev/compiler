@@ -215,5 +215,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @slate_input()");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
     cur = emit_line(cur, "declare ptr @slate_chars(ptr)");
+    cur = emit_line(cur, "declare ptr @collect_module_asts(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @walk_all(ptr, ptr)");
     return cur;
 }

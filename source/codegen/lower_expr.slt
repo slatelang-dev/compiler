@@ -134,6 +134,11 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
                 op_type = "ptr";
             }
         }
+        if node.value == "+" and op_type == "int" {
+            if left.value_type == "ptr" or right.value_type == "ptr" {
+                op_type = "string";
+            }
+        }
         if node.value == "+" and op_type == "string" {
             string result_reg = next_reg(right.emitter);
             cur = advance_reg(right.emitter);

@@ -227,6 +227,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @slate_file_write(ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_file_exists(ptr)");
     cur = emit_line(cur, "declare ptr @slate_home()");
+    cur = emit_line(cur, "declare i1 @project_valid(ptr)");
     cur = emit_line(cur, "declare i1 @exists(ptr)");
     cur = emit_line(cur, "declare i1 @file(ptr)");
     cur = emit_line(cur, "declare ptr @home()");

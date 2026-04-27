@@ -304,24 +304,21 @@ EmitResult call_kind(Node node, Emitter e, table(string, string) locals, Registr
         return emit_primitive_call(cur, node.value, arg_values);
     }
     if node.value == "int" {
-        EmitResult arg = walk_expr(call_children.get(0), cur, locals, reg);
-        string cast_reg = next_reg(arg.emitter);
-        cur = advance_reg(arg.emitter);
-        cur = emit_line(cur, "  " + cast_reg + " = ptrtoint ptr " + arg.value + " to i64");
+        string cast_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + cast_reg + " = ptrtoint ptr " + arg_values.get(0) + " to i64");
         return make_result_typed(cur, cast_reg, "int");
     }
     if node.value == "float" {
-        EmitResult arg = walk_expr(call_children.get(0), cur, locals, reg);
-        string cast_reg = next_reg(arg.emitter);
-        cur = advance_reg(arg.emitter);
-        cur = emit_line(cur, "  " + cast_reg + " = sitofp i64 " + arg.value + " to double");
+        string cast_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + cast_reg + " = sitofp i64 " + arg_values.get(0) + " to double");
         return make_result_typed(cur, cast_reg, "float");
     }
     if node.value == "bool" {
-        EmitResult arg = walk_expr(call_children.get(0), cur, locals, reg);
-        string cast_reg = next_reg(arg.emitter);
-        cur = advance_reg(arg.emitter);
-        cur = emit_line(cur, "  " + cast_reg + " = trunc i64 " + arg.value + " to i1");
+        string cast_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + cast_reg + " = trunc i64 " + arg_values.get(0) + " to i1");
         return make_result_typed(cur, cast_reg, "bool");
     }
     string call_name = remap_call_name(node.value);

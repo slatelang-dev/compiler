@@ -158,6 +158,49 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
             cur = emit_line(cur, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
             return EmitResult(emitter: cur, value: ne_reg, value_type: "bool");
         }
+        if node.value == "==" or node.value == "!=" {
+            string cmp_reg = next_reg(right.emitter);
+            cur = advance_reg(right.emitter);
+            string left_norm = strip_param_prefix(left.value_type);
+            string right_norm = strip_param_prefix(right.value_type);
+            bool left_is_prim = left_norm == "int" or left_norm == "float" or left_norm == "bool"
+                or left_norm == "char" or left_norm == "void";
+            bool right_is_prim = right_norm == "int" or right_norm == "float" or right_norm == "bool"
+                or right_norm == "char" or right_norm == "void";
+            mutable string lv = left.value;
+            mutable string rv = right.value;
+            mutable string cmp_instr = "";
+            if left_norm == "float" or right_norm == "float" {
+                if node.value == "==" { cmp_instr = "fcmp oeq double"; }
+                else { cmp_instr = "fcmp one double"; }
+            } else if left_norm == "bool" and right_norm == "bool" {
+                if node.value == "==" { cmp_instr = "icmp eq i1"; }
+                else { cmp_instr = "icmp ne i1"; }
+            } else if left_is_prim and right_is_prim {
+                if node.value == "==" { cmp_instr = "icmp eq i64"; }
+                else { cmp_instr = "icmp ne i64"; }
+            } else if left_is_prim == false and right_is_prim == false {
+                if node.value == "==" { cmp_instr = "icmp eq ptr"; }
+                else { cmp_instr = "icmp ne ptr"; }
+            } else {
+                if left_is_prim == false {
+                    string unbox = next_reg(cur);
+                    cur = advance_reg(cur);
+                    cur = emit_line(cur, "  " + unbox + " = ptrtoint ptr " + lv + " to i64");
+                    lv = unbox;
+                }
+                if right_is_prim == false {
+                    string unbox = next_reg(cur);
+                    cur = advance_reg(cur);
+                    cur = emit_line(cur, "  " + unbox + " = ptrtoint ptr " + rv + " to i64");
+                    rv = unbox;
+                }
+                if node.value == "==" { cmp_instr = "icmp eq i64"; }
+                else { cmp_instr = "icmp ne i64"; }
+            }
+            cur = emit_line(cur, "  " + cmp_reg + " = " + cmp_instr + " " + lv + ", " + rv);
+            return make_result_typed(cur, cmp_reg, "bool");
+        }
         string result_reg = next_reg(right.emitter);
         cur = emit_binary_op(right.emitter, node.value, left.value, right.value, op_type);
         mutable string result_type = op_type;

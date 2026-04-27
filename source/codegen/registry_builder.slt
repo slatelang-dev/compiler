@@ -216,6 +216,15 @@ Registry seed_c_runtime(Registry r) {
     reg = register_field(reg, "LoadedModule", "ast", "ptr", 3);
     reg = register_field(reg, "LoadedModule", "loaded", "bool", 4);
     reg = register_field(reg, "LoadedModule", "load_error", "string", 5);
+    reg = register_field(reg, "Token", "kind", "int", 0);
+    reg = register_field(reg, "Token", "value", "string", 1);
+    reg = register_field(reg, "Token", "line", "int", 2);
+    reg = register_field(reg, "Token", "col", "int", 3);
+    reg = register_field(reg, "Node", "kind", "int", 0);
+    reg = register_field(reg, "Node", "value", "string", 1);
+    reg = register_field(reg, "Node", "line", "int", 2);
+    reg = register_field(reg, "Node", "col", "int", 3);
+    reg = register_field(reg, "Node", "children", "list", 4);
     reg = register_field(reg, "Project", "name", "string", 0);
     reg = register_field(reg, "Project", "version", "string", 1);
     reg = register_field(reg, "Project", "description", "string", 2);

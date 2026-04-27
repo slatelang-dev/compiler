@@ -206,5 +206,9 @@ string remap_method_name(string name) {
     if name == "read" { return "slate_file_read"; }
     if name == "write" { return "slate_file_write"; }
     if name == "home" { return "slate_home"; }
+    if name == "run" { return "run"; }
+    if name == "read" { return "read_file"; }
+    if name == "write" { return "write_file"; }
+    if name == "exists" { return "file_exists"; }
     return name;
 }

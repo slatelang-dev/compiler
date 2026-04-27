@@ -229,6 +229,13 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @slate_home()");
     cur = emit_line(cur, "declare i1 @project_valid(ptr)");
     cur = emit_line(cur, "declare void @run(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @file(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_file_read(ptr)");
+    cur = emit_line(cur, "declare void @slate_file_write(ptr, ptr)");
+    cur = emit_line(cur, "declare i8 @file_exists_fn(ptr)");
+    cur = emit_line(cur, "declare ptr @read_n(i64)");
+    cur = emit_line(cur, "declare ptr @read_line()");
+    cur = emit_line(cur, "declare void @write_stdout(ptr)");
     cur = emit_line(cur, "declare i1 @exists(ptr)");
     cur = emit_line(cur, "declare i1 @file(ptr)");
     cur = emit_line(cur, "declare ptr @home()");

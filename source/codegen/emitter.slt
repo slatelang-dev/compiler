@@ -195,5 +195,10 @@ string remap_method_name(string name) {
     if name == "values" { return "slate_values"; }
     if name == "args" { return "slate_args"; }
     if name == "chars" { return "slate_chars"; }
+    if name == "contains" { return "slate_contains"; }
+    if name == "starts_with" { return "slate_starts_with"; }
+    if name == "ends_with" { return "slate_ends_with"; }
+    if name == "replace" { return "slate_replace"; }
+    if name == "split" { return "slate_split"; }
     return name;
 }

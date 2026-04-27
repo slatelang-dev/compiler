@@ -231,6 +231,26 @@ EmitResult walk_expr(Node node, Emitter e, table(string, string) locals, Registr
     if node.kind == NodeKind.Call {
         list(Node) call_children = node.children;
         mutable Emitter cur = e;
+        # Check if this is a struct constructor call
+        bool is_struct = registry_has_struct(reg, node.value);
+        if is_struct {
+            string size_reg = next_reg(cur);
+            cur = advance_reg(cur);
+            cur = emit_line(cur, "  " + size_reg + " = call ptr @malloc(i64 64)");
+            mutable int fi = 0;
+            while fi < call_children.len() {
+                EmitResult field_val = walk_expr(call_children.get(fi), cur, locals, reg);
+                cur = field_val.emitter;
+                string field_type = lookup_field_type_by_index(reg, node.value, fi);
+                string llvm_field_type = llvm_type(field_type);
+                string gep_reg = next_reg(cur);
+                cur = advance_reg(cur);
+                cur = emit_line(cur, "  " + gep_reg + " = getelementptr inbounds %struct." + node.value + ", ptr " + size_reg + ", i32 0, i32 " + string(fi));
+                cur = emit_line(cur, "  store " + llvm_field_type + " " + field_val.value + ", ptr " + gep_reg);
+                fi += 1;
+            }
+            return make_result_typed(cur, size_reg, node.value);
+        }
         mutable list(string) arg_values = empty;
         mutable list(string) arg_types = empty;
         mutable int i = 0;

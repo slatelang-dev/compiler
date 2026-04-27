@@ -15,6 +15,7 @@ struct Registry {
     table(string, string) field_types;
     table(string, string) field_indices;
     table(string, string) enum_variants;
+    table(string, string) struct_names;
 }
 
 Registry new_registry() {
@@ -22,11 +23,13 @@ Registry new_registry() {
     mutable table(string, string) field_typ = empty;
     mutable table(string, string) field_idx = empty;
     mutable table(string, string) enum_vars = empty;
+    mutable table(string, string) structs = empty;
     return Registry(
         fn_returns: fn_ret,
         field_types: field_typ,
         field_indices: field_idx,
-        enum_variants: enum_vars
+        enum_variants: enum_vars,
+        struct_names: structs
     );
 }
 
@@ -36,7 +39,8 @@ Registry register_fn(Registry r, string name, string return_type) {
         fn_returns: new_fn_returns,
         field_types: r.field_types,
         field_indices: r.field_indices,
-        enum_variants: r.enum_variants
+        enum_variants: r.enum_variants,
+        struct_names: r.struct_names
     );
 }
 
@@ -49,7 +53,8 @@ Registry register_field(Registry r, string struct_name, string field_name, strin
         fn_returns: r.fn_returns,
         field_types: new_field_types,
         field_indices: new_field_indices,
-        enum_variants: r.enum_variants
+        enum_variants: r.enum_variants,
+        struct_names: r.struct_names
     );
 }
 
@@ -60,7 +65,8 @@ Registry register_enum_variant(Registry r, string enum_name, string variant_name
         fn_returns: r.fn_returns,
         field_types: r.field_types,
         field_indices: r.field_indices,
-        enum_variants: new_variants
+        enum_variants: new_variants,
+        struct_names: r.struct_names
     );
 }
 
@@ -93,4 +99,16 @@ int lookup_field_index(Registry r, string struct_name, string field_name) {
         return int(r.field_indices.get(key));
     }
     return -1;
+}
+
+bool registry_has_struct(Registry r, string name) {
+    return r.struct_names.has(name);
+}
+
+string lookup_field_type_by_index(Registry r, string struct_name, int index) {
+    string key = struct_name + "." + string(index);
+    if r.field_types.has(key) {
+        return r.field_types.get(key);
+    }
+    return "ptr";
 }

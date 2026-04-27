@@ -198,6 +198,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "project_valid", "bool");
     reg = register_fn(reg, "project_display", "ptr");
     reg = register_fn(reg, "collect_module_asts", "ptr");
+    reg = register_fn(reg, "walk_all", "ptr");
     # Analysis functions
     reg = register_fn(reg, "analyse", "ptr");
     reg = register_fn(reg, "analyse_bare", "ptr");

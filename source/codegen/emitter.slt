@@ -200,5 +200,7 @@ string remap_method_name(string name) {
     if name == "ends_with" { return "slate_ends_with"; }
     if name == "replace" { return "slate_replace"; }
     if name == "split" { return "slate_split"; }
+    if name == "or" { return "slate_or"; }
+    if name == "exists" { return "slate_exists"; }
     return name;
 }

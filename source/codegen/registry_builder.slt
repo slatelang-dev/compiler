@@ -133,6 +133,8 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_ends_with", "bool");
     reg = register_fn(reg, "slate_replace", "string");
     reg = register_fn(reg, "slate_split", "list");
+    reg = register_fn(reg, "slate_or", "ptr");
+    reg = register_fn(reg, "slate_exists", "bool");
     reg = register_fn(reg, "slate_list_new", "ptr");
     reg = register_fn(reg, "slate_list_get", "ptr");
     reg = register_fn(reg, "slate_list_len", "int");

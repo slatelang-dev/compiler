@@ -214,5 +214,6 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @slate_print(ptr)");
     cur = emit_line(cur, "declare ptr @slate_input()");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_chars(ptr)");
     return cur;
 }

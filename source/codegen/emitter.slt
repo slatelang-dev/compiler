@@ -194,5 +194,6 @@ string remap_method_name(string name) {
     if name == "keys" { return "slate_keys"; }
     if name == "values" { return "slate_values"; }
     if name == "args" { return "slate_args"; }
+    if name == "chars" { return "slate_chars"; }
     return name;
 }

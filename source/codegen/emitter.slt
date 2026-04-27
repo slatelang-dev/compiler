@@ -202,5 +202,9 @@ string remap_method_name(string name) {
     if name == "split" { return "slate_split"; }
     if name == "or" { return "slate_or"; }
     if name == "exists" { return "slate_exists"; }
+    if name == "path" { return "slate_file_path"; }
+    if name == "read" { return "slate_file_read"; }
+    if name == "write" { return "slate_file_write"; }
+    if name == "home" { return "slate_home"; }
     return name;
 }

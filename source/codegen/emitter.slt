@@ -10,8 +10,8 @@ module emitter;
 # errors: any codegen errors encountered
 
 struct Emitter {
-    string output;
-    string globals;
+    list(string) lines;
+    list(string) global_lines;
     int reg;
     int label;
     int str_count;
@@ -27,8 +27,8 @@ struct EscapeResult {
 
 Emitter new_emitter() {
     return Emitter(
-        output: "",
-        globals: "",
+        lines: empty,
+        global_lines: empty,
         reg: 0,
         label: 0,
         str_count: 0,
@@ -45,8 +45,8 @@ Emitter emit_line(Emitter e, string line) {
         return e;
     }
     return Emitter(
-        output: e.output + line + "\n",
-        globals: e.globals,
+        lines: e.lines.add(line),
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label,
         str_count: e.str_count,
@@ -58,8 +58,8 @@ Emitter emit_line(Emitter e, string line) {
 
 Emitter emit_terminator(Emitter e, string line) {
     return Emitter(
-        output: e.output + line + "\n",
-        globals: e.globals,
+        lines: e.lines.add(line),
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label,
         str_count: e.str_count,
@@ -71,8 +71,8 @@ Emitter emit_terminator(Emitter e, string line) {
 
 Emitter emit_raw(Emitter e, string line) {
     return Emitter(
-        output: e.output + line + "\n",
-        globals: e.globals,
+        lines: e.lines.add(line),
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label,
         str_count: e.str_count,
@@ -87,8 +87,8 @@ Emitter emit_label(Emitter e, string label) {
         return emit_raw(e, label + ":");
     }
     return Emitter(
-        output: e.output + label + ":\n",
-        globals: e.globals,
+        lines: e.lines.add(label + ":"),
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label,
         str_count: e.str_count,
@@ -98,16 +98,14 @@ Emitter emit_label(Emitter e, string label) {
     );
 }
 
-# Allocate a new SSA register — returns the name
-
 string next_reg(Emitter e) {
     return "%r" + string(e.reg);
 }
 
 Emitter advance_reg(Emitter e) {
     return Emitter(
-        output: e.output,
-        globals: e.globals,
+        lines: e.lines,
+        global_lines: e.global_lines,
         reg: e.reg + 1,
         label: e.label,
         str_count: e.str_count,
@@ -117,16 +115,14 @@ Emitter advance_reg(Emitter e) {
     );
 }
 
-# Allocate a new label
-
 string next_label(Emitter e) {
     return "label" + string(e.label);
 }
 
 Emitter advance_label(Emitter e) {
     return Emitter(
-        output: e.output,
-        globals: e.globals,
+        lines: e.lines,
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label + 1,
         str_count: e.str_count,
@@ -136,12 +132,10 @@ Emitter advance_label(Emitter e) {
     );
 }
 
-# Set current function name
-
 Emitter set_fn(Emitter e, string name) {
     return Emitter(
-        output: e.output,
-        globals: e.globals,
+        lines: e.lines,
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label,
         str_count: e.str_count,
@@ -153,10 +147,16 @@ Emitter set_fn(Emitter e, string name) {
 
 Emitter reset_fn_state(Emitter e) {
     return Emitter(
-        output: e.output,
-        globals: e.globals,
+        lines: e.lines,
+        global_lines: e.global_lines,
         reg: 0,
         label: 0,
+        str_count: e.str_count,
+        fn_name: e.fn_name,
+        errors: e.errors,
+        terminated: false
+    );
+}
         str_count: e.str_count,
         fn_name: e.fn_name,
         errors: e.errors,
@@ -196,10 +196,10 @@ Emitter advance_str(Emitter e, string value) {
     EscapeResult esc = escape_ll_string(value);
     string name = "@str" + string(e.str_count);
     int len = esc.byte_count + 1;
-    string global = name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + esc.text + "\\00\"\n";
+    string global = name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + esc.text + "\\00\"";
     return Emitter(
-        output: e.output,
-        globals: e.globals + global,
+        lines: e.lines,
+        global_lines: e.global_lines.add(global),
         reg: e.reg,
         label: e.label,
         str_count: e.str_count + 1,
@@ -209,37 +209,33 @@ Emitter advance_str(Emitter e, string value) {
     );
 }
 
-# Record a codegen error
-
 Emitter emit_error(Emitter e, string message) {
     return Emitter(
-        output: e.output,
-        globals: e.globals,
+        lines: e.lines,
+        global_lines: e.global_lines,
         reg: e.reg,
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
+        errors: e.errors.add(message),
         terminated: e.terminated
-    );
-}
-
-# Record a codegen error
-
-Emitter emit_error(Emitter e, string message) {
-    return Emitter(
-        output: e.output,
-        globals: e.globals,
-        reg: e.reg,
-        label: e.label,
-        str_count: e.str_count,
-        fn_name: e.fn_name,
-        errors: e.errors.add(message)
-    );
+);
 }
 
 bool emitter_has_errors(Emitter e) {
     return e.errors.len() > 0;
+}
+
+# Join lines into a single string
+
+string join_lines(list(string) lines) {
+    mutable string result = "";
+    mutable int i = 0;
+    while i < lines.len() {
+        result = result + lines.get(i) + "\n";
+        i += 1;
+    }
+    return result;
 }
 
 # Remap method names to runtime functions

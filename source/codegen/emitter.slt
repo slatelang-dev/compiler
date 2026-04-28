@@ -157,12 +157,6 @@ Emitter reset_fn_state(Emitter e) {
         terminated: false
     );
 }
-        str_count: e.str_count,
-        fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: false
-    );
-}
 
 # Get string global name
 
@@ -219,7 +213,7 @@ Emitter emit_error(Emitter e, string message) {
         fn_name: e.fn_name,
         errors: e.errors.add(message),
         terminated: e.terminated
-);
+    );
 }
 
 bool emitter_has_errors(Emitter e) {

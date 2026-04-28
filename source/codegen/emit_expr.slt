@@ -258,10 +258,10 @@ Emitter emit_alloca(Emitter e, string reg, string slate_type) {
 
 Emitter emit_return(Emitter e, string value, string value_type, string return_type) {
     if return_type == "void" {
-        return emit_line(e, "  ret void");
+        return emit_terminator(e, "  ret void");
     }
     # Coerce the value to the declared return type if needed
     CoerceResult coerced = coerce_value(e, value, value_type, return_type);
     string llvm_t = llvm_type(return_type);
-    return emit_line(coerced.emitter, "  ret " + llvm_t + " " + coerced.value);
+    return emit_terminator(coerced.emitter, "  ret " + llvm_t + " " + coerced.value);
 }

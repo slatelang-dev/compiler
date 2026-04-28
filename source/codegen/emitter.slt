@@ -17,6 +17,7 @@ struct Emitter {
     int str_count;
     string fn_name;
     list(string) errors;
+    bool terminated;
 }
 
 struct EscapeResult {
@@ -32,13 +33,17 @@ Emitter new_emitter() {
         label: 0,
         str_count: 0,
         fn_name: "",
-        errors: empty
+        errors: empty,
+        terminated: false
     );
 }
 
 # Append a line to the output buffer
 
 Emitter emit_line(Emitter e, string line) {
+    if e.terminated {
+        return e;
+    }
     return Emitter(
         output: e.output + line + "\n",
         globals: e.globals,
@@ -46,7 +51,34 @@ Emitter emit_line(Emitter e, string line) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors
+        errors: e.errors,
+        terminated: false
+    );
+}
+
+Emitter emit_terminator(Emitter e, string line) {
+    return Emitter(
+        output: e.output + line + "\n",
+        globals: e.globals,
+        reg: e.reg,
+        label: e.label,
+        str_count: e.str_count,
+        fn_name: e.fn_name,
+        errors: e.errors,
+        terminated: true
+    );
+}
+
+Emitter emit_label(Emitter e, string label) {
+    return Emitter(
+        output: e.output + label + ":\n",
+        globals: e.globals,
+        reg: e.reg,
+        label: e.label,
+        str_count: e.str_count,
+        fn_name: e.fn_name,
+        errors: e.errors,
+        terminated: false
     );
 }
 
@@ -64,7 +96,8 @@ Emitter advance_reg(Emitter e) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors
+        errors: e.errors,
+        terminated: e.terminated
     );
 }
 
@@ -82,7 +115,8 @@ Emitter advance_label(Emitter e) {
         label: e.label + 1,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors
+        errors: e.errors,
+        terminated: e.terminated
     );
 }
 
@@ -96,7 +130,8 @@ Emitter set_fn(Emitter e, string name) {
         label: e.label,
         str_count: e.str_count,
         fn_name: name,
-        errors: e.errors
+        errors: e.errors,
+        terminated: false
     );
 }
 
@@ -108,7 +143,8 @@ Emitter reset_fn_state(Emitter e) {
         label: 0,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors
+        errors: e.errors,
+        terminated: false
     );
 }
 
@@ -152,7 +188,23 @@ Emitter advance_str(Emitter e, string value) {
         label: e.label,
         str_count: e.str_count + 1,
         fn_name: e.fn_name,
-        errors: e.errors
+        errors: e.errors,
+        terminated: e.terminated
+    );
+}
+
+# Record a codegen error
+
+Emitter emit_error(Emitter e, string message) {
+    return Emitter(
+        output: e.output,
+        globals: e.globals,
+        reg: e.reg,
+        label: e.label,
+        str_count: e.str_count,
+        fn_name: e.fn_name,
+        errors: e.errors,
+        terminated: e.terminated
     );
 }
 

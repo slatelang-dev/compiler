@@ -55,24 +55,24 @@ Emitter emit_if(Emitter e, string cond_reg, string then_label, string else_label
 
 Emitter emit_then_block(Emitter e, string then_label, string merge_label) {
     mutable Emitter cur = e;
-    cur = emit_line(cur, then_label + ":");
+    cur = emit_label(cur, then_label);
     return cur;
 }
 
 Emitter emit_else_block(Emitter e, string else_label, string merge_label) {
     mutable Emitter cur = e;
-    cur = emit_line(cur, else_label + ":");
+    cur = emit_label(cur, else_label);
     return cur;
 }
 
 Emitter emit_merge_block(Emitter e, string merge_label) {
     mutable Emitter cur = e;
-    cur = emit_line(cur, merge_label + ":");
+    cur = emit_label(cur, merge_label);
     return cur;
 }
 
 Emitter emit_jump(Emitter e, string label) {
-    return emit_line(e, "  br label %" + label);
+    return emit_terminator(e, "  br label %" + label);
 }
 
 # Emit while loop — condition block, body block, exit block
@@ -80,21 +80,21 @@ Emitter emit_jump(Emitter e, string label) {
 Emitter emit_while_start(Emitter e, string cond_label) {
     mutable Emitter cur = e;
     cur = emit_jump(cur, cond_label);
-    cur = emit_line(cur, cond_label + ":");
+    cur = emit_label(cur, cond_label);
     return cur;
 }
 
 Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
     mutable Emitter cur = e;
     cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
-    cur = emit_line(cur, body_label + ":");
+    cur = emit_label(cur, body_label);
     return cur;
 }
 
 Emitter emit_while_end(Emitter e, string cond_label, string exit_label) {
     mutable Emitter cur = e;
     cur = emit_jump(cur, cond_label);
-    cur = emit_line(cur, exit_label + ":");
+    cur = emit_label(cur, exit_label);
     return cur;
 }
 
@@ -113,7 +113,7 @@ Emitter emit_for_cond(Emitter e, string cond_label, string var, string end_val) 
     string slot = "%" + var;
     string loaded = next_reg(cur);
     cur = advance_reg(cur);
-    cur = emit_line(cur, cond_label + ":");
+    cur = emit_label(cur, cond_label);
     cur = emit_load(cur, loaded, "int", slot);
     string cmp_reg = next_reg(cur);
     cur = advance_reg(cur);
@@ -152,7 +152,6 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
         i += 1;
     }
     cur = emit_line(cur, "define " + llvm_ret + " @" + name + "(" + params + ") {");
-    cur = emit_line(cur, "entry:");
     return cur;
 }
 
@@ -161,7 +160,7 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
 Emitter emit_fn_footer(Emitter e, string return_type) {
     mutable Emitter cur = e;
     if return_type == "void" {
-        cur = emit_line(cur, "  ret void");
+        cur = emit_terminator(cur, "  ret void");
     }
     cur = emit_line(cur, "}");
     return cur;

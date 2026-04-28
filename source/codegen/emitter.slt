@@ -83,9 +83,6 @@ Emitter emit_raw(Emitter e, string line) {
 }
 
 Emitter emit_label(Emitter e, string label) {
-    if e.terminated {
-        return emit_raw(e, label + ":");
-    }
     return Emitter(
         lines: e.lines.add(label + ":"),
         global_lines: e.global_lines,

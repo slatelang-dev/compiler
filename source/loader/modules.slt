@@ -131,10 +131,22 @@ ModuleCollectResult collect_modules_inner(Node program, string base_path, list(s
                 sub_base = home() + "/.slate/deps/slate/source/";
             } else {
                 string exports_path = base_path + "/" + mod_name + "/exports.slt";
-                mod_path = exports_path;
-                sub_base = base_path + "/" + mod_name;
-                if file(exports_path).exists() == false {
-                    mod_path = base_path + "/" + mod_name + ".slt";
+                string single_path = base_path + "/" + mod_name + ".slt";
+                string deps_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
+                string deps_base = home() + "/.slate/deps/" + mod_name + "/source";
+
+                if file(exports_path).exists() {
+                    mod_path = exports_path;
+                    sub_base = base_path + "/" + mod_name;
+                } else if file(single_path).exists() {
+                    mod_path = single_path;
+                    sub_base = base_path;
+                } else if file(deps_path).exists() {
+                    mod_path = deps_path;
+                    sub_base = deps_base;
+                } else {
+                    mod_path = exports_path;
+                    sub_base = base_path + "/" + mod_name;
                 }
             }
             if module_already_loaded(visited, mod_path) == false {

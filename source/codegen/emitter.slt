@@ -17,7 +17,6 @@ struct Emitter {
     int str_count;
     string fn_name;
     list(string) errors;
-    bool terminated;
 }
 
 struct EscapeResult {
@@ -33,17 +32,13 @@ Emitter new_emitter() {
         label: 0,
         str_count: 0,
         fn_name: "",
-        errors: empty,
-        terminated: false
+        errors: empty
     );
 }
 
 # Append a line to the output buffer
 
 Emitter emit_line(Emitter e, string line) {
-    if e.terminated {
-        return e;
-    }
     return Emitter(
         lines: e.lines.add(line),
         global_lines: e.global_lines,
@@ -51,8 +46,7 @@ Emitter emit_line(Emitter e, string line) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: false
+        errors: e.errors
     );
 }
 
@@ -64,8 +58,7 @@ Emitter emit_terminator(Emitter e, string line) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: true
+        errors: e.errors
     );
 }
 
@@ -77,8 +70,7 @@ Emitter emit_raw(Emitter e, string line) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: e.terminated
+        errors: e.errors
     );
 }
 
@@ -90,8 +82,7 @@ Emitter emit_label(Emitter e, string label) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: false
+        errors: e.errors
     );
 }
 
@@ -107,8 +98,7 @@ Emitter advance_reg(Emitter e) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: e.terminated
+        errors: e.errors
     );
 }
 
@@ -124,8 +114,7 @@ Emitter advance_label(Emitter e) {
         label: e.label + 1,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: e.terminated
+        errors: e.errors
     );
 }
 
@@ -137,8 +126,7 @@ Emitter set_fn(Emitter e, string name) {
         label: e.label,
         str_count: e.str_count,
         fn_name: name,
-        errors: e.errors,
-        terminated: false
+        errors: e.errors
     );
 }
 
@@ -150,8 +138,7 @@ Emitter reset_fn_state(Emitter e) {
         label: 0,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: false
+        errors: e.errors
     );
 }
 
@@ -195,8 +182,7 @@ Emitter advance_str(Emitter e, string value) {
         label: e.label,
         str_count: e.str_count + 1,
         fn_name: e.fn_name,
-        errors: e.errors,
-        terminated: e.terminated
+        errors: e.errors
     );
 }
 
@@ -208,13 +194,18 @@ Emitter emit_error(Emitter e, string message) {
         label: e.label,
         str_count: e.str_count,
         fn_name: e.fn_name,
-        errors: e.errors.add(message),
-        terminated: e.terminated
+        errors: e.errors.add(message)
     );
 }
 
 bool emitter_has_errors(Emitter e) {
     return e.errors.len() > 0;
+}
+
+bool last_is_terminator(Emitter e) {
+    if e.lines.len() == 0 { return false; }
+    string last = e.lines.get(e.lines.len() - 1);
+    return last.starts_with("  ret ") or last.starts_with("  br ") or last == "  unreachable";
 }
 
 # Join lines into a single string

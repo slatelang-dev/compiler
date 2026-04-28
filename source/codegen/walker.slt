@@ -125,8 +125,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = emit_if(cur, cond_value, then_label, else_label, merge_label);
         cur = emit_label(cur, then_label);
         cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, break_target, reg);
-        bool then_terminated = cur.terminated;
-        if cur.terminated == false {
+        if last_is_terminator(cur) == false {
             cur = emit_jump(cur, merge_label);
         }
         cur = emit_label(cur, else_label);
@@ -140,13 +139,10 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 cur_locals = else_sr.locals;
             }
         }
-        bool else_terminated = cur.terminated;
-        if cur.terminated == false {
+        if last_is_terminator(cur) == false {
             cur = emit_jump(cur, merge_label);
         }
-        if then_terminated == false or else_terminated == false {
-            cur = emit_label(cur, merge_label);
-        }
+        cur = emit_merge_block(cur, merge_label);
         return stmt_result(cur, cur_locals);
     }
     if node.kind == NodeKind.While {
@@ -190,7 +186,6 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         mutable int arm_count = match_children.len() - 1;
         mutable string exit_label = next_label(cur_emitter);
         cur_emitter = advance_label(cur_emitter);
-        mutable bool any_arm_reaches_exit = false;
 
         mutable int i = 1;
         while i <= arm_count {
@@ -210,9 +205,8 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 cur_emitter = emit_jump(cur_emitter, body_label);
                 cur_emitter = emit_label(cur_emitter, body_label);
                 cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, exit_label, reg);
-                if cur_emitter.terminated == false {
+                if last_is_terminator(cur_emitter) == false {
                     cur_emitter = emit_jump(cur_emitter, exit_label);
-                    any_arm_reaches_exit = true;
                 }
             } else {
                 Node pattern_expr = arm.children.get(0);
@@ -234,20 +228,17 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 }
                 cur_emitter = emit_label(cur_emitter, body_label);
                 cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, exit_label, reg);
-                if cur_emitter.terminated == false {
+                if last_is_terminator(cur_emitter) == false {
                     cur_emitter = emit_jump(cur_emitter, exit_label);
-                    any_arm_reaches_exit = true;
                 }
-                if i < arm_count and cur_emitter.terminated == false {
+                if i < arm_count {
                     cur_emitter = emit_label(cur_emitter, fallthrough_label);
                 }
             }
             i += 1;
         }
-        if any_arm_reaches_exit {
-            cur_emitter = emit_label(cur_emitter, exit_label);
-            cur_emitter = emit_line(cur_emitter, "  unreachable");
-        }
+        cur_emitter = emit_label(cur_emitter, exit_label);
+        cur_emitter = emit_line(cur_emitter, "  unreachable");
         return stmt_result(cur_emitter, cur_locals);
     }
     if node.kind == NodeKind.Break {

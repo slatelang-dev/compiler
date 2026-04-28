@@ -125,7 +125,9 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         cur = emit_if(cur, cond_value, then_label, else_label, merge_label);
         cur = emit_then_block(cur, then_label, merge_label);
         cur = walk_block(stmt_children.get(1), cur, cur_locals, return_type, break_target, reg);
-        cur = emit_jump(cur, merge_label);
+        if cur.terminated == false {
+            cur = emit_jump(cur, merge_label);
+        }
         cur = emit_else_block(cur, else_label, merge_label);
         if stmt_children.len() > 2 {
             Node else_child = stmt_children.get(2);
@@ -137,7 +139,9 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 cur_locals = else_sr.locals;
             }
         }
-        cur = emit_jump(cur, merge_label);
+        if cur.terminated == false {
+            cur = emit_jump(cur, merge_label);
+        }
         cur = emit_merge_block(cur, merge_label);
         return stmt_result(cur, cur_locals);
     }
@@ -201,10 +205,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 cur_emitter = emit_jump(cur_emitter, body_label);
                 cur_emitter = emit_label(cur_emitter, body_label);
                 cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, exit_label, reg);
-                string last_out = cur_emitter.output;
-                bool already_terminated = last_out.ends_with("  ret void\n")
-                    or last_out.contains("\n  ret ");
-                if already_terminated == false {
+                if cur_emitter.terminated == false {
                     cur_emitter = emit_jump(cur_emitter, exit_label);
                 }
             } else {
@@ -227,10 +228,7 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
                 }
                 cur_emitter = emit_label(cur_emitter, body_label);
                 cur_emitter = walk_block(arm_body, cur_emitter, cur_locals, return_type, exit_label, reg);
-                string last_out = cur_emitter.output;
-                bool already_terminated = last_out.ends_with("  ret void\n")
-                    or last_out.contains("\n  ret ");
-                if already_terminated == false {
+                if cur_emitter.terminated == false {
                     cur_emitter = emit_jump(cur_emitter, exit_label);
                 }
                 if i < arm_count {

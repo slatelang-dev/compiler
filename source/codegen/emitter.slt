@@ -69,6 +69,19 @@ Emitter emit_terminator(Emitter e, string line) {
     );
 }
 
+Emitter emit_raw(Emitter e, string line) {
+    return Emitter(
+        output: e.output + line + "\n",
+        globals: e.globals,
+        reg: e.reg,
+        label: e.label,
+        str_count: e.str_count,
+        fn_name: e.fn_name,
+        errors: e.errors,
+        terminated: e.terminated
+    );
+}
+
 Emitter emit_label(Emitter e, string label) {
     return Emitter(
         output: e.output + label + ":\n",

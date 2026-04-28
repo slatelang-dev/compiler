@@ -151,7 +151,8 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
         params = params + llvm_param_type(param_types.get(i)) + " %" + param_names.get(i);
         i += 1;
     }
-    cur = emit_line(cur, "define " + llvm_ret + " @" + name + "(" + params + ") {");
+    cur = emit_raw(cur, "define " + llvm_ret + " @" + name + "(" + params + ") {");
+    cur = emit_label(cur, "entry");
     return cur;
 }
 
@@ -159,10 +160,10 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
 
 Emitter emit_fn_footer(Emitter e, string return_type) {
     mutable Emitter cur = e;
-    if return_type == "void" {
+    if return_type == "void" and cur.terminated == false {
         cur = emit_terminator(cur, "  ret void");
     }
-    cur = emit_line(cur, "}");
+    cur = emit_raw(cur, "}");
     return cur;
 }
 

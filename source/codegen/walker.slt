@@ -299,10 +299,42 @@ string walk_program(Node program, string target_triple) {
     return header + join_lines(e.global_lines) + join_lines(e.lines);
 }
 
+Emitter emit_struct_declarations(Emitter e, list(Node) programs) {
+    mutable Emitter cur = e;
+    mutable int i = 0;
+    while i < programs.len() {
+        Node prog = programs.get(i);
+        mutable int j = 0;
+        while j < prog.children.len() {
+            Node decl = prog.children.get(j);
+            if decl.kind == NodeKind.StructDecl {
+                string type_def = "%struct." + decl.value + " = type { ";
+                mutable string fields = "";
+                mutable int k = 0;
+                while k < decl.children.len() {
+                    Node member = decl.children.get(k);
+                    if member.kind == NodeKind.Field {
+                        if fields.len() > 0 { fields = fields + ", "; }
+                        string field_type = node_type_to_slate(member.children.get(0));
+                        fields = fields + llvm_type(field_type);
+                    }
+                    k += 1;
+                }
+                type_def = type_def + fields + " }";
+                cur = emit_line(cur, type_def);
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+    return cur;
+}
+
 string walk_all(list(Node) programs, string target_triple) {
     Registry reg = build_registry(programs);
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);
+    e = emit_struct_declarations(e, programs);
     string header = join_lines(e.lines);
     e = new_emitter();
     mutable int i = 0;

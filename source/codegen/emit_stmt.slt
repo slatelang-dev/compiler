@@ -152,7 +152,7 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
         i += 1;
     }
     cur = emit_raw(cur, "define " + llvm_ret + " @" + name + "(" + params + ") {");
-    cur = emit_label(cur, "start");
+    cur = emit_label(cur, "fn_begin");
     return cur;
 }
 

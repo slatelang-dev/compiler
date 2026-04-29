@@ -206,6 +206,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @slate_file_read(ptr)");
     cur = emit_line(cur, "declare void @slate_file_write(ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_file_exists(ptr)");
+    cur = emit_line(cur, "declare ptr @toml(ptr)");
     cur = emit_line(cur, "declare void @run(ptr, ...)");
     cur = emit_line(cur, "declare ptr @file(ptr)");
     cur = emit_line(cur, "declare ptr @read_n(i64)");

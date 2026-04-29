@@ -211,13 +211,13 @@ bool last_is_terminator(Emitter e) {
 # Join lines into a single string
 
 string join_lines(list(string) lines) {
-    mutable string result = "";
+    mutable string out = "";
     mutable int i = 0;
     while i < lines.len() {
-        result = result + lines.get(i) + "\n";
+        out = out + lines.get(i) + "\n";
         i += 1;
     }
-    return result;
+    return out;
 }
 
 # Remap method names to runtime functions

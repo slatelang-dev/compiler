@@ -181,7 +181,7 @@ Emitter advance_str(Emitter e, string value) {
     while j < e.global_lines.len() {
         string g = e.global_lines.get(j);
         if g.contains(candidate) {
-            int at_pos = 0;
+            mutable int at_pos = 0;
             while at_pos < g.len() and string(g.chars().get(at_pos)) != "@" {
                 at_pos = at_pos + 1;
             }

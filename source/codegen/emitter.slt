@@ -182,13 +182,13 @@ Emitter advance_str(Emitter e, string value) {
         string g = e.global_lines.get(j);
         if g.contains(candidate) {
             int at_pos = 0;
-            while at_pos < g.len() and g.chars().get(at_pos) != "@" {
+            while at_pos < g.len() and string(g.chars().get(at_pos)) != "@" {
                 at_pos = at_pos + 1;
             }
             if at_pos < g.len() {
                 existing_name = "";
                 mutable int k = at_pos;
-                while k < g.len() and g.chars().get(k) != " " {
+                while k < g.len() and string(g.chars().get(k)) != " " {
                     existing_name = existing_name + string(g.chars().get(k));
                     k = k + 1;
                 }
@@ -199,7 +199,8 @@ Emitter advance_str(Emitter e, string value) {
         }
     }
     
-    if existing_name != "" {
+    int existing_len = existing_name.len();
+    if existing_len > 0 {
         return Emitter(
             lines: e.lines,
             global_lines: e.global_lines,

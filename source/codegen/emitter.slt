@@ -173,8 +173,45 @@ EscapeResult escape_ll_string(string s) {
 
 Emitter advance_str(Emitter e, string value) {
     EscapeResult esc = escape_ll_string(value);
-    string name = "@str" + string(e.str_count);
+    string candidate = esc.text;
     int len = esc.byte_count + 1;
+    
+    mutable int j = 0;
+    mutable string existing_name = "";
+    while j < e.global_lines.len() {
+        string g = e.global_lines.get(j);
+        if g.contains(candidate) {
+            int at_pos = 0;
+            while at_pos < g.len() and g.chars().get(at_pos) != "@" {
+                at_pos = at_pos + 1;
+            }
+            if at_pos < g.len() {
+                existing_name = "";
+                mutable int k = at_pos;
+                while k < g.len() and g.chars().get(k) != " " {
+                    existing_name = existing_name + string(g.chars().get(k));
+                    k = k + 1;
+                }
+            }
+            j = e.global_lines.len();
+        } else {
+            j = j + 1;
+        }
+    }
+    
+    if existing_name != "" {
+        return Emitter(
+            lines: e.lines,
+            global_lines: e.global_lines,
+            reg: e.reg,
+            label: e.label,
+            str_count: e.str_count + 1,
+            fn_name: e.fn_name,
+            errors: e.errors
+        );
+    }
+    
+    string name = "@str" + string(e.str_count);
     string global = name + " = private unnamed_addr constant [" + string(len) + " x i8] c\"" + esc.text + "\\00\"";
     return Emitter(
         lines: e.lines,

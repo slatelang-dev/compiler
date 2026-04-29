@@ -159,8 +159,22 @@ EscapeResult escape_ll_string(string s) {
         if c == "\n" { result_str = result_str + "\\0A"; byte_count = byte_count + 1; }
         else if c == "\t" { result_str = result_str + "\\09"; byte_count = byte_count + 1; }
         else if c == "\r" { result_str = result_str + "\\0D"; byte_count = byte_count + 1; }
-        else if c == "\u001b" { result_str = result_str + "\1B"; byte_count = byte_count + 1; }
-        else if c == "\\" { result_str = result_str + "\\\\"; byte_count = byte_count + 1; }
+        else if c == "\\" {
+            if i + 1 < s.chars().len() {
+                string next = string(s.chars().get(i + 1));
+                if next == "e" {
+                    result_str = result_str + "\\1B";
+                    byte_count = byte_count + 1;
+                    i = i + 1;
+                } else {
+                    result_str = result_str + "\\\\";
+                    byte_count = byte_count + 1;
+                }
+            } else {
+                result_str = result_str + "\\\\";
+                byte_count = byte_count + 1;
+            }
+        }
         else if c == "\"" { result_str = result_str + "\\22"; byte_count = byte_count + 1; }
         else {
             result_str = result_str + c;

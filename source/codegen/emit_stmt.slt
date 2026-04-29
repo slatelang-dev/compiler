@@ -192,7 +192,6 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare i64 @slate_int(ptr)");
     cur = emit_line(cur, "declare double @slate_float(ptr)");
     cur = emit_line(cur, "declare void @slate_print(ptr)");
-    cur = emit_line(cur, "declare ptr @slate_input()");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
     cur = emit_line(cur, "declare ptr @slate_chars(ptr)");
     cur = emit_line(cur, "declare i8 @slate_contains(ptr, ptr)");

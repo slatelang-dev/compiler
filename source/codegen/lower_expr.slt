@@ -290,6 +290,10 @@ EmitResult call_kind(Node node, Emitter e, table(string, string) locals, Registr
     }
     mutable list(string) arg_values = empty;
     mutable list(string) arg_types = empty;
+    if node.value == "args" and call_children.len() == 0 {
+        arg_values = arg_values.add("null");
+        arg_types = arg_types.add("ptr");
+    }
     mutable int i = 0;
     while i < call_children.len() {
         EmitResult arg = walk_expr(call_children.get(i), cur, locals, reg);

@@ -16,7 +16,18 @@ Emitter emit_var_decl_typed(Emitter e, string name, string slate_type, string va
     string slot = "%" + name;
     if value == "null" and slate_type == "list" {
         cur = emit_alloca(cur, slot, slate_type);
-        cur = emit_line(cur, "  store ptr @slate_list_new(), ptr " + slot);
+        string list_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + list_reg + " = call ptr @slate_list_new()");
+        cur = emit_store(cur, list_reg, slate_type, slot);
+        return cur;
+    }
+    if value == "null" and slate_type == "table" {
+        cur = emit_alloca(cur, slot, slate_type);
+        string table_reg = next_reg(cur);
+        cur = advance_reg(cur);
+        cur = emit_line(cur, "  " + table_reg + " = call ptr @slate_table_new()");
+        cur = emit_store(cur, table_reg, slate_type, slot);
         return cur;
     }
     cur = emit_alloca(cur, slot, slate_type);

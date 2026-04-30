@@ -14,6 +14,11 @@ use emit_expr;
 Emitter emit_var_decl_typed(Emitter e, string name, string slate_type, string value, string value_type) {
     mutable Emitter cur = e;
     string slot = "%" + name;
+    if value == "null" and slate_type == "list" {
+        cur = emit_alloca(cur, slot, slate_type);
+        cur = emit_line(cur, "  store ptr @slate_list_new(), ptr " + slot);
+        return cur;
+    }
     cur = emit_alloca(cur, slot, slate_type);
     CoerceResult coerced = coerce_value(cur, value, value_type, slate_type);
     cur = emit_store(coerced.emitter, coerced.value, slate_type, slot);
@@ -206,7 +211,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @slate_file_write(ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_file_exists(ptr)");
     cur = emit_line(cur, "declare ptr @toml(ptr)");
-    cur = emit_line(cur, "declare void @run(ptr, ...)");
+    cur = emit_line(cur, "declare void @run(ptr, ptr, ptr, ptr, ptr, ptr)");
     cur = emit_line(cur, "declare ptr @file(ptr)");
     cur = emit_line(cur, "declare ptr @read_n(i64)");
     cur = emit_line(cur, "declare ptr @read()");

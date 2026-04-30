@@ -328,8 +328,18 @@ EmitResult call_kind(Node node, Emitter e, table(string, string) locals, Registr
         return make_result_typed(cur, cast_reg, "bool");
     }
     string call_name = remap_call_name(node.value);
-    string call_return_type = lookup_fn_return(reg, call_name);
     string result_reg = next_reg(cur);
+    if call_name == "run" {
+        mutable list(string) padded_args = arg_values;
+        mutable list(string) padded_types = arg_types;
+        while padded_args.len() < 6 {
+            padded_args = padded_args.add("null");
+            padded_types = padded_types.add("ptr");
+        }
+        cur = emit_call(cur, call_name, "void", padded_args, padded_types);
+        return make_result_typed(cur, result_reg, "void");
+    }
+    string call_return_type = lookup_fn_return(reg, call_name);
     cur = emit_call(cur, call_name, call_return_type, arg_values, arg_types);
     return make_result_typed(cur, result_reg, call_return_type);
 }

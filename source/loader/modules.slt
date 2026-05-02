@@ -105,9 +105,6 @@ bool module_already_loaded(list(string) seen, string path) {
 
 string normalize_path(string p) {
     print("[DEBUG] normalize_path: " + p);
-    if p.len() > 0 and p.chars().get(0) != "/" {
-        p = "/" + p;
-    }
     while p.contains("//") {
         p = p.replace("//", "/");
     }
@@ -115,62 +112,7 @@ string normalize_path(string p) {
     return p;
 }
 
-string resolve_module_path(string mod_name, string base_path) {
-    print("[DEBUG] resolve_module_path: " + mod_name + " base: " + base_path);
-    if mod_name == "slate" {
-        string path = normalize_path(home()) + "/.slate/deps/slate/source/lib.slt";
-        print("[DEBUG]   slate -> " + path);
-        return path;
-    }
-    string dir_path = base_path + "/" + mod_name;
-    string dir_lib = dir_path + "/lib.slt";
-    string dir_exports = dir_path + "/exports.slt";
-    string single_path = base_path + "/" + mod_name + ".slt";
-
-    print("[DEBUG]   checking dir_lib: " + dir_lib + " exists: " + string(file(dir_lib).exists()));
-    if file(dir_lib).exists() {
-        print("[DEBUG]   using dir_lib: " + dir_lib);
-        return normalize_path(dir_lib);
-    }
-    print("[DEBUG]   checking dir_exports: " + dir_exports + " exists: " + string(file(dir_exports).exists()));
-    if file(dir_exports).exists() {
-        print("[DEBUG]   using dir_exports: " + dir_exports);
-        return normalize_path(dir_exports);
-    }
-    print("[DEBUG]   checking single: " + single_path + " exists: " + string(file(single_path).exists()));
-    if file(single_path).exists() {
-        print("[DEBUG]   using single: " + single_path);
-        return normalize_path(single_path);
-    }
-
-    mutable string home_path = normalize_path(home());
-    string deps_dir = home_path + "/.slate/deps/" + mod_name;
-    string deps_dir_lib = deps_dir + "/source/lib.slt";
-    string deps_dir_exports = deps_dir + "/source/exports.slt";
-    string deps_single = deps_dir + "/source/" + mod_name + ".slt";
-
-    print("[DEBUG]   checking deps_dir_lib: " + deps_dir_lib + " exists: " + string(file(deps_dir_lib).exists()));
-    if file(deps_dir_lib).exists() {
-        print("[DEBUG]   using deps_dir_lib: " + deps_dir_lib);
-        return normalize_path(deps_dir_lib);
-    }
-    print("[DEBUG]   checking deps_dir_exports: " + deps_dir_exports + " exists: " + string(file(deps_dir_exports).exists()));
-    if file(deps_dir_exports).exists() {
-        print("[DEBUG]   using deps_dir_exports: " + deps_dir_exports);
-        return normalize_path(deps_dir_exports);
-    }
-    print("[DEBUG]   checking deps_single: " + deps_single + " exists: " + string(file(deps_single).exists()));
-    if file(deps_single).exists() {
-        print("[DEBUG]   using deps_single: " + deps_single);
-        return normalize_path(deps_single);
-    }
-
-    print("[DEBUG]   using fallback dir_lib: " + dir_lib);
-    return normalize_path(dir_lib);
-}
-
-string resolve_base(string mod_path) {
-    mutable string dir_path = "";
+string resolve_parent(string mod_path) {
     mutable int last_slash = -1;
     mutable int i = 0;
     while i < mod_path.len() {
@@ -180,13 +122,58 @@ string resolve_base(string mod_path) {
         i = i + 1;
     }
     if last_slash > 0 {
+        mutable string parent = "";
         i = 0;
         while i < last_slash {
-            dir_path = dir_path + string(mod_path.chars().get(i));
+            parent = parent + string(mod_path.chars().get(i));
             i = i + 1;
         }
+        return parent;
     }
-    return dir_path;
+    return "";
+}
+
+string resolve_module_path(string mod_name, string base_path) {
+    print("[DEBUG] resolve_module_path: " + mod_name + " base: " + base_path);
+
+    if file(base_path).exists() == false {
+        print("[DEBUG]   base_path does not exist: " + base_path);
+    }
+
+    string local_exports = base_path + "/" + mod_name + "/exports.slt";
+    string local_single = base_path + "/" + mod_name + ".slt";
+
+    print("[DEBUG]   checking local_exports: " + local_exports + " exists: " + string(file(local_exports).exists()));
+    if file(local_exports).exists() {
+        print("[DEBUG]   using local_exports");
+        return normalize_path(local_exports);
+    }
+
+    print("[DEBUG]   checking local_single: " + local_single + " exists: " + string(file(local_single).exists()));
+    if file(local_single).exists() {
+        print("[DEBUG]   using local_single");
+        return normalize_path(local_single);
+    }
+
+    string home_path = home();
+    string deps_dir = home_path + "/.slate/deps";
+    string deps_exports = deps_dir + "/" + mod_name + "/source/exports.slt";
+    string deps_lib = deps_dir + "/" + mod_name + "/source/lib.slt";
+
+    print("[DEBUG]   checking deps_exports: " + deps_exports + " exists: " + string(file(deps_exports).exists()));
+    if file(deps_exports).exists() {
+        print("[DEBUG]   using deps_exports");
+        return normalize_path(deps_exports);
+    }
+
+    print("[DEBUG]   checking deps_lib: " + deps_lib + " exists: " + string(file(deps_lib).exists()));
+    if file(deps_lib).exists() {
+        print("[DEBUG]   using deps_lib");
+        return normalize_path(deps_lib);
+    }
+
+    print("[DEBUG]   using fallback local_exports: " + local_exports);
+    return normalize_path(local_exports);
 }
 
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
@@ -201,8 +188,11 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
     print("[DEBUG] === Seeding queue with slate ===");
     string slate_path = resolve_module_path("slate", base_path);
     print("[DEBUG] slate_path resolved to: " + slate_path);
-    queue = queue.add(slate_path);
-    queue_bases = queue_bases.add(resolve_base(slate_path));
+    if module_already_loaded(visited, slate_path) == false {
+        visited = visited.add(slate_path);
+        queue = queue.add(slate_path);
+        queue_bases = queue_bases.add(resolve_parent(slate_path));
+    }
     print("[DEBUG] Queue now has: " + string(queue.len()) + " items");
 
     print("[DEBUG] === Seeding queue with program children ===");
@@ -217,18 +207,15 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                 string mod_path = resolve_module_path(mod_name, base_path);
                 print("[DEBUG]   resolved to: " + mod_path);
                 if module_already_loaded(visited, mod_path) == false {
-                    if module_already_loaded(queue, mod_path) == false {
-                        print("[DEBUG]   adding to queue");
-                        queue = queue.add(mod_path);
-                        queue_bases = queue_bases.add(resolve_base(mod_path));
-                    } else {
-                        print("[DEBUG]   already in queue");
-                    }
+                    visited = visited.add(mod_path);
+                    print("[DEBUG]   adding to queue");
+                    queue = queue.add(mod_path);
+                    queue_bases = queue_bases.add(resolve_parent(mod_path));
                 } else {
-                    print("[DEBUG]   already in visited, skipping");
+                    print("[DEBUG]   already in visited");
                 }
             } else {
-                print("[DEBUG]   skipping slate (already queued)");
+                print("[DEBUG]   skipping slate");
             }
         }
         i += 1;
@@ -248,6 +235,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
         if module_already_loaded(visited, mod_path) {
             print("[DEBUG] Already visited, skipping");
         } else {
+            visited = visited.add(mod_path);
             mutable string mod_name = mod_path.split("/").get(mod_path.split("/").len() - 1);
             if mod_name.ends_with(".slt") {
                 mod_name = mod_name.replace(".slt", "");
@@ -255,9 +243,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
             print("[DEBUG] Loading: " + mod_name);
             LoadedModule loaded = load_module(mod_name, mod_path);
             if loaded.loaded {
-                print("[DEBUG] Load succeeded, marking as visited");
-                visited = visited.add(mod_path);
-                print("[DEBUG] Adding to module_list");
+                print("[DEBUG] Load succeeded");
                 module_list = module_list.add(loaded.ast);
                 print("[DEBUG] Checking children for Use nodes...");
                 mutable int j = 0;
@@ -270,14 +256,10 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                         string child_mod_path = resolve_module_path(child_mod_name, sub_base);
                         print("[DEBUG]   Resolved to: " + child_mod_path);
                         if module_already_loaded(visited, child_mod_path) == false {
-                            print("[DEBUG]   Not visited, checking queue...");
-                            if module_already_loaded(queue, child_mod_path) == false {
-                                print("[DEBUG]   Not in queue, adding");
-                                queue = queue.add(child_mod_path);
-                                queue_bases = queue_bases.add(resolve_base(child_mod_path));
-                            } else {
-                                print("[DEBUG]   Already in queue");
-                            }
+                            visited = visited.add(child_mod_path);
+                            print("[DEBUG]   Not in queue, adding");
+                            queue = queue.add(child_mod_path);
+                            queue_bases = queue_bases.add(resolve_parent(child_mod_path));
                         } else {
                             print("[DEBUG]   Already visited");
                         }

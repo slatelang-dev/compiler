@@ -142,28 +142,26 @@ string resolve_module_path(string mod_name, string base_path) {
         print("[DEBUG]   using deps: " + deps_path);
         return deps_path;
     }
-    print("[DEBUG]   using fallback dir_lib: " + dir_lib);
-    return dir_lib;
+    print("[DEBUG]   using fallback exports: " + exports_path);
+    return exports_path;
 }
 
 string resolve_base(string mod_path) {
     bool is_abs = mod_path.starts_with("/");
-    print("[DEBUG] resolve_base: " + mod_path + " is_abs: " + string(is_abs));
     list(string) parts = mod_path.split("/");
     mutable string base = "";
-    mutable int start_idx = 0;
-    if is_abs and parts.len() > 0 {
-        start_idx = 1;
-    }
-    mutable int i = start_idx;
+    mutable bool first = true;
+    mutable int i = 0;
     while i < parts.len() - 1 {
-        if base.len() > 0 {
-            base = base + "/";
+        if parts.get(i).len() > 0 or (first and is_abs) {
+            if base.len() > 0 {
+                base = base + "/";
+            }
+            base = base + parts.get(i);
         }
-        base = base + parts.get(i);
+        first = false;
         i = i + 1;
     }
-    print("[DEBUG] resolve_base result: " + base);
     return base;
 }
 

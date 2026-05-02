@@ -151,16 +151,17 @@ string resolve_base(string mod_path) {
     print("[DEBUG] resolve_base: " + mod_path + " is_abs: " + string(is_abs));
     list(string) parts = mod_path.split("/");
     mutable string base = "";
-    mutable int i = 0;
+    mutable int start_idx = 0;
+    if is_abs and parts.len() > 0 {
+        start_idx = 1;
+    }
+    mutable int i = start_idx;
     while i < parts.len() - 1 {
-        if base.len() > 0 or is_abs {
+        if base.len() > 0 {
             base = base + "/";
         }
         base = base + parts.get(i);
-        i += 1;
-    }
-    if is_abs and base.len() > 0 and base.starts_with("/") == false {
-        base = "/" + base;
+        i = i + 1;
     }
     print("[DEBUG] resolve_base result: " + base);
     return base;

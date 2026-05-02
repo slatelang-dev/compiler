@@ -170,17 +170,21 @@ string resolve_module_path(string mod_name, string base_path) {
 }
 
 string resolve_base(string mod_path) {
-    string dir_path = mod_path;
+    mutable string dir_path = "";
     mutable int last_slash = -1;
     mutable int i = 0;
-    while i < dir_path.len() {
-        if dir_path.chars().get(i) == "/" {
+    while i < mod_path.len() {
+        if mod_path.chars().get(i) == "/" {
             last_slash = i;
         }
         i = i + 1;
     }
     if last_slash > 0 {
-        dir_path = dir_path.slice(0, last_slash);
+        i = 0;
+        while i < last_slash {
+            dir_path = dir_path + string(mod_path.chars().get(i));
+            i = i + 1;
+        }
     }
     return dir_path;
 }

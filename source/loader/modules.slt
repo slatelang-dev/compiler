@@ -188,11 +188,8 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
     print("[DEBUG] === Seeding queue with slate ===");
     string slate_path = resolve_module_path("slate", base_path);
     print("[DEBUG] slate_path resolved to: " + slate_path);
-    if module_already_loaded(visited, slate_path) == false {
-        visited = visited.add(slate_path);
-        queue = queue.add(slate_path);
-        queue_bases = queue_bases.add(resolve_parent(slate_path));
-    }
+    queue = queue.add(slate_path);
+    queue_bases = queue_bases.add(resolve_parent(slate_path));
     print("[DEBUG] Queue now has: " + string(queue.len()) + " items");
 
     print("[DEBUG] === Seeding queue with program children ===");
@@ -206,13 +203,12 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
             if mod_name != "slate" {
                 string mod_path = resolve_module_path(mod_name, base_path);
                 print("[DEBUG]   resolved to: " + mod_path);
-                if module_already_loaded(visited, mod_path) == false {
-                    visited = visited.add(mod_path);
+                if module_already_loaded(queue, mod_path) == false {
                     print("[DEBUG]   adding to queue");
                     queue = queue.add(mod_path);
                     queue_bases = queue_bases.add(resolve_parent(mod_path));
                 } else {
-                    print("[DEBUG]   already in visited");
+                    print("[DEBUG]   already in queue");
                 }
             } else {
                 print("[DEBUG]   skipping slate");
@@ -256,10 +252,14 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                         string child_mod_path = resolve_module_path(child_mod_name, sub_base);
                         print("[DEBUG]   Resolved to: " + child_mod_path);
                         if module_already_loaded(visited, child_mod_path) == false {
-                            visited = visited.add(child_mod_path);
-                            print("[DEBUG]   Not in queue, adding");
-                            queue = queue.add(child_mod_path);
-                            queue_bases = queue_bases.add(resolve_parent(child_mod_path));
+                            if module_already_loaded(queue, child_mod_path) == false {
+                                visited = visited.add(child_mod_path);
+                                print("[DEBUG]   Not in queue, adding");
+                                queue = queue.add(child_mod_path);
+                                queue_bases = queue_bases.add(resolve_parent(child_mod_path));
+                            } else {
+                                print("[DEBUG]   Already in queue");
+                            }
                         } else {
                             print("[DEBUG]   Already visited");
                         }

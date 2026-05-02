@@ -106,16 +106,20 @@ bool module_already_loaded(list(string) seen, string path) {
 string resolve_module_path(string mod_name, string base_path) {
     print("[DEBUG] resolve_module_path: " + mod_name + " base: " + base_path);
     if mod_name == "slate" {
-        string path = home() + "/.slate/deps/slate/source/lib.slt";
+        string path = "/" + home() + "/.slate/deps/slate/source/lib.slt";
         print("[DEBUG]   slate -> " + path);
         return path;
+    }
+    mutable string home_path = home();
+    if home_path.len() > 0 and home_path.chars().get(0) != "/" {
+        home_path = "/" + home_path;
     }
     string dir_lib = base_path + "/" + mod_name + "/lib.slt";
     string exports_path = base_path + "/" + mod_name + "/exports.slt";
     string single_path = base_path + "/" + mod_name + ".slt";
-    string deps_dir_lib = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
-    string deps_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
-    string deps_base = home() + "/.slate/deps/" + mod_name + "/source";
+    string deps_dir_lib = home_path + "/.slate/deps/" + mod_name + "/source/lib.slt";
+    string deps_path = home_path + "/.slate/deps/" + mod_name + "/source/lib.slt";
+    string deps_base = home_path + "/.slate/deps/" + mod_name + "/source";
 
     print("[DEBUG]   checking dir_lib: " + dir_lib + " exists: " + string(file(dir_lib).exists()));
     if file(dir_lib).exists() {

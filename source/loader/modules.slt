@@ -253,7 +253,6 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                         print("[DEBUG]   Resolved to: " + child_mod_path);
                         if module_already_loaded(visited, child_mod_path) == false {
                             if module_already_loaded(queue, child_mod_path) == false {
-                                visited = visited.add(child_mod_path);
                                 print("[DEBUG]   Not in queue, adding");
                                 queue = queue.add(child_mod_path);
                                 queue_bases = queue_bases.add(resolve_parent(child_mod_path));
@@ -261,7 +260,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                                 print("[DEBUG]   Already in queue");
                             }
                         } else {
-                            print("[DEBUG]   Already visited");
+                            print("[DEBUG]   Already in loaded_set");
                         }
                     }
                     j = j + 1;

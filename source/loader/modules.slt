@@ -40,11 +40,11 @@ LoadedModule load_module(string name, string path) {
         return make_failed_module(name, path, "file not found: " + path);
     }
     string source = file(path).read();
-    ParseResult result = parse(source);
-    if result.success == false {
-        return make_failed_module(name, path, result.message);
+    ParseResult module_list = parse(source);
+    if module_list.success == false {
+        return make_failed_module(name, path, module_list.message);
     }
-    return make_loaded_module(name, path, source, result.node);
+    return make_loaded_module(name, path, source, module_list.node);
 }
 
 LoadedModule load_entry(Project p) {
@@ -123,7 +123,7 @@ string resolve_base(string mod_path) {
 
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(string) visited = seen;
-    mutable list(Node) result = empty;
+    mutable list(Node) module_list = empty;
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
 
@@ -173,7 +173,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
             }
             LoadedModule loaded = load_module(mod_name, mod_path);
             if loaded.loaded {
-                result = result.add(loaded.ast);
+                module_list = module_list.add(loaded.ast);
                 mutable int j = 0;
                 while j < loaded.ast.children.len() {
                     Node child = loaded.ast.children.get(j);
@@ -188,5 +188,5 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
             }
         }
     }
-    return result;
+    return module_list;
 }

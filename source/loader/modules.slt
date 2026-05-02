@@ -3,8 +3,6 @@ module modules;
 use project;
 use slate;
 
-# A loaded module — source text and its parsed AST
-
 struct LoadedModule {
     string name;
     string path;
@@ -37,8 +35,6 @@ LoadedModule make_failed_module(string name, string path, string msg) {
     );
 }
 
-# Load and parse a single .slt file
-
 LoadedModule load_module(string name, string path) {
     if file(path).exists() == false {
         return make_failed_module(name, path, "file not found: " + path);
@@ -51,29 +47,8 @@ LoadedModule load_module(string name, string path) {
     return make_loaded_module(name, path, source, result.node);
 }
 
-# Load the entry point module from a project
-
 LoadedModule load_entry(Project p) {
     return load_module(p.name, p.entry);
-}
-
-# Collect all modules needed by a program
-# Walks Use nodes and loads each dependency
-
-list(LoadedModule) load_all_modules(Node program, string base_path) {
-    mutable list(LoadedModule) modules = empty;
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.Use {
-            string mod_name = decl.value;
-            string mod_path = base_path + "/" + mod_name + ".slt";
-            LoadedModule loaded = load_module(mod_name, mod_path);
-            modules = modules.add(loaded);
-        }
-        i += 1;
-    }
-    return modules;
 }
 
 bool all_modules_ok(list(LoadedModule) modules) {
@@ -111,65 +86,101 @@ bool module_already_loaded(list(string) seen, string path) {
     return false;
 }
 
-struct ModuleCollectResult {
-    list(Node) asts;
-    list(string) visited;
+string resolve_module_path(string mod_name, string base_path) {
+    if mod_name == "slate" {
+        return home() + "/.slate/deps/slate/source/lib.slt";
+    }
+    string exports_path = base_path + "/" + mod_name + "/exports.slt";
+    string single_path = base_path + "/" + mod_name + ".slt";
+    string deps_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
+    string deps_base = home() + "/.slate/deps/" + mod_name + "/source";
+
+    if file(exports_path).exists() {
+        return exports_path;
+    }
+    if file(single_path).exists() {
+        return single_path;
+    }
+    if file(deps_path).exists() {
+        return deps_path;
+    }
+    return exports_path;
 }
 
-ModuleCollectResult collect_modules_inner(Node program, string base_path, list(string) seen) {
-    mutable list(Node) result_list = empty;
+string resolve_base(string mod_path) {
+    list(string) parts = mod_path.split("/");
+    mutable string base = "";
+    mutable int i = 0;
+    while i < parts.len() - 1 {
+        if base.len() > 0 {
+            base = base + "/";
+        }
+        base = base + parts.get(i);
+        i += 1;
+    }
+    return base;
+}
+
+list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
     mutable list(string) visited = seen;
+    mutable list(Node) result = empty;
+    mutable list(string) queue = empty;
+    mutable list(string) queue_bases = empty;
+
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            string mod_path = "";
-            string sub_base = "";
-            if mod_name == "slate" {
-                mod_path = home() + "/.slate/deps/slate/source/lib.slt";
-                sub_base = home() + "/.slate/deps/slate/source/";
-            } else {
-                string exports_path = base_path + "/" + mod_name + "/exports.slt";
-                string single_path = base_path + "/" + mod_name + ".slt";
-                string deps_path = home() + "/.slate/deps/" + mod_name + "/source/lib.slt";
-                string deps_base = home() + "/.slate/deps/" + mod_name + "/source";
-
-                if file(exports_path).exists() {
-                    mod_path = exports_path;
-                    sub_base = base_path + "/" + mod_name;
-                } else if file(single_path).exists() {
-                    mod_path = single_path;
-                    sub_base = base_path;
-                } else if file(deps_path).exists() {
-                    mod_path = deps_path;
-                    sub_base = deps_base;
-                } else {
-                    mod_path = exports_path;
-                    sub_base = base_path + "/" + mod_name;
-                }
-            }
-            if module_already_loaded(visited, mod_path) == false {
-                visited = visited.add(mod_path);
-                LoadedModule loaded = load_module(mod_name, mod_path);
-                if loaded.loaded {
-                    ModuleCollectResult sub = collect_modules_inner(loaded.ast, sub_base, visited);
-                    visited = sub.visited;
-                    mutable int j = 0;
-                    while j < sub.asts.len() {
-                        result_list = result_list.add(sub.asts.get(j));
-                        j += 1;
-                    }
-                    result_list = result_list.add(loaded.ast);
-                }
-            }
+            string mod_path = resolve_module_path(mod_name, base_path);
+            queue = queue.add(mod_path);
+            string sub_base = resolve_base(mod_path);
+            queue_bases = queue_bases.add(sub_base);
         }
         i += 1;
     }
-    return ModuleCollectResult(asts: result_list, visited: visited);
-}
 
-list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
-    ModuleCollectResult r = collect_modules_inner(program, base_path, seen);
-    return r.asts;
+    mutable int head = 0;
+    while head < queue.len() {
+        string mod_path = queue.get(head);
+        string sub_base = queue_bases.get(head);
+        head = head + 1;
+
+        if module_already_loaded(visited, mod_path) {
+        } else {
+            visited = visited.add(mod_path);
+            string mod_name = mod_path.split("/").get(mod_path.split("/").len() - 1);
+            if mod_name.ends_with(".slt") {
+                list(string) parts = mod_path.split("/");
+                mod_name = parts.get(parts.len() - 1);
+                int dot_pos = 0;
+                mutable int dp = 0;
+                while dp < mod_name.len() {
+                    if mod_name.chars().get(dp) == "." {
+                        dot_pos = dp;
+                    }
+                    dp += 1;
+                }
+                if dot_pos > 0 {
+                    mod_name = mod_name.slice(0, dot_pos);
+                }
+            }
+            LoadedModule loaded = load_module(mod_name, mod_path);
+            if loaded.loaded {
+                result = result.add(loaded.ast);
+                mutable int j = 0;
+                while j < loaded.ast.children.len() {
+                    Node child = loaded.ast.children.get(j);
+                    if child.kind == NodeKind.Use {
+                        string child_mod_name = child.value;
+                        string child_mod_path = resolve_module_path(child_mod_name, sub_base);
+                        queue = queue.add(child_mod_path);
+                        queue_bases = queue_bases.add(resolve_base(child_mod_path));
+                    }
+                    j += 1;
+                }
+            }
+        }
+    }
+    return result;
 }

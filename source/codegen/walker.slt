@@ -286,7 +286,7 @@ string walk_program(Node program, string target_triple) {
     Registry reg = build_registry(programs);
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);
-    string header = join_lines_fast(e.lines);
+    string header = join_lines(e.lines);
     e = new_emitter();
     list(Node) program_children = program.children;
     mutable int i = 0;
@@ -297,7 +297,7 @@ string walk_program(Node program, string target_triple) {
         }
         i += 1;
     }
-    return header + join_lines_fast(e.global_lines) + join_lines_fast(e.lines);
+    return header + join_lines(e.global_lines) + join_lines(e.lines);
 }
 
 Emitter emit_struct_declarations(Emitter e, list(Node) programs) {
@@ -336,7 +336,7 @@ string walk_all(list(Node) programs, string target_triple) {
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);
     e = emit_struct_declarations(e, programs);
-    string header = join_lines_fast(e.lines);
+    string header = join_lines(e.lines);
     e = new_emitter();
     mutable int i = 0;
     while i < programs.len() {
@@ -352,5 +352,5 @@ string walk_all(list(Node) programs, string target_triple) {
         }
         i += 1;
     }
-    return header + join_lines_fast(e.global_lines) + join_lines_fast(e.lines);
+    return header + join_lines(e.global_lines) + join_lines(e.lines);
 }

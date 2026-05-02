@@ -162,7 +162,13 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                     dp += 1;
                 }
                 if dot_pos > 0 {
-                    mod_name = mod_name.slice(0, dot_pos);
+                    mutable string truncated = "";
+                    mutable int ti = 0;
+                    while ti < dot_pos {
+                        truncated = truncated + string(mod_name.chars().get(ti));
+                        ti += 1;
+                    }
+                    mod_name = truncated;
                 }
             }
             LoadedModule loaded = load_module(mod_name, mod_path);

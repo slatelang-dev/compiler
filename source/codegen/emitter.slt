@@ -235,6 +235,10 @@ string join_lines(list(string) lines) {
     return out;
 }
 
+string join_lines_fast(list(string) lines) {
+    return slate_join_lines(lines);
+}
+
 # Remap method names to runtime functions
 
 string remap_call_name(string name) {

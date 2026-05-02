@@ -114,7 +114,7 @@ string resolve_parent(string mod_path) {
     return "";
 }
 
-string resolve_module_path(string mod_name, string base_path) {
+string resolve_module_path(string mod_name, string base_path, string home_path) {
     string local_exports = base_path + "/" + mod_name + "/exports.slt";
     string local_single = base_path + "/" + mod_name + ".slt";
 
@@ -126,7 +126,6 @@ string resolve_module_path(string mod_name, string base_path) {
         return normalize_path(local_single);
     }
 
-    string home_path = home();
     string deps_dir = home_path + "/.slate/deps";
     string deps_exports = deps_dir + "/" + mod_name + "/source/exports.slt";
     string deps_lib = deps_dir + "/" + mod_name + "/source/lib.slt";
@@ -143,12 +142,13 @@ string resolve_module_path(string mod_name, string base_path) {
 }
 
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
+    string home_dir = home();
     mutable list(string) visited = seen;
     mutable list(Node) module_list = empty;
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
 
-    string slate_path = resolve_module_path("slate", base_path);
+    string slate_path = resolve_module_path("slate", base_path, home_dir);
     queue = queue.add(slate_path);
     queue_bases = queue_bases.add(resolve_parent(slate_path));
 
@@ -158,7 +158,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
             if mod_name != "slate" {
-                string mod_path = resolve_module_path(mod_name, base_path);
+                string mod_path = resolve_module_path(mod_name, base_path, home_dir);
                 if module_already_loaded(queue, mod_path) == false {
                     queue = queue.add(mod_path);
                     queue_bases = queue_bases.add(resolve_parent(mod_path));
@@ -189,7 +189,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                     Node child = loaded.ast.children.get(j);
                     if child.kind == NodeKind.Use {
                         string child_mod_name = child.value;
-                        string child_mod_path = resolve_module_path(child_mod_name, sub_base);
+                        string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
                         if module_already_loaded(visited, child_mod_path) == false {
                             if module_already_loaded(queue, child_mod_path) == false {
                                 queue = queue.add(child_mod_path);

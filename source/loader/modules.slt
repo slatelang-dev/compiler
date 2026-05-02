@@ -127,15 +127,22 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
 
+    string slate_path = resolve_module_path("slate", base_path);
+    queue = queue.add(slate_path);
+    queue_bases = queue_bases.add(resolve_base(slate_path));
+
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            string mod_path = resolve_module_path(mod_name, base_path);
-            queue = queue.add(mod_path);
-            string sub_base = resolve_base(mod_path);
-            queue_bases = queue_bases.add(sub_base);
+            if mod_name != "slate" {
+                string mod_path = resolve_module_path(mod_name, base_path);
+                if module_already_loaded(visited, mod_path) == false {
+                    queue = queue.add(mod_path);
+                    queue_bases = queue_bases.add(resolve_base(mod_path));
+                }
+            }
         }
         i += 1;
     }
@@ -162,8 +169,12 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                     if child.kind == NodeKind.Use {
                         string child_mod_name = child.value;
                         string child_mod_path = resolve_module_path(child_mod_name, sub_base);
-                        queue = queue.add(child_mod_path);
-                        queue_bases = queue_bases.add(resolve_base(child_mod_path));
+                        if module_already_loaded(visited, child_mod_path) == false {
+                            if module_already_loaded(queue, child_mod_path) == false {
+                                queue = queue.add(child_mod_path);
+                                queue_bases = queue_bases.add(resolve_base(child_mod_path));
+                            }
+                        }
                     }
                     j += 1;
                 }

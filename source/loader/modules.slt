@@ -149,11 +149,11 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
         if module_already_loaded(visited, mod_path) {
         } else {
             visited = visited.add(mod_path);
-            string mod_name = mod_path.split("/").get(mod_path.split("/").len() - 1);
+            mutable string mod_name = mod_path.split("/").get(mod_path.split("/").len() - 1);
             if mod_name.ends_with(".slt") {
                 list(string) parts = mod_path.split("/");
                 mod_name = parts.get(parts.len() - 1);
-                int dot_pos = 0;
+                mutable int dot_pos = 0;
                 mutable int dp = 0;
                 while dp < mod_name.len() {
                     if mod_name.chars().get(dp) == "." {

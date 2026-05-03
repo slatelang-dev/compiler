@@ -232,5 +232,6 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @read()");
     cur = emit_line(cur, "declare ptr @home()");
     cur = emit_line(cur, "declare ptr @slate_hash(ptr)");
+    cur = emit_line(cur, "declare ptr @concat(ptr, ...)");
     return cur;
 }

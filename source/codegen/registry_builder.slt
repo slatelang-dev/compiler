@@ -150,6 +150,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_table_get", "ptr");
     reg = register_fn(reg, "slate_table_has", "bool");
     reg = register_fn(reg, "slate_table_len", "int");
+    reg = register_fn(reg, "concat", "string");
     reg = register_fn(reg, "slate_get", "ptr");
     reg = register_fn(reg, "slate_add", "ptr");
     reg = register_fn(reg, "slate_has", "bool");

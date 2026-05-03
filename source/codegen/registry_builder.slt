@@ -128,14 +128,6 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_string_len", "int");
     reg = register_fn(reg, "slate_len", "int");
     reg = register_fn(reg, "slate_chars", "list");
-    reg = register_fn(reg, "slate_join_lines", "string");
-    reg = register_fn(reg, "slate_join_chars", "string");
-    reg = register_fn(reg, "slate_escape_string", "list");
-    reg = register_fn(reg, "slate_escape_ll", "string");
-    reg = register_fn(reg, "slate_strlen", "int");
-    reg = register_fn(reg, "slate_concat3", "string");
-    reg = register_fn(reg, "slate_concat4", "string");
-    reg = register_fn(reg, "slate_concat5", "string");
     
     reg = register_fn(reg, "slate_contains", "bool");
     reg = register_fn(reg, "slate_starts_with", "bool");

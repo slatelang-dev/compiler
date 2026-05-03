@@ -4,9 +4,8 @@ use project;
 use slate;
 
 struct ModuleInfo {
-    Node ast;
-    string path;
     string name;
+    string path;
 }
 
 struct LoadedModule {
@@ -187,7 +186,7 @@ list(ModuleInfo) collect_module_asts(Node program, string base_path, list(string
             }
             LoadedModule loaded = load_module(mod_name, mod_path);
             if loaded.loaded {
-                module_list = module_list.add(ModuleInfo(ast: loaded.ast, path: mod_path, name: mod_name));
+                module_list = module_list.add(ModuleInfo(path: mod_path, name: mod_name));
                 mutable int j = 0;
                 while j < loaded.ast.children.len() {
                     Node child = loaded.ast.children.get(j);

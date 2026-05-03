@@ -84,6 +84,58 @@ bool module_already_loaded(table(string, string) seen, string path) {
     return seen.has(path);
 }
 
+string extract_mod_name(string mod_path) {
+    mutable int last_slash = -1;
+    mutable int i = 0;
+    while i < mod_path.len() {
+        if mod_path.chars().get(i) == "/" { last_slash = i; }
+        i = i + 1;
+    }
+    mutable string name = "";
+    i = last_slash + 1;
+    while i < mod_path.len() {
+        name = name + string(mod_path.chars().get(i));
+        i = i + 1;
+    }
+    if name.ends_with(".slt") {
+        mutable string stripped = "";
+        mutable int j = 0;
+        while j < name.len() - 4 {
+            stripped = stripped + string(name.chars().get(j));
+            j = j + 1;
+        }
+        return stripped;
+    }
+    return name;
+}
+
+list(string) scan_imports(string source) {
+    mutable list(string) imports = empty;
+    mutable int pos = 0;
+    while pos < source.len() {
+        while pos < source.len() && source.chars().get(pos) == " " { pos = pos + 1; }
+        if source.len() >= 4 && 
+           source.chars().get(pos) == "u" &&
+           source.chars().get(pos + 1) == "s" &&
+           source.chars().get(pos + 2) == "e" &&
+           source.chars().get(pos + 3) == " " {
+            pos = pos + 4;
+            mutable int end = pos;
+            while end < source.len() && source.chars().get(end) != ";" { end = end + 1; }
+            mutable string name = "";
+            mutable int k = pos;
+            while k < end {
+                name = name + string(source.chars().get(k));
+                k = k + 1;
+            }
+            imports = imports.add(name);
+        }
+        while pos < source.len() && source.chars().get(pos) != "\n" { pos = pos + 1; }
+        if pos < source.len() { pos = pos + 1; }
+    }
+    return imports;
+}
+
 string normalize_path(string p) {
     while p.contains("//") {
         p = p.replace("//", "/");
@@ -180,25 +232,20 @@ list(ModuleInfo) collect_module_asts(Node program, string base_path, list(string
         if module_already_loaded(visited, mod_path) {
         } else {
             visited = visited.set(mod_path, "1");
-            mutable string mod_name = mod_path.split("/").get(mod_path.split("/").len() - 1);
-            if mod_name.ends_with(".slt") {
-                mod_name = mod_name.replace(".slt", "");
-            }
-            LoadedModule loaded = load_module(mod_name, mod_path);
-            if loaded.loaded {
+            string mod_name = extract_mod_name(mod_path);
+            if file(mod_path).exists() {
                 module_list = module_list.add(ModuleInfo(path: mod_path, name: mod_name));
+                string source = file(mod_path).read();
+                list(string) imports = scan_imports(source);
                 mutable int j = 0;
-                while j < loaded.ast.children.len() {
-                    Node child = loaded.ast.children.get(j);
-                    if child.kind == NodeKind.Use {
-                        string child_mod_name = child.value;
-                        string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
-                        if module_already_loaded(visited, child_mod_path) == false {
-                            if module_already_loaded(queued, child_mod_path) == false {
-                                queue = queue.add(child_mod_path);
-                                queue_bases = queue_bases.add(resolve_parent(child_mod_path));
-                                queued = queued.set(child_mod_path, "1");
-                            }
+                while j < imports.len() {
+                    string child_mod_name = imports.get(j);
+                    string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
+                    if module_already_loaded(visited, child_mod_path) == false {
+                        if module_already_loaded(queued, child_mod_path) == false {
+                            queue = queue.add(child_mod_path);
+                            queue_bases = queue_bases.add(resolve_parent(child_mod_path));
+                            queued = queued.set(child_mod_path, "1");
                         }
                     }
                     j = j + 1;

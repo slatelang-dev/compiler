@@ -282,7 +282,8 @@ EmitResult call_kind(Node node, Emitter e, table(string, string) locals, Registr
             cur = coerced.emitter;
             string gep_reg = next_reg(cur);
             cur = advance_reg(cur);
-            cur = emit_line(cur, "  ".concat(gep_reg, " = getelementptr inbounds %struct.", node.value, ", ptr ", size_reg, ", i32 0, i32 ", string(fi)));
+            string fi_str = string(fi);
+            cur = emit_line(cur, "  ".concat(gep_reg, " = getelementptr inbounds %struct.", node.value, ", ptr ", size_reg, ", i32 0, i32 ", fi_str));
             cur = emit_line(cur, "  store " + llvm_field_type + " " + coerced.value + ", ptr " + gep_reg);
             fi += 1;
         }
@@ -398,7 +399,8 @@ EmitResult field_kind(Node node, Emitter e, table(string, string) locals, Regist
         string llvm_field_type = llvm_type(field_type);
         string gep_reg = next_reg(receiver.emitter);
         mutable Emitter cur = advance_reg(receiver.emitter);
-        string gep_instr = "  ".concat(gep_reg, " = getelementptr inbounds %struct.", struct_type, ", ptr ", receiver.value, ", i32 0, i32 ", string(field_idx));
+        string field_idx_str = string(field_idx);
+        string gep_instr = "  ".concat(gep_reg, " = getelementptr inbounds %struct.", struct_type, ", ptr ", receiver.value, ", i32 0, i32 ", field_idx_str);
         cur = emit_line(cur, gep_instr);
         string load_reg = next_reg(cur);
         cur = advance_reg(cur);

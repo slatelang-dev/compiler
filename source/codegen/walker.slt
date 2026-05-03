@@ -47,7 +47,8 @@ StmtResult walk_stmt(Node node, Emitter e, table(string, string) locals, string 
         if type_node.kind == NodeKind.TypeResult { slate_type = "result"; }
         if slate_type == "" { slate_type = "int"; }
         cur_locals = cur_locals.set(var_name, slate_type);
-        string unique_slot = var_name.concat("_", string(cur.reg));
+        string unique_suffix = string(cur.reg);
+        string unique_slot = var_name.concat("_", unique_suffix);
         EmitResult init = walk_expr(stmt_children.get(1), cur, cur_locals, reg);
         cur_locals = cur_locals.set(var_name + "_slot", "%" + unique_slot);
         # Use typed variant to coerce init.value from init.value_type to slate_type

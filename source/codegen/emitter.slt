@@ -187,7 +187,10 @@ EscapeResult escape_ll_string(string s) {
 
 Emitter advance_str(Emitter e, string value) {
     EscapeResult esc = escape_ll_string(value);
-    string global = "@str".concat(string(e.str_count), " = private unnamed_addr constant [", string(len), " x i8] c\"", esc.text, "\\00\"");
+    string name = "@str" + string(e.str_count);
+    int len = esc.byte_count + 1;
+    string len_str = string(len);
+    string global = name.concat(" = private unnamed_addr constant [", len_str, " x i8] c\"", esc.text, "\\00\"");
     return Emitter(
         lines: e.lines,
         global_lines: e.global_lines.add(global),

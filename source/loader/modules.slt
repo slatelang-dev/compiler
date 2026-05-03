@@ -75,15 +75,8 @@ string first_module_error(list(LoadedModule) modules) {
     return "";
 }
 
-bool module_already_loaded(list(string) seen, string path) {
-    mutable int i = 0;
-    while i < seen.len() {
-        if seen.get(i) == path {
-            return true;
-        }
-        i += 1;
-    }
-    return false;
+bool module_already_loaded(table(string, string) seen, string path) {
+    return seen.has(path);
 }
 
 string normalize_path(string p) {
@@ -143,7 +136,10 @@ string resolve_module_path(string mod_name, string base_path, string home_path) 
 
 list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
     string home_dir = home();
-    mutable list(string) visited = seen;
+    mutable table(string, string) visited = empty;
+    mutable int vi = 0;
+    while vi < seen.len() { visited = visited.set(seen.get(vi), "1"); vi = vi + 1; }
+    mutable table(string, string) queued = empty;
     mutable list(Node) module_list = empty;
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
@@ -151,6 +147,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
     string slate_path = resolve_module_path("slate", base_path, home_dir);
     queue = queue.add(slate_path);
     queue_bases = queue_bases.add(resolve_parent(slate_path));
+    queued = queued.set(slate_path, "1");
 
     mutable int i = 0;
     while i < program.children.len() {
@@ -159,9 +156,10 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
             string mod_name = decl.value;
             if mod_name != "slate" {
                 string mod_path = resolve_module_path(mod_name, base_path, home_dir);
-                if module_already_loaded(queue, mod_path) == false {
+                if module_already_loaded(queued, mod_path) == false {
                     queue = queue.add(mod_path);
                     queue_bases = queue_bases.add(resolve_parent(mod_path));
+                    queued = queued.set(mod_path, "1");
                 }
             }
         }
@@ -176,7 +174,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
 
         if module_already_loaded(visited, mod_path) {
         } else {
-            visited = visited.add(mod_path);
+            visited = visited.set(mod_path, "1");
             mutable string mod_name = mod_path.split("/").get(mod_path.split("/").len() - 1);
             if mod_name.ends_with(".slt") {
                 mod_name = mod_name.replace(".slt", "");
@@ -191,9 +189,10 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
                         string child_mod_name = child.value;
                         string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
                         if module_already_loaded(visited, child_mod_path) == false {
-                            if module_already_loaded(queue, child_mod_path) == false {
+                            if module_already_loaded(queued, child_mod_path) == false {
                                 queue = queue.add(child_mod_path);
                                 queue_bases = queue_bases.add(resolve_parent(child_mod_path));
+                                queued = queued.set(child_mod_path, "1");
                             }
                         }
                     }

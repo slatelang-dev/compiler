@@ -210,6 +210,14 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @slate_print(ptr)");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
     cur = emit_line(cur, "declare ptr @slate_chars(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_join_lines(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_join_chars(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_escape_string(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_escape_ll(ptr)");
+    cur = emit_line(cur, "declare i64 @slate_strlen(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_concat3(ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_concat4(ptr, ptr, ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_concat5(ptr, ptr, ptr, ptr, ptr)");
     
     cur = emit_line(cur, "declare i8 @slate_contains(ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_starts_with(ptr, ptr)");

@@ -15,6 +15,21 @@ Registry build_registry(list(Node) programs) {
     return r;
 }
 
+Registry build_registry_from_modules(list(ModuleInfo) modules) {
+    mutable Registry r = new_registry();
+    r = seed_c_runtime(r);
+    mutable int i = 0;
+    while i < modules.len() {
+        ModuleInfo info = modules.get(i);
+        LoadedModule m = load_module(info.name, info.path);
+        if m.loaded {
+            r = register_program(r, m.ast);
+        }
+        i = i + 1;
+    }
+    return r;
+}
+
 Registry register_program(Registry r, Node program) {
     mutable Registry reg = r;
     mutable int i = 0;
@@ -218,6 +233,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "walk_all", "ptr");
     reg = register_fn(reg, "walk_module", "ptr");
     reg = register_fn(reg, "build_registry", "ptr");
+    reg = register_fn(reg, "build_registry_from_modules", "ptr");
     reg = register_fn(reg, "load_entry", "ptr");
     reg = register_fn(reg, "load_project_file", "ptr");
     reg = register_fn(reg, "project_valid", "bool");

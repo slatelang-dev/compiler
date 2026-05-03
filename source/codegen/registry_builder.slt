@@ -141,8 +141,10 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_file_write", "void");
     reg = register_fn(reg, "slate_file_exists", "bool");
     reg = register_fn(reg, "slate_home", "string");
+    reg = register_fn(reg, "slate_hash", "string");
     reg = register_fn(reg, "slate_list_new", "ptr");
-    reg = register_fn(reg, "slate_list_get", "ptr");
+    reg = register_fn(reg, "slate_list_add_ptr", "ptr");
+    reg = register_fn(reg, "slate_get_ptr", "ptr");
     reg = register_fn(reg, "slate_list_len", "int");
     reg = register_fn(reg, "slate_table_new", "ptr");
     reg = register_fn(reg, "slate_table_get", "ptr");
@@ -212,6 +214,8 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "project_display", "ptr");
     reg = register_fn(reg, "collect_module_asts", "ptr");
     reg = register_fn(reg, "walk_all", "ptr");
+    reg = register_fn(reg, "walk_module", "ptr");
+    reg = register_fn(reg, "build_registry", "ptr");
     reg = register_fn(reg, "load_entry", "ptr");
     reg = register_fn(reg, "load_project_file", "ptr");
     reg = register_fn(reg, "project_valid", "bool");

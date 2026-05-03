@@ -282,6 +282,23 @@ Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
     return cur;
 }
 
+string walk_module(Node program, string target_triple, Registry reg) {
+    mutable Emitter e = new_emitter();
+    e = emit_file_header(e, target_triple);
+    string header = join_lines(e.lines);
+    e = new_emitter();
+    list(Node) program_children = program.children;
+    mutable int i = 0;
+    while i < program_children.len() {
+        Node decl = program_children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            e = walk_fn(decl, e, reg);
+        }
+        i += 1;
+    }
+    return header + join_lines(e.global_lines) + join_lines(e.lines);
+}
+
 string walk_program(Node program, string target_triple) {
     list(Node) programs = (program,);
     Registry reg = build_registry(programs);

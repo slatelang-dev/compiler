@@ -3,6 +3,12 @@ module modules;
 use project;
 use slate;
 
+struct ModuleInfo {
+    Node ast;
+    string path;
+    string name;
+}
+
 struct LoadedModule {
     string name;
     string path;
@@ -134,13 +140,13 @@ string resolve_module_path(string mod_name, string base_path, string home_path) 
     return normalize_path(local_exports);
 }
 
-list(Node) collect_module_asts(Node program, string base_path, list(string) seen) {
+list(ModuleInfo) collect_module_asts(Node program, string base_path, list(string) seen) {
     string home_dir = home();
     mutable table(string, string) visited = empty;
     mutable int vi = 0;
     while vi < seen.len() { visited = visited.set(seen.get(vi), "1"); vi = vi + 1; }
     mutable table(string, string) queued = empty;
-    mutable list(Node) module_list = empty;
+    mutable list(ModuleInfo) module_list = empty;
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
 
@@ -181,7 +187,7 @@ list(Node) collect_module_asts(Node program, string base_path, list(string) seen
             }
             LoadedModule loaded = load_module(mod_name, mod_path);
             if loaded.loaded {
-                module_list = module_list.add(loaded.ast);
+                module_list = module_list.add(ModuleInfo(ast: loaded.ast, path: mod_path, name: mod_name));
                 mutable int j = 0;
                 while j < loaded.ast.children.len() {
                     Node child = loaded.ast.children.get(j);

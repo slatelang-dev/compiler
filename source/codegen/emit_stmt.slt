@@ -65,7 +65,7 @@ Emitter emit_assign(Emitter e, string slot, string slate_type, string value) {
 
 Emitter emit_if(Emitter e, string cond_reg, string then_label, string else_label, string merge_label) {
     mutable Emitter cur = e;
-    cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + then_label + ", label %" + else_label);
+    cur = emit_line(cur, "  br i1 ".concat(cond_reg, ", label %", then_label, ", label %", else_label));
     return cur;
 }
 
@@ -102,7 +102,7 @@ Emitter emit_while_start(Emitter e, string cond_label) {
 
 Emitter emit_while_body(Emitter e, string cond_reg, string body_label, string exit_label) {
     mutable Emitter cur = e;
-    cur = emit_line(cur, "  br i1 " + cond_reg + ", label %" + body_label + ", label %" + exit_label);
+    cur = emit_line(cur, "  br i1 ".concat(cond_reg, ", label %", body_label, ", label %", exit_label));
     cur = emit_label(cur, body_label);
     return cur;
 }
@@ -133,7 +133,7 @@ Emitter emit_for_cond(Emitter e, string cond_label, string var, string end_val) 
     cur = emit_load(cur, loaded, "int", slot);
     string cmp_reg = next_reg(cur);
     cur = advance_reg(cur);
-    cur = emit_line(cur, "  " + cmp_reg + " = icmp slt i64 " + loaded + ", " + end_val);
+    cur = emit_line(cur, "  ".concat(cmp_reg, " = icmp slt i64 ", loaded, ", ", end_val));
     return cur;
 }
 
@@ -145,7 +145,7 @@ Emitter emit_for_increment(Emitter e, string var, string cond_label) {
     cur = emit_load(cur, loaded, "int", slot);
     string incremented = next_reg(cur);
     cur = advance_reg(cur);
-    cur = emit_line(cur, "  " + incremented + " = add i64 " + loaded + ", 1");
+    cur = emit_line(cur, "  ".concat(incremented, " = add i64 ", loaded, ", 1"));
     cur = emit_store(cur, incremented, "int", slot);
     cur = emit_jump(cur, cond_label);
     return cur;
@@ -167,7 +167,7 @@ Emitter emit_fn_header(Emitter e, string name, string return_type, list(string) 
         params = params + llvm_param_type(param_types.get(i)) + " %" + param_names.get(i);
         i += 1;
     }
-    cur = emit_raw(cur, "define " + llvm_ret + " @" + name + "(" + params + ") {");
+    cur = emit_raw(cur, "define ".concat(llvm_ret, " @", name, "(", params, ") {"));
     cur = emit_label(cur, "fn_begin");
     return cur;
 }

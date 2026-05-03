@@ -57,7 +57,7 @@ CoerceResult coerce_value(Emitter e, string val, string actual_type, string expe
         if val.starts_with("%") or val.starts_with("@") {
             string reg = next_reg(cur);
             cur = advance_reg(cur);
-            cur = emit_line(cur, "  " + reg + " = ptrtoint ptr " + val + " to i64");
+            cur = emit_line(cur, "  ".concat(reg, " = ptrtoint ptr ", val, " to i64"));
             return CoerceResult(emitter: cur, value: reg);
         }
         return CoerceResult(emitter: cur, value: val);
@@ -68,20 +68,20 @@ CoerceResult coerce_value(Emitter e, string val, string actual_type, string expe
         if val.starts_with("%") or val.starts_with("@") {
             string reg = next_reg(cur);
             cur = advance_reg(cur);
-            cur = emit_line(cur, "  " + reg + " = inttoptr i64 " + val + " to ptr");
+            cur = emit_line(cur, "  ".concat(reg, " = inttoptr i64 ", val, " to ptr"));
             return CoerceResult(emitter: cur, value: reg);
         }
-        return CoerceResult(emitter: cur, value: "inttoptr (i64 " + val + " to ptr)");
+        return CoerceResult(emitter: cur, value: "inttoptr (i64 ".concat(val, " to ptr)"));
     }
     # ptr -> bool: ptrtoint + trunc
     if expected == "bool" and actual == "ptr" {
         mutable Emitter cur = e;
         string int_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + int_reg + " = ptrtoint ptr " + val + " to i64");
+        cur = emit_line(cur, "  ".concat(int_reg, " = ptrtoint ptr ", val, " to i64"));
         string bool_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + bool_reg + " = trunc i64 " + int_reg + " to i1");
+        cur = emit_line(cur, "  ".concat(bool_reg, " = trunc i64 ", int_reg, " to i1"));
         return CoerceResult(emitter: cur, value: bool_reg);
     }
     # int -> bool: trunc
@@ -89,7 +89,7 @@ CoerceResult coerce_value(Emitter e, string val, string actual_type, string expe
         mutable Emitter cur = e;
         string reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = trunc i64 " + val + " to i1");
+        cur = emit_line(cur, "  ".concat(reg, " = trunc i64 ", val, " to i1"));
         return CoerceResult(emitter: cur, value: reg);
     }
     # No coercion needed or known
@@ -106,84 +106,84 @@ Emitter emit_binary_op(Emitter e, string op, string left, string right, string s
 
     if op == "+" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fadd " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fadd ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = add " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = add ", llvm_t, " ", left, ", ", right));
     }
     if op == "-" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fsub " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fsub ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = sub " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = sub ", llvm_t, " ", left, ", ", right));
     }
     if op == "*" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fmul " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fmul ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = mul " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = mul ", llvm_t, " ", left, ", ", right));
     }
     if op == "/" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fdiv " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fdiv ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = sdiv " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = sdiv ", llvm_t, " ", left, ", ", right));
     }
     if op == "%" {
-        return emit_line(cur, "  " + reg + " = srem " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = srem ", llvm_t, " ", left, ", ", right));
     }
     if op == "==" {
         if slate_type == "bool" {
-            return emit_line(cur, "  " + reg + " = icmp eq i1 " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = icmp eq i1 ", left, ", ", right));
         }
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fcmp oeq double " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fcmp oeq double ", left, ", ", right));
         }
         if slate_type == "ptr" {
-            return emit_line(cur, "  " + reg + " = icmp eq ptr " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = icmp eq ptr ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = icmp eq i64 " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = icmp eq i64 ", left, ", ", right));
     }
     if op == "!=" {
         if slate_type == "bool" {
-            return emit_line(cur, "  " + reg + " = icmp ne i1 " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = icmp ne i1 ", left, ", ", right));
         }
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fcmp one double " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fcmp one double ", left, ", ", right));
         }
         if slate_type == "ptr" {
-            return emit_line(cur, "  " + reg + " = icmp ne ptr " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = icmp ne ptr ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = icmp ne i64 " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = icmp ne i64 ", left, ", ", right));
     }
     if op == "<" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fcmp olt " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fcmp olt ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = icmp slt " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = icmp slt ", llvm_t, " ", left, ", ", right));
     }
     if op == ">" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fcmp ogt " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fcmp ogt ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = icmp sgt " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = icmp sgt ", llvm_t, " ", left, ", ", right));
     }
     if op == "<=" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fcmp ole " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fcmp ole ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = icmp sle " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = icmp sle ", llvm_t, " ", left, ", ", right));
     }
     if op == ">=" {
         if slate_type == "float" {
-            return emit_line(cur, "  " + reg + " = fcmp oge " + llvm_t + " " + left + ", " + right);
+            return emit_line(cur, "  ".concat(reg, " = fcmp oge ", llvm_t, " ", left, ", ", right));
         }
-        return emit_line(cur, "  " + reg + " = icmp sge " + llvm_t + " " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = icmp sge ", llvm_t, " ", left, ", ", right));
     }
     if op == "and" {
-        return emit_line(cur, "  " + reg + " = and i1 " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = and i1 ", left, ", ", right));
     }
     if op == "or" {
-        return emit_line(cur, "  " + reg + " = or i1 " + left + ", " + right);
+        return emit_line(cur, "  ".concat(reg, " = or i1 ", left, ", ", right));
     }
 
     return emit_error(cur, "unknown binary op: " + op);
@@ -222,12 +222,12 @@ Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_v
         i += 1;
     }
     if return_type == "void" {
-        cur = emit_line(cur, "  call void @" + name + "(" + args + ")");
+        cur = emit_line(cur, "  call void @".concat(name, "(", args, ")"));
         return cur;
     }
     string reg = next_reg(cur);
     cur = advance_reg(cur);
-    return emit_line(cur, "  " + reg + " = call " + llvm_ret + " @" + name + "(" + args + ")");
+    return emit_line(cur, "  ".concat(reg, " = call ", llvm_ret, " @", name, "(", args, ")"));
 }
 
 # Emit a variable load from alloca slot
@@ -235,7 +235,7 @@ Emitter emit_call(Emitter e, string name, string return_type, list(string) arg_v
 Emitter emit_load(Emitter e, string reg_dest, string slate_type, string alloca_reg) {
     mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
-    return emit_line(cur, "  " + reg_dest + " = load " + llvm_t + ", ptr " + alloca_reg);
+    return emit_line(cur, "  ".concat(reg_dest, " = load ", llvm_t, ", ptr ", alloca_reg));
 }
 
 # Emit a variable store to alloca slot
@@ -243,7 +243,7 @@ Emitter emit_load(Emitter e, string reg_dest, string slate_type, string alloca_r
 Emitter emit_store(Emitter e, string value, string slate_type, string alloca_reg) {
     mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
-    return emit_line(cur, "  store " + llvm_t + " " + value + ", ptr " + alloca_reg);
+    return emit_line(cur, "  store ".concat(llvm_t, " ", value, ", ptr ", alloca_reg));
 }
 
 # Emit an alloca — stack slot for a variable
@@ -251,7 +251,7 @@ Emitter emit_store(Emitter e, string value, string slate_type, string alloca_reg
 Emitter emit_alloca(Emitter e, string reg, string slate_type) {
     mutable Emitter cur = e;
     string llvm_t = llvm_type(slate_type);
-    return emit_line(cur, "  " + reg + " = alloca " + llvm_t);
+    return emit_line(cur, "  ".concat(reg, " = alloca ", llvm_t));
 }
 
 # Emit a return statement
@@ -263,5 +263,5 @@ Emitter emit_return(Emitter e, string value, string value_type, string return_ty
     # Coerce the value to the declared return type if needed
     CoerceResult coerced = coerce_value(e, value, value_type, return_type);
     string llvm_t = llvm_type(return_type);
-    return emit_terminator(coerced.emitter, "  ret " + llvm_t + " " + coerced.value);
+    return emit_terminator(coerced.emitter, "  ret ".concat(llvm_t, " ", coerced.value));
 }

@@ -30,7 +30,7 @@ EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) 
     if name == "alloc" {
         string reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = call ptr @malloc(i64 " + arg_values.get(0) + ")");
+        cur = emit_line(cur, "  ".concat(reg, " = call ptr @malloc(i64 ", arg_values.get(0), ")"));
         return EmitResult(emitter: cur, value: reg, value_type: "ptr");
     }
     if name == "free" {
@@ -40,13 +40,13 @@ EmitResult emit_primitive_call(Emitter e, string name, list(string) arg_values) 
     if name == "strlen" {
         string reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = call i64 @strlen(ptr " + arg_values.get(0) + ")");
+        cur = emit_line(cur, "  ".concat(reg, " = call i64 @strlen(ptr ", arg_values.get(0), ")"));
         return EmitResult(emitter: cur, value: reg, value_type: "int");
     }
     if name == "strcmp" {
         string reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + reg + " = call i32 @strcmp(ptr " + arg_values.get(0) + ", ptr " + arg_values.get(1) + ")");
+        cur = emit_line(cur, "  ".concat(reg, " = call i32 @strcmp(ptr ", arg_values.get(0), ", ptr ", arg_values.get(1), ")"));
         return EmitResult(emitter: cur, value: reg, value_type: "int");
     }
     if name == "puts" {
@@ -176,25 +176,25 @@ EmitResult binary_kind(Node node, Emitter cur, table(string, string) locals, Reg
     if node.value == "+" and op_type == "string" {
         string result_reg = next_reg(right_val.emitter);
         cur = advance_reg(right_val.emitter);
-        cur = emit_line(cur, "  " + result_reg + " = call ptr @slate_string_concat(ptr " + left_val.value + ", ptr " + right_val.value + ")");
+        cur = emit_line(cur, "  ".concat(result_reg, " = call ptr @slate_string_concat(ptr ", left_val.value, ", ptr ", right_val.value, ")"));
         return make_result_typed(cur, result_reg, "string");
     }
     if op_type == "string" and node.value == "==" {
         string cmp_reg = next_reg(right_val.emitter);
         cur = advance_reg(right_val.emitter);
-        cur = emit_line(cur, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left_val.value + ", ptr " + right_val.value + ")");
+        cur = emit_line(cur, "  ".concat(cmp_reg, " = call i32 @strcmp(ptr ", left_val.value, ", ptr ", right_val.value, ")"));
         string eq_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + eq_reg + " = icmp eq i32 " + cmp_reg + ", 0");
+        cur = emit_line(cur, "  ".concat(eq_reg, " = icmp eq i32 ", cmp_reg, ", 0"));
         return EmitResult(emitter: cur, value: eq_reg, value_type: "bool");
     }
     if op_type == "string" and node.value == "!=" {
         string cmp_reg = next_reg(right_val.emitter);
         cur = advance_reg(right_val.emitter);
-        cur = emit_line(cur, "  " + cmp_reg + " = call i32 @strcmp(ptr " + left_val.value + ", ptr " + right_val.value + ")");
+        cur = emit_line(cur, "  ".concat(cmp_reg, " = call i32 @strcmp(ptr ", left_val.value, ", ptr ", right_val.value, ")"));
         string ne_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + ne_reg + " = icmp ne i32 " + cmp_reg + ", 0");
+        cur = emit_line(cur, "  ".concat(ne_reg, " = icmp ne i32 ", cmp_reg, ", 0"));
         return EmitResult(emitter: cur, value: ne_reg, value_type: "bool");
     }
     if node.value == "==" or node.value == "!=" {
@@ -225,19 +225,19 @@ EmitResult binary_kind(Node node, Emitter cur, table(string, string) locals, Reg
             if left_is_prim == false {
                 string unbox = next_reg(cur);
                 cur = advance_reg(cur);
-                cur = emit_line(cur, "  " + unbox + " = ptrtoint ptr " + lv + " to i64");
+                cur = emit_line(cur, "  ".concat(unbox, " = ptrtoint ptr ", lv, " to i64"));
                 lv = unbox;
             }
             if right_is_prim == false {
                 string unbox = next_reg(cur);
                 cur = advance_reg(cur);
-                cur = emit_line(cur, "  " + unbox + " = ptrtoint ptr " + rv + " to i64");
+                cur = emit_line(cur, "  ".concat(unbox, " = ptrtoint ptr ", rv, " to i64"));
                 rv = unbox;
             }
             if node.value == "==" { cmp_instr = "icmp eq i64"; }
             else { cmp_instr = "icmp ne i64"; }
         }
-        cur = emit_line(cur, "  " + cmp_reg + " = " + cmp_instr + " " + lv + ", " + rv);
+        cur = emit_line(cur, "  ".concat(cmp_reg, " = ", cmp_instr, " ", lv, ", ", rv));
         return make_result_typed(cur, cmp_reg, "bool");
     }
     string result_reg = next_reg(right_val.emitter);
@@ -282,7 +282,7 @@ EmitResult call_kind(Node node, Emitter e, table(string, string) locals, Registr
             cur = coerced.emitter;
             string gep_reg = next_reg(cur);
             cur = advance_reg(cur);
-            cur = emit_line(cur, "  " + gep_reg + " = getelementptr inbounds %struct." + node.value + ", ptr " + size_reg + ", i32 0, i32 " + string(fi));
+            cur = emit_line(cur, "  ".concat(gep_reg, " = getelementptr inbounds %struct.", node.value, ", ptr ", size_reg, ", i32 0, i32 ", string(fi)));
             cur = emit_line(cur, "  store " + llvm_field_type + " " + coerced.value + ", ptr " + gep_reg);
             fi += 1;
         }
@@ -312,19 +312,19 @@ EmitResult call_kind(Node node, Emitter e, table(string, string) locals, Registr
     if node.value == "int" {
         string cast_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + cast_reg + " = ptrtoint ptr " + arg_values.get(0) + " to i64");
+        cur = emit_line(cur, "  ".concat(cast_reg, " = ptrtoint ptr ", arg_values.get(0), " to i64"));
         return make_result_typed(cur, cast_reg, "int");
     }
     if node.value == "float" {
         string cast_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + cast_reg + " = sitofp i64 " + arg_values.get(0) + " to double");
+        cur = emit_line(cur, "  ".concat(cast_reg, " = sitofp i64 ", arg_values.get(0), " to double"));
         return make_result_typed(cur, cast_reg, "float");
     }
     if node.value == "bool" {
         string cast_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + cast_reg + " = trunc i64 " + arg_values.get(0) + " to i1");
+        cur = emit_line(cur, "  ".concat(cast_reg, " = trunc i64 ", arg_values.get(0), " to i1"));
         return make_result_typed(cur, cast_reg, "bool");
     }
     string call_name = remap_call_name(node.value);
@@ -398,12 +398,11 @@ EmitResult field_kind(Node node, Emitter e, table(string, string) locals, Regist
         string llvm_field_type = llvm_type(field_type);
         string gep_reg = next_reg(receiver.emitter);
         mutable Emitter cur = advance_reg(receiver.emitter);
-        string gep_instr = "  " + gep_reg + " = getelementptr inbounds %struct." + struct_type + ", ptr ";
-        gep_instr = gep_instr + receiver.value + ", i32 0, i32 " + string(field_idx);
+        string gep_instr = "  ".concat(gep_reg, " = getelementptr inbounds %struct.", struct_type, ", ptr ", receiver.value, ", i32 0, i32 ", string(field_idx));
         cur = emit_line(cur, gep_instr);
         string load_reg = next_reg(cur);
         cur = advance_reg(cur);
-        cur = emit_line(cur, "  " + load_reg + " = load " + llvm_field_type + ", ptr " + gep_reg);
+        cur = emit_line(cur, "  ".concat(load_reg, " = load ", llvm_field_type, ", ptr ", gep_reg));
         return make_result_typed(cur, load_reg, field_type);
     }
     return make_result_typed(receiver.emitter, receiver.value, struct_type);

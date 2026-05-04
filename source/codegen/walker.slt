@@ -296,6 +296,28 @@ string walk_module(Node program, string target_triple, Registry reg) {
         fi = fi + 1;
     }
 
+    list(string) already_declared = ("malloc", "free", "strlen", "strcmp", "puts",
+        "memcpy", "slate_list_new", "slate_add", "slate_get", "slate_len",
+        "slate_set", "slate_has", "slate_table_new", "slate_string_concat",
+        "slate_string", "slate_int", "slate_float", "slate_print", "slate_args",
+        "slate_chars", "slate_contains", "slate_starts_with",
+        "slate_ends_with", "slate_replace", "slate_split", "slate_or",
+        "slate_exists", "slate_file_path", "slate_file_read", "slate_file_write",
+        "slate_file_exists", "run", "file", "read_n", "read", "home", "concat", "hash",
+        "slate_hash", "toml", "slate_list_add_ptr", "slate_get_ptr",
+        "slate_list_len", "slate_string_data", "slate_string_eq", "slate_string_len",
+        "slate_table_get", "slate_table_has", "slate_table_len",
+        "slate_keys", "slate_values", "slate_input", "slate_color",
+        "bold", "red", "green", "blue", "gray", "white",
+        "bold_green", "bold_slate", "bold_red", "bold_yellow", "bold_blue",
+        "dim", "italic", "underline", "replace", "split", "strcat", "advance",
+        "alloc", "gc_alloc", "slate_alloc");
+    mutable int ai = 0;
+    while ai < already_declared.len() {
+        local_fns = local_fns.set(already_declared.get(ai), "1");
+        ai = ai + 1;
+    }
+
     list(string) all_fns = reg.fn_returns.keys();
     fi = 0;
     while fi < all_fns.len() {

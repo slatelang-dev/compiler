@@ -199,7 +199,7 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "%struct.LoadedModule = type { ptr, ptr, ptr, ptr, i8, ptr }");
     cur = emit_line(cur, "%struct.AnalysisResult = type { ptr, ptr }");
     cur = emit_line(cur, "%struct.LexState = type { ptr, i64, i64, ptr }");
-    cur = emit_line(cur, "%struct.Symbol = type { ptr, i8, ptr }");
+    cur = emit_line(cur, "%struct.Symbol = type { ptr, ptr, i8, i1, i1, i64, i64, i64 }");
     cur = emit_line(cur, "%struct.ResolveResult = type { ptr, i64, ptr }");
     cur = emit_line(cur, "%struct.CheckResult = type { ptr, ptr, i8 }");
     cur = emit_line(cur, "%struct.MutResult = type { ptr, i64, i8 }");

@@ -224,11 +224,14 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @slate_get(ptr, i64)");
     cur = emit_line(cur, "declare i64 @slate_len(ptr)");
     cur = emit_line(cur, "declare ptr @slate_list_add_ptr(ptr, ptr)");
-    cur = emit_line(cur, "declare ptr @slate_get_ptr(ptr, i64)");
+    cur = emit_line(cur, "declare ptr @slate_get_ptr(ptr, ptr)");
     cur = emit_line(cur, "declare i64 @slate_list_len(ptr)");
     cur = emit_line(cur, "declare ptr @slate_set(ptr, ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_has(ptr, ptr)");
     cur = emit_line(cur, "declare ptr @slate_table_new()");
+    cur = emit_line(cur, "declare ptr @slate_table_get(ptr, ptr)");
+    cur = emit_line(cur, "declare i8 @slate_table_has(ptr, ptr)");
+    cur = emit_line(cur, "declare i64 @slate_table_len(ptr)");
     cur = emit_line(cur, "declare ptr @slate_string_concat(ptr, ptr)");
     cur = emit_line(cur, "declare ptr @slate_string(i64)");
     cur = emit_line(cur, "declare i64 @slate_int(ptr)");
@@ -236,7 +239,6 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare void @slate_print(ptr)");
     cur = emit_line(cur, "declare ptr @slate_args(ptr)");
     cur = emit_line(cur, "declare ptr @slate_chars(ptr)");
-    
     cur = emit_line(cur, "declare i8 @slate_contains(ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_starts_with(ptr, ptr)");
     cur = emit_line(cur, "declare i8 @slate_ends_with(ptr, ptr)");
@@ -276,5 +278,13 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @underline(ptr)");
     cur = emit_line(cur, "declare ptr @slate_color(ptr)");
     cur = emit_line(cur, "declare ptr @strcat(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_keys(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_values(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_input(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_string_new()");
+    cur = emit_line(cur, "declare ptr @slate_string_data(ptr)");
+    cur = emit_line(cur, "declare i64 @slate_string_len(ptr)");
+    cur = emit_line(cur, "declare i1 @slate_string_eq(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @slate_home()");
     return cur;
 }

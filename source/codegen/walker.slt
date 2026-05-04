@@ -310,7 +310,7 @@ string walk_module(Node program, string target_triple, Registry reg) {
         "slate_keys", "slate_values", "slate_input", "slate_color",
         "bold", "red", "green", "blue", "yellow", "orange", "purple", "gray", "white",
         "bold_green", "bold_slate", "bold_red", "bold_yellow", "bold_blue",
-        "dim", "italic", "underline", "replace", "split", "strcat", "advance",
+        "dim", "italic", "underline", "replace", "split", "strcat",
         "alloc", "gc_alloc", "slate_alloc");
     mutable int ai = 0;
     while ai < already_declared.len() {

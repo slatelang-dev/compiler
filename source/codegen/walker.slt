@@ -343,7 +343,7 @@ string walk_module(Node program, string target_triple, Registry reg) {
         }
         i += 1;
     }
-    return header + global_header + join_lines(e.lines);
+    return header + global_header + join_lines(e.global_lines) + join_lines(e.lines);
 }
 
 string walk_program(Node program, string target_triple) {

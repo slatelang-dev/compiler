@@ -285,7 +285,6 @@ Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
 string walk_module(Node program, string target_triple, Registry reg) {
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);
-    e = emit_struct_declarations(e, (program,));
     string header = join_lines(e.lines);
     string global_header = join_lines(e.global_lines);
     e = new_emitter();

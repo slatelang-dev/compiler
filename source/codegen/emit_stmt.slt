@@ -275,7 +275,6 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @italic(ptr)");
     cur = emit_line(cur, "declare ptr @underline(ptr)");
     cur = emit_line(cur, "declare ptr @slate_color(ptr)");
-    cur = emit_line(cur, "declare ptr @advance(ptr, ptr)");
     cur = emit_line(cur, "declare ptr @strcat(ptr, ptr)");
     return cur;
 }

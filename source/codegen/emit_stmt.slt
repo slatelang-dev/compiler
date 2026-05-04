@@ -234,5 +234,15 @@ Emitter emit_file_header(Emitter e, string target_triple) {
     cur = emit_line(cur, "declare ptr @slate_hash(ptr)");
     cur = emit_line(cur, "declare ptr @concat(ptr, ...)");
     cur = emit_line(cur, "declare ptr @hash(ptr)");
+    cur = emit_line(cur, "declare ptr @bold(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_green(ptr)");
+    cur = emit_line(cur, "declare ptr @bold_slate(ptr)");
+    cur = emit_line(cur, "declare ptr @red(ptr)");
+    cur = emit_line(cur, "declare ptr @green(ptr)");
+    cur = emit_line(cur, "declare ptr @blue(ptr)");
+    cur = emit_line(cur, "declare ptr @gray(ptr)");
+    cur = emit_line(cur, "declare ptr @slate_color(ptr)");
+    cur = emit_line(cur, "declare ptr @advance(ptr, ptr)");
+    cur = emit_line(cur, "declare ptr @strcat(ptr, ptr)");
     return cur;
 }

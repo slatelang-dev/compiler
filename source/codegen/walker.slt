@@ -287,6 +287,7 @@ string walk_module(Node program, string target_triple, Registry reg) {
     e = emit_file_header(e, target_triple);
     e = emit_struct_declarations(e, (program,));
     string header = join_lines(e.lines);
+    string global_header = join_lines(e.global_lines);
     e = new_emitter();
     list(Node) program_children = program.children;
     mutable int i = 0;
@@ -297,7 +298,7 @@ string walk_module(Node program, string target_triple, Registry reg) {
         }
         i += 1;
     }
-    return header + join_lines(e.global_lines) + join_lines(e.lines);
+    return header + global_header + join_lines(e.lines);
 }
 
 string walk_program(Node program, string target_triple) {

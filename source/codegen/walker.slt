@@ -285,6 +285,30 @@ Emitter walk_fn(Node fn_node, Emitter e, Registry reg) {
 string walk_module(Node program, string target_triple, Registry reg) {
     mutable Emitter e = new_emitter();
     e = emit_file_header(e, target_triple);
+
+    table(string, string) local_fns = empty;
+    mutable int fi = 0;
+    while fi < program.children.len() {
+        Node decl = program.children.get(fi);
+        if decl.kind == NodeKind.FnDecl {
+            local_fns = local_fns.set(decl.value, "1");
+        }
+        fi = fi + 1;
+    }
+
+    list(string) all_fns = reg.fn_returns.keys();
+    fi = 0;
+    while fi < all_fns.len() {
+        string fn_name = all_fns.get(fi);
+        if local_fns.has(fn_name) == false {
+            string ret_type = lookup_fn_return(reg, fn_name);
+            string llvm_ret = llvm_type(ret_type);
+            e = emit_line(e, "declare " + llvm_ret + " @" + fn_name + "(...)");
+        }
+        fi = fi + 1;
+    }
+
+    e = emit_line(e, "");
     string header = join_lines(e.lines);
     string global_header = join_lines(e.global_lines);
     e = new_emitter();

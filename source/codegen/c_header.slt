@@ -14,9 +14,9 @@ CEmitter emit_header_includes(CEmitter e) {
 CEmitter emit_forward_decls(CEmitter e, list(var) registry) {
     mutable int i = 0;
     while i < registry.len() {
-        var fn = registry.get(i);
-        if fn.kind == "fn" {
-            string ret = c_type(fn.ret_type);
+        var fn_def = registry.get(i);
+        if fn_def.kind == "fn" {
+            string ret = c_type(fn_def.ret_type);
             string decl = "void* " + c_fn_name(fn.name) + "(";
             mutable int j = 0;
             while j < fn.params.len() {

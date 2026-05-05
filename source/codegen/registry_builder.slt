@@ -2,7 +2,6 @@ module registry_builder;
 
 use node;
 use type_registry;
-use emit_types;
 
 Registry build_registry(list(Node) programs) {
     mutable Registry r = new_registry();

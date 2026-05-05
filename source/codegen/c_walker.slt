@@ -32,14 +32,14 @@ CEmitter emit_function(CEmitter e, var fn_def) {
     return e;
 }
 
-string walk_module(var mod_node, list(var) registry) {
+string walk_module(var program, list(var) registry) {
     mutable CEmitter e = new_emitter();
     e = emit_line(e, "#include \"slate_module.h\"");
     e = emit_line(e, "");
     
     mutable int i = 0;
-    while i < mod_node.ast.len() {
-        var node = mod_node.ast.get(i);
+    while i < program.children.len() {
+        var node = program.children.get(i);
         if node.kind == "fn" {
             e = emit_function(e, node);
             e = emit_line(e, "");

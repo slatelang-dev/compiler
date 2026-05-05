@@ -7,7 +7,15 @@ use node;
 string emit_literal(Node n) {
     if n.kind == NodeKind.IntLit { return n.value; }
     if n.kind == NodeKind.FloatLit { return n.value; }
-    if n.kind == NodeKind.StringLit { return "\"" + n.value + "\""; }
+    if n.kind == NodeKind.StringLit {
+        string val = n.value;
+        val = val.replace("\\", "\\\\");
+        val = val.replace("\"", "\\\"");
+        val = val.replace("\n", "\\n");
+        val = val.replace("\r", "\\r");
+        val = val.replace("\t", "\\t");
+        return "\"" + val + "\"";
+    }
     if n.kind == NodeKind.CharLit { return n.value; }
     if n.kind == NodeKind.BoolLit {
         if n.value == "true" { return "1"; }
@@ -158,10 +166,25 @@ string emit_expr(Node expr) {
         Node left = expr.children.get(0);
         Node right = expr.children.get(1);
         string op = expr.value;
+        string left_expr = emit_expr(left);
+        string right_expr = emit_expr(right);
         if op == "+" {
-            return "slate_concat(" + emit_expr(left) + ", " + emit_expr(right) + ")";
+            return "slate_concat(" + left_expr + ", " + right_expr + ")";
         }
-        return "(" + emit_expr(left) + " " + emit_binop(op) + " " + emit_expr(right) + ")";
+        if op == "and" { return "(" + left_expr + " && " + right_expr + ")"; }
+        if op == "or" { return "(" + left_expr + " || " + right_expr + ")"; }
+        if op == "==" { return "(" + left_expr + " == " + right_expr + ")"; }
+        if op == "!=" { return "(" + left_expr + " != " + right_expr + ")"; }
+        if op == "<" { return "(" + left_expr + " < " + right_expr + ")"; }
+        if op == ">" { return "(" + left_expr + " > " + right_expr + ")"; }
+        if op == "<=" { return "(" + left_expr + " <= " + right_expr + ")"; }
+        if op == ">=" { return "(" + left_expr + " >= " + right_expr + ")"; }
+        if op == "+" { return "(" + left_expr + " + " + right_expr + ")"; }
+        if op == "-" { return "(" + left_expr + " - " + right_expr + ")"; }
+        if op == "*" { return "(" + left_expr + " * " + right_expr + ")"; }
+        if op == "/" { return "(" + left_expr + " / " + right_expr + ")"; }
+        if op == "%" { return "(" + left_expr + " % " + right_expr + ")"; }
+        return "(" + left_expr + " " + op + " " + right_expr + ")";
     }
     
     if expr.kind == NodeKind.UnaryOp {

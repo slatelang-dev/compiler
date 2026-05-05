@@ -71,6 +71,13 @@ string emit_call(Node expr) {
     if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_args(args, 0) + ")"; }
     if fn_name == "load_manifest" { return "slate_load_manifest(" + emit_args(args, 0) + ")"; }
     if fn_name == "save_manifest" { return "slate_save_manifest(" + emit_args(args, 0) + ")"; }
+    if fn_name == "bold_slate" { return "slate_bold_slate(" + emit_args(args, 0) + ")"; }
+    if fn_name == "bold" { return "slate_bold(" + emit_args(args, 0) + ")"; }
+    if fn_name == "red" { return "slate_red(" + emit_args(args, 0) + ")"; }
+    if fn_name == "green" { return "slate_green(" + emit_args(args, 0) + ")"; }
+    if fn_name == "yellow" { return "slate_yellow(" + emit_args(args, 0) + ")"; }
+    if fn_name == "blue" { return "slate_blue(" + emit_args(args, 0) + ")"; }
+    if fn_name == "gray" { return "slate_gray(" + emit_args(args, 0) + ")"; }
     if fn_name == "strlen" { return "slate_strlen(" + emit_args(args, 0) + ")"; }
     if fn_name == "empty" { return "slate_empty()"; }
     if fn_name == "table" { return "slate_table()"; }
@@ -152,7 +159,7 @@ string emit_expr(Node expr) {
         string right_expr = emit_expr(right);
         
         if op == "+" {
-            if left.kind == NodeKind.StringLit or right.kind == NodeKind.StringLit {
+            if left.kind == NodeKind.StringLit or right.kind == NodeKind.StringLit or left.kind == NodeKind.Call or right.kind == NodeKind.Call {
                 return "slate_concat(" + left_expr + ", " + right_expr + ")";
             }
             return "(" + left_expr + " + " + right_expr + ")";

@@ -108,10 +108,15 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "float" { return "slate_to_float(" + target_expr + ")"; }
     if method == "string" { return "slate_to_string(" + target_expr + ")"; }
     if method == "parse" { return "slate_parse(" + target_expr + ")"; }
-    if method == "success" { return target_expr + "->success"; }
-    if method == "message" { return target_expr + "->message"; }
-    if method == "loaded" { return target_expr + "->loaded"; }
-    if method == "load_error" { return target_expr + "->load_error"; }
+    if method == "success" { return "((slate_ParseResult*)" + target_expr + ")->success"; }
+    if method == "message" { return "((slate_ParseResult*)" + target_expr + ")->message"; }
+    if method == "loaded" { return "((slate_LoadedModule*)" + target_expr + ")->loaded"; }
+    if method == "load_error" { return "((slate_LoadedModule*)" + target_expr + ")->load_error"; }
+    if method == "errors" { return "((slate_AnalysisResult*)" + target_expr + ")->errors"; }
+    if method == "warnings" { return "((slate_AnalysisResult*)" + target_expr + ")->warnings"; }
+    if method == "node" { return "((slate_ParseResult*)" + target_expr + ")->node"; }
+    if method == "source" { return "((slate_ParseResult*)" + target_expr + ")->source"; }
+    if method == "ast" { return "((slate_LoadedModule*)" + target_expr + ")->ast"; }
     
     return target_expr + "->" + method + "()";
 }
@@ -216,20 +221,20 @@ string emit_expr(Node expr) {
         Node target = expr.children.get(0);
         string target_expr = emit_expr(target);
         string field = expr.value;
-        if field == "success" { return target_expr + "->success"; }
-        if field == "message" { return target_expr + "->message"; }
-        if field == "node" { return target_expr + "->node"; }
-        if field == "source" { return target_expr + "->source"; }
-        if field == "errors" { return target_expr + "->errors"; }
-        if field == "warnings" { return target_expr + "->warnings"; }
-        if field == "loaded" { return target_expr + "->loaded"; }
-        if field == "load_error" { return target_expr + "->load_error"; }
-        if field == "name" { return target_expr + "->name"; }
-        if field == "path" { return target_expr + "->path"; }
-        if field == "ast" { return target_expr + "->ast"; }
-        if field == "bare" { return target_expr + "->bare"; }
-        if field == "entry" { return target_expr + "->entry"; }
-        if field == "bin" { return target_expr + "->bin"; }
+        if field == "success" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
+        if field == "message" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
+        if field == "node" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
+        if field == "source" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
+        if field == "errors" { return "((slate_AnalysisResult*)" + target_expr + ")->" + field; }
+        if field == "warnings" { return "((slate_AnalysisResult*)" + target_expr + ")->" + field; }
+        if field == "loaded" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
+        if field == "load_error" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
+        if field == "name" { return "((slate_ModuleInfo*)" + target_expr + ")->" + field; }
+        if field == "path" { return "((slate_ModuleInfo*)" + target_expr + ")->" + field; }
+        if field == "ast" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
+        if field == "bare" { return "((slate_Project*)" + target_expr + ")->" + field; }
+        if field == "entry" { return "((slate_Project*)" + target_expr + ")->" + field; }
+        if field == "bin" { return "((slate_Project*)" + target_expr + ")->" + field; }
         return target_expr + "->" + field;
     }
     

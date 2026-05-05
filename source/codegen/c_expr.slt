@@ -54,7 +54,6 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "set" { return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
     if method == "add" { return "slate_add(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
     if method == "has" { return "slate_has(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
-    if method == "get" { return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
     if method == "keys" { return "slate_keys(" + target_expr + ")"; }
     if method == "values" { return "slate_values(" + target_expr + ")"; }
     if method == "split" { return "slate_split(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
@@ -66,6 +65,7 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "exists" { return "slate_file_exists(" + target_expr + ")"; }
     if method == "read" { return "slate_file_read(" + target_expr + ")"; }
     if method == "write" { return "slate_file_write(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "path" { return "(char*)" + target_expr; }
     if method == "print" { return "slate_print(" + target_expr + ")"; }
     if method == "println" { return "slate_println()"; }
     if method == "int" { return "slate_to_int(" + target_expr + ")"; }

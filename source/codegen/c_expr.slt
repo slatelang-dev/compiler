@@ -51,13 +51,14 @@ string emit_expr(var expr, CEmitter e) {
         return "(" + left + " " + emit_binop(expr.op) + " " + right + ")";
     }
     if expr.kind == "call" {
+        string callee = expr.fn;
         list(string) args = empty;
         mutable int i = 0;
         while i < expr.args.len() {
             args = args.add(emit_expr(expr.args.get(i), e));
             i = i + 1;
         }
-        return emit_call(expr.fn, args);
+        return emit_call(callee, args);
     }
     if expr.kind == "field" {
         string base = emit_expr(expr.target, e);

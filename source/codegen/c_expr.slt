@@ -77,9 +77,18 @@ string emit_method_call(Node target, string method, list(Node) args) {
     }
     
     if method == "len" { return "slate_len(" + target_expr + ")"; }
-    if method == "get" { return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
-    if method == "set" { return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
-    if method == "add" { return "slate_add(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "get" {
+        if target.kind == NodeKind.Call and target.value == "table" {
+            return "slate_table_get(" + emit_args(args, 1) + ")";
+        }
+        return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")";
+    }
+    if method == "set" {
+        if target.kind == NodeKind.Call and target.value == "table" {
+            return "slate_table_set(" + emit_args(args, 1) + ")";
+        }
+        return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")";
+    }
     if method == "has" { return "slate_has(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
     if method == "keys" { return "slate_keys(" + target_expr + ")"; }
     if method == "values" { return "slate_values(" + target_expr + ")"; }
@@ -99,12 +108,12 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "float" { return "slate_to_float(" + target_expr + ")"; }
     if method == "string" { return "slate_to_string(" + target_expr + ")"; }
     if method == "parse" { return "slate_parse(" + target_expr + ")"; }
-    if method == "success" { return "((slate_ParseResult*)" + target_expr + ")->success"; }
-    if method == "message" { return "((slate_ParseResult*)" + target_expr + ")->message"; }
-    if method == "loaded" { return "((slate_LoadedModule*)" + target_expr + ")->loaded"; }
-    if method == "load_error" { return "((slate_LoadedModule*)" + target_expr + ")->load_error"; }
+    if method == "success" { return target_expr + "->success"; }
+    if method == "message" { return target_expr + "->message"; }
+    if method == "loaded" { return target_expr + "->loaded"; }
+    if method == "load_error" { return target_expr + "->load_error"; }
     
-    return "slate_" + method + "(" + target_expr + ")";
+    return target_expr + "->" + method + "()";
 }
 
 string emit_call(Node expr) {
@@ -129,15 +138,13 @@ string emit_call(Node expr) {
     if fn_name == "float_to_str" { return "slate_float_to_str(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "str_to_int" { return "slate_str_to_int(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "str_to_float" { return "slate_str_to_float(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "hash" { return "slate_hash(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "hash" { return "slate_int_to_str(slate_hash(" + emit_expr(args.get(0)) + "))"; }
     if fn_name == "render_all" { return "slate_render_all(" + emit_args(args, 0) + ")"; }
     if fn_name == "load_module" { return "slate_load_module(" + emit_args(args, 0) + ")"; }
     if fn_name == "load_entry" { return "slate_load_entry(" + emit_args(args, 0) + ")"; }
     if fn_name == "load_project_file" { return "slate_load_project_file()"; }
     if fn_name == "project_valid" { return "slate_project_valid(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "collect_module_asts" { return "slate_collect_module_asts(" + emit_args(args, 0) + ")"; }
-    if fn_name == "walk_module" { return "slate_walk_module(" + emit_args(args, 0) + ")"; }
-    if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_args(args, 0) + ")"; }
     if fn_name == "is_bare" { return "slate_is_bare(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "strlen" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "str" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
@@ -145,7 +152,7 @@ string emit_call(Node expr) {
     if fn_name == "table" { return "slate_table()"; }
     if fn_name == "list" { return "slate_list(" + emit_expr(args.get(0)) + ")"; }
     
-    return "slate__" + fn_name + "(" + emit_args(args, 0) + ")";
+    return fn_name + "(" + emit_args(args, 0) + ")";
 }
 
 string emit_expr(Node expr) {
@@ -206,21 +213,21 @@ string emit_expr(Node expr) {
         Node target = expr.children.get(0);
         string target_expr = emit_expr(target);
         string field = expr.value;
-        if field == "success" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
-        if field == "message" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
-        if field == "node" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
-        if field == "source" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
-        if field == "errors" { return "((slate_AnalysisResult*)" + target_expr + ")->" + field; }
-        if field == "warnings" { return "((slate_AnalysisResult*)" + target_expr + ")->" + field; }
-        if field == "loaded" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
-        if field == "load_error" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
-        if field == "name" { return "((slate_ModuleInfo*)" + target_expr + ")->" + field; }
-        if field == "path" { return "((slate_ModuleInfo*)" + target_expr + ")->" + field; }
-        if field == "ast" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
-        if field == "bare" { return "((slate_Project*)" + target_expr + ")->" + field; }
-        if field == "entry" { return "((slate_Project*)" + target_expr + ")->" + field; }
-        if field == "bin" { return "((slate_Project*)" + target_expr + ")->" + field; }
-        return "((void*)" + target_expr + ")->" + field;
+        if field == "success" { return target_expr + "->success"; }
+        if field == "message" { return target_expr + "->message"; }
+        if field == "node" { return target_expr + "->node"; }
+        if field == "source" { return target_expr + "->source"; }
+        if field == "errors" { return target_expr + "->errors"; }
+        if field == "warnings" { return target_expr + "->warnings"; }
+        if field == "loaded" { return target_expr + "->loaded"; }
+        if field == "load_error" { return target_expr + "->load_error"; }
+        if field == "name" { return target_expr + "->name"; }
+        if field == "path" { return target_expr + "->path"; }
+        if field == "ast" { return target_expr + "->ast"; }
+        if field == "bare" { return target_expr + "->bare"; }
+        if field == "entry" { return target_expr + "->entry"; }
+        if field == "bin" { return target_expr + "->bin"; }
+        return target_expr + "->" + field;
     }
     
     if expr.kind == NodeKind.Interp {

@@ -35,6 +35,71 @@ string emit_binop(string op) {
     return op;
 }
 
+string emit_args(list(Node) args, int start) {
+    mutable string s = "";
+    mutable int i = start;
+    while i < args.len() {
+        if i > start { s = s + ", "; }
+        s = s + emit_expr(args.get(i));
+        i = i + 1;
+    }
+    return s;
+}
+
+string emit_method_call(Node target, string method, list(Node) args) {
+    string target_expr = emit_expr(target);
+    
+    if method == "len" { return "slate_len(" + target_expr + ")"; }
+    if method == "get" { return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "set" { return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
+    if method == "add" { return "slate_add(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "has" { return "slate_has(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "get" { return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "keys" { return "slate_keys(" + target_expr + ")"; }
+    if method == "values" { return "slate_values(" + target_expr + ")"; }
+    if method == "split" { return "slate_split(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "contains" { return "slate_contains(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "trim" { return "slate_trim(" + target_expr + ")"; }
+    if method == "replace" { return "slate_replace(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
+    if method == "starts_with" { return "slate_starts_with(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "ends_with" { return "slate_ends_with(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "exists" { return "slate_file_exists(" + target_expr + ")"; }
+    if method == "read" { return "slate_file_read(" + target_expr + ")"; }
+    if method == "write" { return "slate_file_write(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "print" { return "slate_print(" + target_expr + ")"; }
+    if method == "println" { return "slate_println()"; }
+    if method == "int" { return "slate_to_int(" + target_expr + ")"; }
+    if method == "float" { return "slate_to_float(" + target_expr + ")"; }
+    if method == "string" { return "slate_to_string(" + target_expr + ")"; }
+    if method == "parse" { return "slate_parse(" + target_expr + ")"; }
+    
+    return "slate__" + method + "(" + target_expr + ")";
+}
+
+string emit_call(Node expr) {
+    string fn_name = expr.children.get(0).value;
+    list(Node) args = expr.children;
+    int arg_count = args.len() - 1;
+    
+    if fn_name == "parse" { return "slate_parse(" + emit_args(args, 1) + ")"; }
+    if fn_name == "analyse" { return "slate_analyse(" + emit_args(args, 1) + ")"; }
+    if fn_name == "print" { return "slate_print(" + emit_args(args, 1) + ")"; }
+    if fn_name == "println" { return "slate_println()"; }
+    if fn_name == "time" { return "slate_time()"; }
+    if fn_name == "env" { return "slate_env(" + emit_args(args, 1) + ")"; }
+    if fn_name == "home" { return "slate_home()"; }
+    if fn_name == "file" { return "slate_file(" + emit_args(args, 1) + ")"; }
+    if fn_name == "run" { return "slate_run(" + emit_args(args, 1) + ")"; }
+    if fn_name == "int_to_str" { return "slate_int_to_str(" + emit_args(args, 1) + ")"; }
+    if fn_name == "float_to_str" { return "slate_float_to_str(" + emit_args(args, 1) + ")"; }
+    if fn_name == "str_to_int" { return "slate_str_to_int(" + emit_args(args, 1) + ")"; }
+    if fn_name == "str_to_float" { return "slate_str_to_float(" + emit_args(args, 1) + ")"; }
+    if fn_name == "hash" { return "slate_hash(" + emit_args(args, 1) + ")"; }
+    if fn_name == "render_all" { return "slate_render_all(" + emit_args(args, 1) + ")"; }
+    
+    return "slate__" + fn_name + "(" + emit_args(args, 1) + ")";
+}
+
 string emit_expr(Node expr) {
     if expr.kind == NodeKind.IntLit 
     or expr.kind == NodeKind.FloatLit 
@@ -61,33 +126,22 @@ string emit_expr(Node expr) {
     }
     
     if expr.kind == NodeKind.Call {
-        string fn_name = expr.children.get(0).value;
-        mutable string args = "";
-        mutable int i = 1;
-        while i < expr.children.len() {
-            if i > 1 { args = args + ", "; }
-            args = args + emit_expr(expr.children.get(i));
-            i = i + 1;
-        }
-        return "slate__" + fn_name + "(" + args + ")";
+        return emit_call(expr);
     }
     
     if expr.kind == NodeKind.MethodCall {
         Node target = expr.children.get(0);
         string method = expr.value;
-        mutable string args = emit_expr(target) + ", ";
-        mutable int i = 1;
-        while i < expr.children.len() {
-            if i > 1 { args = args + ", "; }
-            args = args + emit_expr(expr.children.get(i));
-            i = i + 1;
-        }
-        return "slate__" + method + "(" + args + ")";
+        return emit_method_call(target, method, expr.children);
     }
     
     if expr.kind == NodeKind.FieldAccess {
         Node target = expr.children.get(0);
         return "(" + emit_expr(target) + ")->" + expr.value;
+    }
+    
+    if expr.kind == NodeKind.Interp {
+        return "\"" + expr.value + "\"";
     }
     
     return "NULL";

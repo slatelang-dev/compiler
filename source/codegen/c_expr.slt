@@ -1,0 +1,76 @@
+module c_expr;
+
+use c_types::*;
+use emitter::*;
+
+# Literals
+string emit_literal(string value) {
+    if value == "true" { return "1"; }
+    if value == "false" { return "0"; }
+    if value == "nil" { return "NULL"; }
+    return value;
+}
+
+# Binary operations
+string emit_binop(string op) {
+    if op == "and" { return "&&"; }
+    if op == "or" { return "||"; }
+    if op == "not" { return "!"; }
+    return op;
+}
+
+# Field access: node.field → ((Slate_Node*)node)->field
+string emit_field_access(string expr, string field) {
+    return "((" + expr + ")->" + field + ")";
+}
+
+# Function call
+string emit_call(string fn_name, list(string) args) {
+    mutable string s = "slate__" + fn_name + "(";
+    mutable int i = 0;
+    while i < args.len() {
+        if i > 0 { s = s + ", "; }
+        s = s + args.get(i);
+        i = i + 1;
+    }
+    s = s + ")";
+    return s;
+}
+
+# Emit expression, returns C code
+string emit_expr(var expr, CEmitter e) {
+    if expr.kind == "lit" {
+        return emit_literal(expr.value);
+    }
+    if expr.kind == "var" {
+        return expr.name;
+    }
+    if expr.kind == "binop" {
+        string left = emit_expr(expr.left, e);
+        string right = emit_expr(expr.right, e);
+        return "(" + left + " " + emit_binop(expr.op) + " " + right + ")";
+    }
+    if expr.kind == "call" {
+        list(string) args = empty;
+        mutable int i = 0;
+        while i < expr.args.len() {
+            args = args.add(emit_expr(expr.args.get(i), e));
+            i = i + 1;
+        }
+        return emit_call(expr.fn, args);
+    }
+    if expr.kind == "field" {
+        string base = emit_expr(expr.target, e);
+        return emit_field_access(base, expr.field);
+    }
+    if expr.kind == "index" {
+        string base = emit_expr(expr.target, e);
+        string idx = emit_expr(expr.index, e);
+        return "((" + base + ")[" + idx + "])";
+    }
+    if expr.kind == "cast" {
+        string inner = emit_expr(expr.value, e);
+        return "(" + c_type(expr.to_type) + ")(" + inner + ")";
+    }
+    return "NULL";
+}

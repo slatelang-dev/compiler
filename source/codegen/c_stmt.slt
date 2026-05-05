@@ -1,0 +1,90 @@
+module c_stmt;
+
+use c_types::*;
+use emitter::*;
+use c_expr::*;
+
+string indent(int level) {
+    mutable string s = "";
+    mutable int i = 0;
+    while i < level { s = s + "    "; i = i + 1; }
+    return s;
+}
+
+string emit_stmt(var stmt, CEmitter e, int level) {
+    string ind = indent(level);
+    
+    if stmt.kind == "decl" {
+        string c_type = c_type_for_field(stmt.var_type);
+        string init = "";
+        if stmt.init.kind != "none" {
+            init = " = " + emit_expr(stmt.init, e);
+        }
+        return ind + c_type + " " + stmt.name + init + ";";
+    }
+    
+    if stmt.kind == "assign" {
+        string lhs = emit_expr(stmt.target, e);
+        string rhs = emit_expr(stmt.value, e);
+        return ind + lhs + " = " + rhs + ";";
+    }
+    
+    if stmt.kind == "if" {
+        string cond = emit_expr(stmt.cond, e);
+        mutable string result = ind + "if (" + cond + ") {\n";
+        mutable int i = 0;
+        while i < stmt.then.len() {
+            result = result + emit_stmt(stmt.then.get(i), e, level + 1) + "\n";
+            i = i + 1;
+        }
+        result = result + ind + "}";
+        if stmt.else_.len() > 0 {
+            result = result + " else {\n";
+            mutable int j = 0;
+            while j < stmt.else_.len() {
+                result = result + emit_stmt(stmt.else_.get(j), e, level + 1) + "\n";
+                j = j + 1;
+            }
+            result = result + ind + "}";
+        }
+        return result;
+    }
+    
+    if stmt.kind == "while" {
+        string cond = emit_expr(stmt.cond, e);
+        mutable string result = ind + "while (" + cond + ") {\n";
+        mutable int i = 0;
+        while i < stmt.body.len() {
+            result = result + emit_stmt(stmt.body.get(i), e, level + 1) + "\n";
+            i = i + 1;
+        }
+        result = result + ind + "}";
+        return result;
+    }
+    
+    if stmt.kind == "return" {
+        if stmt.value.kind == "none" {
+            return ind + "return;";
+        }
+        string val = emit_expr(stmt.value, e);
+        return ind + "return " + val + ";";
+    }
+    
+    if stmt.kind == "expr" {
+        string val = emit_expr(stmt.value, e);
+        return ind + val + ";";
+    }
+    
+    if stmt.kind == "block" {
+        mutable string result = ind + "{\n";
+        mutable int i = 0;
+        while i < stmt.stmts.len() {
+            result = result + emit_stmt(stmt.stmts.get(i), e, level + 1) + "\n";
+            i = i + 1;
+        }
+        result = result + ind + "}";
+        return result;
+    }
+    
+    return ind + "/* unknown stmt */;";
+}

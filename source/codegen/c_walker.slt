@@ -1,0 +1,51 @@
+module c_walker;
+
+use emitter::*;
+use c_stmt::*;
+use c_types::*;
+use c_header::*;
+
+CEmitter emit_function(CEmitter e, var fn_node) {
+    e = set_fn(e, fn_node.name);
+    string ret = c_type(fn_node.ret_type);
+    string fn_name = c_fn_name(fn_node.name);
+    
+    string header = ret + " " + fn_name + "(";
+    mutable int i = 0;
+    while i < fn_node.params.len() {
+        if i > 0 { header = header + ", "; }
+        var p = fn_node.params.get(i);
+        header = header + c_type(p.param_type) + " " + p.name;
+        i = i + 1;
+    }
+    header = header + ") {";
+    e = emit_line(e, header);
+    
+    mutable int j = 0;
+    while j < fn_node.body.len() {
+        string stmt = emit_stmt(fn_node.body.get(j), e, 1);
+        e = emit_line(e, "    " + stmt);
+        j = j + 1;
+    }
+    
+    e = emit_line(e, "}");
+    return e;
+}
+
+string walk_module(var mod, list(var) registry) {
+    mutable CEmitter e = new_emitter();
+    e = emit_line(e, "#include \"slate_module.h\"");
+    e = emit_line(e, "");
+    
+    mutable int i = 0;
+    while i < mod.ast.len() {
+        var node = mod.ast.get(i);
+        if node.kind == "fn" {
+            e = emit_function(e, node);
+            e = emit_line(e, "");
+        }
+        i = i + 1;
+    }
+    
+    return join_lines(e.lines);
+}

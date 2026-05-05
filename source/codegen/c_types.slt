@@ -1,0 +1,28 @@
+module c_types;
+
+string c_type(string slate_type) {
+    if slate_type == "int" { return "int64_t"; }
+    if slate_type == "float" { return "double"; }
+    if slate_type == "bool" { return "int8_t"; }
+    if slate_type == "char" { return "int32_t"; }
+    if slate_type == "string" { return "char*"; }
+    if slate_type == "void" { return "void"; }
+    if slate_type == "ptr" { return "void*"; }
+    return "void*";
+}
+
+string c_type_for_field(string slate_type) {
+    if slate_type == "int" { return "int64_t"; }
+    if slate_type == "float" { return "double"; }
+    if slate_type == "bool" { return "int8_t"; }
+    if slate_type == "char" { return "int32_t"; }
+    return "void*";
+}
+
+string c_fn_name(string fn_name) {
+    return "slate__" + fn_name;
+}
+
+string c_struct_name(string struct_name) {
+    return "Slate_" + struct_name;
+}

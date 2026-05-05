@@ -133,13 +133,9 @@ string emit_call(Node expr) {
     if fn_name == "is_bare" { return "slate_is_bare(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "strlen" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "str" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "load_manifest" { return "slate_load_manifest(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "save_manifest" { return "slate_save_manifest(" + emit_args(args, 0) + ")"; }
     if fn_name == "empty" { return "slate_empty()"; }
     if fn_name == "table" { return "slate_table()"; }
     if fn_name == "list" { return "slate_list(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "analyse_bare" { return "slate_analyse_bare(" + emit_args(args, 0) + ")"; }
-    if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_expr(args.get(0)) + ")"; }
     
     return "slate__" + fn_name + "(" + emit_args(args, 0) + ")";
 }

@@ -15,18 +15,19 @@ string indent(int level) {
 string emit_stmt(Node stmt, int level) {
     string ind = indent(level);
     
-    if stmt.kind == NodeKind.VarDecl 
-    or stmt.kind == NodeKind.MutableDecl 
-    or stmt.kind == NodeKind.ConstDecl 
+    if stmt.kind == NodeKind.VarDecl
+    or stmt.kind == NodeKind.MutableDecl
+    or stmt.kind == NodeKind.ConstDecl
     or stmt.kind == NodeKind.AffineDecl {
         string var_name = stmt.value;
         Node type_node = stmt.children.get(0);
         string var_type = type_node.value;
         Node init = stmt.children.get(1);
+        string c_var_type = c_type(var_type);
         if init.kind == NodeKind.Empty {
-            return ind + c_type_for_field(var_type) + " " + var_name + ";";
+            return ind + c_var_type + " " + var_name + ";";
         }
-        return ind + c_type_for_field(var_type) + " " + var_name + " = " + emit_expr(init) + ";";
+        return ind + c_var_type + " " + var_name + " = " + emit_expr(init) + ";";
     }
     
     if stmt.kind == NodeKind.Assign {
@@ -41,18 +42,10 @@ string emit_stmt(Node stmt, int level) {
         string op = parts.get(1);
         Node value = stmt.children.get(0);
         
-        if op == "+=" {
-            return ind + var_name + " = " + var_name + " + " + emit_expr(value) + ";";
-        }
-        if op == "-=" {
-            return ind + var_name + " = " + var_name + " - " + emit_expr(value) + ";";
-        }
-        if op == "*=" {
-            return ind + var_name + " = " + var_name + " * " + emit_expr(value) + ";";
-        }
-        if op == "/=" {
-            return ind + var_name + " = " + var_name + " / " + emit_expr(value) + ";";
-        }
+        if op == "+=" { return ind + var_name + " = " + var_name + " + " + emit_expr(value) + ";"; }
+        if op == "-=" { return ind + var_name + " = " + var_name + " - " + emit_expr(value) + ";"; }
+        if op == "*=" { return ind + var_name + " = " + var_name + " * " + emit_expr(value) + ";"; }
+        if op == "/=" { return ind + var_name + " = " + var_name + " / " + emit_expr(value) + ";"; }
         return ind + var_name + " = " + var_name + " " + op + " " + emit_expr(value) + ";";
     }
     
@@ -96,6 +89,21 @@ string emit_stmt(Node stmt, int level) {
         Node cond = stmt.children.get(0);
         Node body = stmt.children.get(1);
         mutable string result = ind + "while (" + emit_expr(cond) + ") {\n";
+        mutable int i = 0;
+        while i < body.children.len() {
+            result = result + emit_stmt(body.children.get(i), level + 1) + "\n";
+            i = i + 1;
+        }
+        result = result + ind + "}";
+        return result;
+    }
+    
+    if stmt.kind == NodeKind.For {
+        string var_name = stmt.value;
+        Node start = stmt.children.get(0);
+        Node end_expr = stmt.children.get(1);
+        Node body = stmt.children.get(2);
+        mutable string result = ind + "for (int64_t " + var_name + " = " + emit_expr(start) + "; " + var_name + " < " + emit_expr(end_expr) + "; " + var_name + "++) {\n";
         mutable int i = 0;
         while i < body.children.len() {
             result = result + emit_stmt(body.children.get(i), level + 1) + "\n";

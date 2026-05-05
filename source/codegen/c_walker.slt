@@ -3,13 +3,10 @@ module c_walker;
 use emitter;
 use c_stmt;
 use c_types;
-use c_header;
 use node;
 
 CEmitter emit_function(CEmitter e, Node fn_decl) {
     string fn_name = fn_decl.value;
-    e = set_fn(e, fn_name);
-    
     list(Node) fn_children = fn_decl.children;
     int child_count = fn_children.len();
     
@@ -20,6 +17,7 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
     
     string header = ret + " slate__" + fn_name + "(";
     int param_count = child_count - 2;
+    
     if param_count == 0 {
         header = header + "void";
     } else {
@@ -45,35 +43,9 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
     return e;
 }
 
-string walk_module(Node program, list(var) registry) {
-    mutable CEmitter e = new_emitter();
-    e = emit_line(e, "#include \"slate_runtime.h\"");
-    e = emit_line(e, "");
-    
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node node = program.children.get(i);
-        if node.kind == NodeKind.FnDecl {
-            e = emit_function(e, node);
-            e = emit_line(e, "");
-        }
-        if node.kind == NodeKind.StructDecl {
-            e = emit_struct(e, node);
-            e = emit_line(e, "");
-        }
-        if node.kind == NodeKind.Module {
-            string module_name = node.value;
-            e = emit_line(e, "// module " + module_name);
-        }
-        i = i + 1;
-    }
-    
-    return join_lines(e.lines);
-}
-
 CEmitter emit_struct(CEmitter e, Node struct_decl) {
     string name = struct_decl.value;
-    e = emit_line(e, "typedef struct {");
+    e = emit_line(e, "typedef struct slate_" + name + " {");
     
     mutable int i = 0;
     while i < struct_decl.children.len() {
@@ -86,6 +58,34 @@ CEmitter emit_struct(CEmitter e, Node struct_decl) {
         i = i + 1;
     }
     
-    e = emit_line(e, "} Slate_" + name + ";");
+    e = emit_line(e, "} slate_" + name + ";");
     return e;
+}
+
+string walk_module(Node program, list(var) registry) {
+    mutable CEmitter e = new_emitter();
+    e = emit_line(e, "#include \"slate_runtime.h\"");
+    e = emit_line(e, "");
+    
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node node = program.children.get(i);
+        if node.kind == NodeKind.StructDecl {
+            e = emit_struct(e, node);
+            e = emit_line(e, "");
+        }
+        i = i + 1;
+    }
+    
+    i = 0;
+    while i < program.children.len() {
+        Node node = program.children.get(i);
+        if node.kind == NodeKind.FnDecl {
+            e = emit_function(e, node);
+            e = emit_line(e, "");
+        }
+        i = i + 1;
+    }
+    
+    return join_lines(e.lines);
 }

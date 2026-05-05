@@ -3,28 +3,23 @@ module c_types;
 string c_type(string slate_type) {
     if slate_type == "int" { return "int64_t"; }
     if slate_type == "float" { return "double"; }
-    if slate_type == "bool" { return "int64_t"; }
+    if slate_type == "bool" { return "int8_t"; }
     if slate_type == "char" { return "int32_t"; }
     if slate_type == "string" { return "char*"; }
     if slate_type == "void" { return "void"; }
     if slate_type == "ptr" { return "void*"; }
     if slate_type == "list" { return "void*"; }
     if slate_type == "table" { return "void*"; }
+    if slate_type == "option" { return "void*"; }
+    if slate_type == "result" { return "void*"; }
     if slate_type == "Node" { return "void*"; }
-    if slate_type == "ParseResult" { return "slate_ParseResult*"; }
-    if slate_type == "AnalysisResult" { return "slate_AnalysisResult*"; }
-    if slate_type == "LoadedModule" { return "slate_LoadedModule*"; }
-    if slate_type == "Project" { return "slate_Project*"; }
-    if slate_type == "ModuleInfo" { return "slate_ModuleInfo*"; }
-    if slate_type == "Registry" { return "void*"; }
-    if slate_type == "Scope" { return "void*"; }
     return "void*";
 }
 
 string c_type_for_field(string slate_type) {
     if slate_type == "int" { return "int64_t"; }
     if slate_type == "float" { return "double"; }
-    if slate_type == "bool" { return "int64_t"; }
+    if slate_type == "bool" { return "int8_t"; }
     if slate_type == "char" { return "int32_t"; }
     if slate_type == "string" { return "char*"; }
     return "void*";
@@ -35,5 +30,5 @@ string c_fn_name(string fn_name) {
 }
 
 string c_struct_name(string struct_name) {
-    return "Slate_" + struct_name;
+    return "slate_" + struct_name;
 }

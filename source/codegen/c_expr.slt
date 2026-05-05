@@ -170,7 +170,11 @@ string emit_expr(Node expr) {
         string right_expr = emit_expr(right);
         
         if op == "+" {
-            if left.kind == NodeKind.StringLit or right.kind == NodeKind.StringLit or left.kind == NodeKind.Call or right.kind == NodeKind.Call {
+            if left.kind == NodeKind.StringLit or right.kind == NodeKind.StringLit 
+            or left.kind == NodeKind.Call or right.kind == NodeKind.Call
+            or left.kind == NodeKind.FieldAccess or right.kind == NodeKind.FieldAccess
+            or left.kind == NodeKind.MethodCall or right.kind == NodeKind.MethodCall
+            or left.kind == NodeKind.Interp or right.kind == NodeKind.Interp {
                 return "slate_concat(" + left_expr + ", " + right_expr + ")";
             }
             return "(" + left_expr + " + " + right_expr + ")";

@@ -173,7 +173,6 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_set", "ptr");
     reg = register_fn(reg, "slate_keys", "ptr");
     reg = register_fn(reg, "slate_values", "ptr");
-    reg = register_fn(reg, "slate_input", "ptr");
     reg = register_fn(reg, "slate_args", "ptr");
     # IO builtins
     reg = register_fn(reg, "file", "ptr");
@@ -198,6 +197,8 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "slate_int", "int");
     reg = register_fn(reg, "slate_float", "float");
     reg = register_fn(reg, "len", "int");
+    reg = register_fn(reg, "time", "int");
+    reg = register_fn(reg, "env", "ptr");
     # Render functions
     reg = register_fn(reg, "render_all", "ptr");
     # Known struct fields

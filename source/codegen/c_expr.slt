@@ -49,15 +49,23 @@ string emit_args(list(Node) args, int start) {
 string emit_method_call(Node target, string method, list(Node) args) {
     string target_expr = emit_expr(target);
     
-    if target.kind == NodeKind.Call {
-        Node fn_node = target.children.get(0);
-        if fn_node.value == "file" {
-            string path_arg = emit_expr(target.children.get(1));
-            if method == "exists" { return "slate_file_exists(" + path_arg + ")"; }
-            if method == "read" { return "slate_file_read(" + path_arg + ")"; }
-            if method == "write" { return "slate_file_write(" + path_arg + ", " + emit_expr(args.get(1)) + ")"; }
-            if method == "path" { return path_arg; }
-        }
+    if target.kind == NodeKind.Call and target.value == "file" {
+        string path_arg = emit_expr(target.children.get(0));
+        if method == "exists" { return "slate_file_exists(" + path_arg + ")"; }
+        if method == "read" { return "slate_file_read(" + path_arg + ")"; }
+        if method == "write" { return "slate_file_write(" + path_arg + ", " + emit_expr(args.get(1)) + ")"; }
+        if method == "path" { return path_arg; }
+    }
+    
+    if target.kind == NodeKind.Call and target.value == "parse" {
+        string source_arg = emit_expr(target.children.get(0));
+        if method == "source" { return source_arg; }
+        if method == "node" { return source_arg; }
+    }
+    
+    if target.kind == NodeKind.Call and target.value == "analyse" {
+        if method == "errors" { return "slate_analyse_errors(" + emit_expr(target) + ")"; }
+        if method == "warnings" { return "slate_analyse_warnings(" + emit_expr(target) + ")"; }
     }
     
     if method == "len" { return "slate_len(" + target_expr + ")"; }
@@ -83,9 +91,6 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "float" { return "slate_to_float(" + target_expr + ")"; }
     if method == "string" { return "slate_to_string(" + target_expr + ")"; }
     if method == "parse" { return "slate_parse(" + target_expr + ")"; }
-    if method == "source" { return "slate_source(" + target_expr + ")"; }
-    if method == "node" { return "slate_node(" + target_expr + ")"; }
-    if method == "errors" { return "slate_errors(" + emit_args(args, 1) + ")"; }
     if method == "success" { return "((slate_ParseResult*)" + target_expr + ")->success"; }
     if method == "message" { return "((slate_ParseResult*)" + target_expr + ")->message"; }
     if method == "loaded" { return "((slate_LoadedModule*)" + target_expr + ")->loaded"; }
@@ -95,39 +100,39 @@ string emit_method_call(Node target, string method, list(Node) args) {
 }
 
 string emit_call(Node expr) {
-    string fn_name = expr.children.get(0).value;
+    string fn_name = expr.value;
     list(Node) args = expr.children;
-    int arg_count = args.len() - 1;
+    int arg_count = args.len();
     
-    if fn_name == "parse" { return "slate_parse(" + emit_args(args, 1) + ")"; }
-    if fn_name == "analyse" { return "slate_analyse(" + emit_args(args, 1) + ")"; }
-    if fn_name == "analyse_bare" { return "slate_analyse_bare(" + emit_args(args, 1) + ")"; }
+    if fn_name == "parse" { return "slate_parse(" + emit_args(args, 0) + ")"; }
+    if fn_name == "analyse" { return "slate_analyse(" + emit_args(args, 0) + ")"; }
+    if fn_name == "analyse_bare" { return "slate_analyse_bare(" + emit_args(args, 0) + ")"; }
     if fn_name == "print" { 
-        if arg_count == 1 { return "slate_print(" + emit_expr(args.get(1)) + ")"; }
-        return "slate_print(" + emit_args(args, 1) + ")";
+        if arg_count == 1 { return "slate_print(" + emit_expr(args.get(0)) + ")"; }
+        return "slate_print(" + emit_args(args, 0) + ")";
     }
     if fn_name == "println" { return "slate_println()"; }
     if fn_name == "time" { return "slate_time()"; }
-    if fn_name == "env" { return "slate_env(" + emit_expr(args.get(1)) + ")"; }
+    if fn_name == "env" { return "slate_env(" + emit_expr(args.get(0)) + ")"; }
     if fn_name == "home" { return "slate_home()"; }
-    if fn_name == "file" { return emit_expr(args.get(1)); }
-    if fn_name == "run" { return "slate_run(" + emit_args(args, 1) + ")"; }
-    if fn_name == "int_to_str" { return "slate_int_to_str(" + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "float_to_str" { return "slate_float_to_str(" + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "str_to_int" { return "slate_str_to_int(" + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "str_to_float" { return "slate_str_to_float(" + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "hash" { return "slate_hash(" + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "render_all" { return "slate_render_all(" + emit_args(args, 1) + ")"; }
-    if fn_name == "load_module" { return "slate_load_module(" + emit_args(args, 1) + ")"; }
-    if fn_name == "load_entry" { return "slate_load_entry(" + emit_args(args, 1) + ")"; }
+    if fn_name == "file" { return emit_expr(args.get(0)); }
+    if fn_name == "run" { return "slate_run(" + emit_args(args, 0) + ")"; }
+    if fn_name == "int_to_str" { return "slate_int_to_str(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "float_to_str" { return "slate_float_to_str(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "str_to_int" { return "slate_str_to_int(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "str_to_float" { return "slate_str_to_float(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "hash" { return "slate_hash(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "render_all" { return "slate_render_all(" + emit_args(args, 0) + ")"; }
+    if fn_name == "load_module" { return "slate_load_module(" + emit_args(args, 0) + ")"; }
+    if fn_name == "load_entry" { return "slate_load_entry(" + emit_args(args, 0) + ")"; }
     if fn_name == "load_project_file" { return "slate_load_project_file()"; }
-    if fn_name == "project_valid" { return "slate_project_valid(" + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "collect_module_asts" { return "slate_collect_module_asts(" + emit_args(args, 1) + ")"; }
-    if fn_name == "walk_module" { return "slate_walk_module(" + emit_args(args, 1) + ")"; }
-    if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_args(args, 1) + ")"; }
-    if fn_name == "is_bare" { return "slate_is_bare(" + emit_expr(args.get(1)) + ")"; }
+    if fn_name == "project_valid" { return "slate_project_valid(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "collect_module_asts" { return "slate_collect_module_asts(" + emit_args(args, 0) + ")"; }
+    if fn_name == "walk_module" { return "slate_walk_module(" + emit_args(args, 0) + ")"; }
+    if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_args(args, 0) + ")"; }
+    if fn_name == "is_bare" { return "slate_is_bare(" + emit_expr(args.get(0)) + ")"; }
     
-    return "slate_" + fn_name + "(" + emit_args(args, 1) + ")";
+    return "slate_" + fn_name + "(" + emit_args(args, 0) + ")";
 }
 
 string emit_expr(Node expr) {

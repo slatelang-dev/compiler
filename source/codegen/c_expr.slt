@@ -131,6 +131,8 @@ string emit_call(Node expr) {
     if fn_name == "walk_module" { return "slate_walk_module(" + emit_args(args, 0) + ")"; }
     if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_args(args, 0) + ")"; }
     if fn_name == "is_bare" { return "slate_is_bare(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "strlen" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "str" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
     
     return "slate_" + fn_name + "(" + emit_args(args, 0) + ")";
 }

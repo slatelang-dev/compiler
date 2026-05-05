@@ -52,8 +52,35 @@ string walk_module(Node program, list(var) registry) {
             e = emit_function(e, node);
             e = emit_line(e, "");
         }
+        if node.kind == NodeKind.StructDecl {
+            e = emit_struct(e, node);
+            e = emit_line(e, "");
+        }
+        if node.kind == NodeKind.Module {
+            string module_name = node.value;
+            e = emit_line(e, "// module " + module_name);
+        }
         i = i + 1;
     }
     
     return join_lines(e.lines);
+}
+
+CEmitter emit_struct(CEmitter e, Node struct_decl) {
+    string name = struct_decl.value;
+    e = emit_line(e, "typedef struct {");
+    
+    mutable int i = 0;
+    while i < struct_decl.children.len() {
+        Node field = struct_decl.children.get(i);
+        if field.kind == NodeKind.Field {
+            Node type_node = field.children.get(0);
+            string field_type = c_type_for_field(type_node.value);
+            e = emit_line(e, "    " + field_type + " " + field.value + ";");
+        }
+        i = i + 1;
+    }
+    
+    e = emit_line(e, "} Slate_" + name + ";");
+    return e;
 }

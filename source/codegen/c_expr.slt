@@ -1,7 +1,7 @@
 module c_expr;
 
-use c_types::*;
-use emitter::*;
+use c_types;
+use emitter;
 
 # Literals
 string emit_literal(string value) {

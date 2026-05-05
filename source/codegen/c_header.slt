@@ -1,7 +1,7 @@
 module c_header;
 
-use emitter::*;
-use c_types::*;
+use emitter;
+use c_types;
 
 CEmitter emit_header_includes(CEmitter e) {
     e = emit_header(e, "#include <stdint.h>");

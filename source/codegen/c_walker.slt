@@ -1,9 +1,9 @@
 module c_walker;
 
-use emitter::*;
-use c_stmt::*;
-use c_types::*;
-use c_header::*;
+use emitter;
+use c_stmt;
+use c_types;
+use c_header;
 
 CEmitter emit_function(CEmitter e, var fn_node) {
     e = set_fn(e, fn_node.name);

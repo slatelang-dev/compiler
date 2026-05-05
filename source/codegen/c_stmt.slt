@@ -1,8 +1,8 @@
 module c_stmt;
 
-use c_types::*;
-use emitter::*;
-use c_expr::*;
+use c_types;
+use emitter;
+use c_expr;
 
 string indent(int level) {
     mutable string s = "";

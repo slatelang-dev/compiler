@@ -79,13 +79,13 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "len" { return "slate_len(" + target_expr + ")"; }
     if method == "get" {
         if target.kind == NodeKind.Call and target.value == "table" {
-            return "slate_table_get(" + emit_args(args, 1) + ")";
+            return "slate_table_get(" + emit_expr(args.get(1)) + ", " + target_expr + ")";
         }
         return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")";
     }
     if method == "set" {
         if target.kind == NodeKind.Call and target.value == "table" {
-            return "slate_table_set(" + emit_args(args, 1) + ")";
+            return "slate_table_set(" + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ", " + target_expr + ")";
         }
         return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")";
     }

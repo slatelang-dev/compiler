@@ -2,76 +2,93 @@ module c_expr;
 
 use c_types;
 use emitter;
+use node;
 
-# Literals
-string emit_literal(string value) {
-    if value == "true" { return "1"; }
-    if value == "false" { return "0"; }
-    if value == "nil" { return "NULL"; }
-    return value;
+string emit_literal(Node n) {
+    if n.kind == NodeKind.IntLit { return n.value; }
+    if n.kind == NodeKind.FloatLit { return n.value; }
+    if n.kind == NodeKind.StringLit { return "\"" + n.value + "\""; }
+    if n.kind == NodeKind.CharLit { return n.value; }
+    if n.kind == NodeKind.BoolLit {
+        if n.value == "true" { return "1"; }
+        return "0";
+    }
+    if n.kind == NodeKind.None { return "NULL"; }
+    return "0";
 }
 
-# Binary operations
 string emit_binop(string op) {
     if op == "and" { return "&&"; }
     if op == "or" { return "||"; }
     if op == "not" { return "!"; }
+    if op == "==" { return "=="; }
+    if op == "!=" { return "!="; }
+    if op == "<" { return "<"; }
+    if op == ">" { return ">"; }
+    if op == "<=" { return "<="; }
+    if op == ">=" { return ">="; }
+    if op == "+" { return "+"; }
+    if op == "-" { return "-"; }
+    if op == "*" { return "*"; }
+    if op == "/" { return "/"; }
+    if op == "%" { return "%"; }
     return op;
 }
 
-# Field access: node.field → ((Slate_Node*)node)->field
-string emit_field_access(string expr, string field) {
-    return "((" + expr + ")->" + field + ")";
-}
-
-# Function call
-string emit_call(string fn_name, list(string) args) {
-    mutable string s = "slate__" + fn_name + "(";
-    mutable int i = 0;
-    while i < args.len() {
-        if i > 0 { s = s + ", "; }
-        s = s + args.get(i);
-        i = i + 1;
+string emit_expr(Node expr) {
+    if expr.kind == NodeKind.IntLit 
+    or expr.kind == NodeKind.FloatLit 
+    or expr.kind == NodeKind.StringLit 
+    or expr.kind == NodeKind.CharLit 
+    or expr.kind == NodeKind.BoolLit 
+    or expr.kind == NodeKind.None {
+        return emit_literal(expr);
     }
-    s = s + ")";
-    return s;
-}
-
-# Emit expression, returns C code
-string emit_expr(var expr, CEmitter e) {
-    if expr.kind == "lit" {
-        return emit_literal(expr.value);
+    
+    if expr.kind == NodeKind.Ident {
+        return expr.value;
     }
-    if expr.kind == "var" {
-        return expr.name;
+    
+    if expr.kind == NodeKind.BinaryOp {
+        Node left = expr.children.get(0);
+        Node right = expr.children.get(1);
+        return "(" + emit_expr(left) + " " + emit_binop(expr.value) + " " + emit_expr(right) + ")";
     }
-    if expr.kind == "binop" {
-        string left = emit_expr(expr.left, e);
-        string right = emit_expr(expr.right, e);
-        return "(" + left + " " + emit_binop(expr.op) + " " + right + ")";
+    
+    if expr.kind == NodeKind.UnaryOp {
+        Node operand = expr.children.get(0);
+        return emit_binop(expr.value) + "(" + emit_expr(operand) + ")";
     }
-    if expr.kind == "call" {
-        string callee = expr.fn;
-        list(string) args = empty;
-        mutable int i = 0;
-        while i < expr.args.len() {
-            args = args.add(emit_expr(expr.args.get(i), e));
+    
+    if expr.kind == NodeKind.Call {
+        string fn_name = expr.children.get(0).value;
+        mutable string args = "";
+        mutable int i = 1;
+        while i < expr.children.len() {
+            if i > 1 { args = args + ", "; }
+            args = args + emit_expr(expr.children.get(i));
             i = i + 1;
         }
-        return emit_call(callee, args);
+        return "slate__" + fn_name + "(" + args + ")";
     }
-    if expr.kind == "field" {
-        string base = emit_expr(expr.target, e);
-        return emit_field_access(base, expr.field);
+    
+    if expr.kind == NodeKind.MethodCall {
+        Node target = expr.children.get(0);
+        string method = expr.value;
+        mutable string args = emit_expr(target) + ", ";
+        mutable int i = 1;
+        while i < expr.children.len() {
+            if i > 1 { args = args + ", "; }
+            args = args + emit_expr(expr.children.get(i));
+            i = i + 1;
+        }
+        return "slate__" + method + "(" + args + ")";
     }
-    if expr.kind == "index" {
-        string base = emit_expr(expr.target, e);
-        string idx = emit_expr(expr.index, e);
-        return "((" + base + ")[" + idx + "])";
+    
+    if expr.kind == NodeKind.FieldAccess {
+        Node target = expr.children.get(0);
+        return "(" + emit_expr(target) + ")->" + expr.value;
     }
-    if expr.kind == "cast" {
-        string inner = emit_expr(expr.value, e);
-        return "(" + c_type(expr.to_type) + ")(" + inner + ")";
-    }
+    
     return "NULL";
 }

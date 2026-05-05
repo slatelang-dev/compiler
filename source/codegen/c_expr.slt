@@ -49,6 +49,17 @@ string emit_args(list(Node) args, int start) {
 string emit_method_call(Node target, string method, list(Node) args) {
     string target_expr = emit_expr(target);
     
+    if target.kind == NodeKind.Call {
+        Node fn_node = target.children.get(0);
+        if fn_node.value == "file" {
+            string path_arg = emit_expr(target.children.get(1));
+            if method == "exists" { return "slate_file_exists(" + path_arg + ")"; }
+            if method == "read" { return "slate_file_read(" + path_arg + ")"; }
+            if method == "write" { return "slate_file_write(" + path_arg + ", " + emit_expr(args.get(1)) + ")"; }
+            if method == "path" { return path_arg; }
+        }
+    }
+    
     if method == "len" { return "slate_len(" + target_expr + ")"; }
     if method == "get" { return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
     if method == "set" { return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
@@ -72,6 +83,9 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "float" { return "slate_to_float(" + target_expr + ")"; }
     if method == "string" { return "slate_to_string(" + target_expr + ")"; }
     if method == "parse" { return "slate_parse(" + target_expr + ")"; }
+    if method == "source" { return "slate_source(" + target_expr + ")"; }
+    if method == "node" { return "slate_node(" + target_expr + ")"; }
+    if method == "errors" { return "slate_errors(" + emit_args(args, 1) + ")"; }
     
     return "slate__" + method + "(" + target_expr + ")";
 }

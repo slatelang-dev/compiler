@@ -175,8 +175,12 @@ string emit_expr(Node expr) {
         string op = expr.value;
         string left_expr = emit_expr(left);
         string right_expr = emit_expr(right);
+        
         if op == "+" {
-            return "slate_concat(" + left_expr + ", " + right_expr + ")";
+            if left.kind == NodeKind.StringLit or right.kind == NodeKind.StringLit {
+                return "slate_concat(" + left_expr + ", " + right_expr + ")";
+            }
+            return "(" + left_expr + " + " + right_expr + ")";
         }
         if op == "and" { return "(" + left_expr + " && " + right_expr + ")"; }
         if op == "or" { return "(" + left_expr + " || " + right_expr + ")"; }
@@ -186,7 +190,6 @@ string emit_expr(Node expr) {
         if op == ">" { return "(" + left_expr + " > " + right_expr + ")"; }
         if op == "<=" { return "(" + left_expr + " <= " + right_expr + ")"; }
         if op == ">=" { return "(" + left_expr + " >= " + right_expr + ")"; }
-        if op == "+" { return "(" + left_expr + " + " + right_expr + ")"; }
         if op == "-" { return "(" + left_expr + " - " + right_expr + ")"; }
         if op == "*" { return "(" + left_expr + " * " + right_expr + ")"; }
         if op == "/" { return "(" + left_expr + " / " + right_expr + ")"; }

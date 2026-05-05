@@ -42,10 +42,7 @@ string emit_stmt(Node stmt, int level) {
         Node value = stmt.children.get(0);
         
         if op == "+=" {
-            if value.kind == NodeKind.IntLit {
-                return ind + var_name + " = " + var_name + " + " + emit_expr(value) + ";";
-            }
-            return ind + var_name + " = slate_concat(" + var_name + ", " + emit_expr(value) + ");";
+            return ind + var_name + " = " + var_name + " + " + emit_expr(value) + ";";
         }
         if op == "-=" {
             return ind + var_name + " = " + var_name + " - " + emit_expr(value) + ";";

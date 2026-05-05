@@ -19,12 +19,17 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
     Node body = fn_children.get(child_count - 1);
     
     string header = ret + " slate__" + fn_name + "(";
-    mutable int i = 1;
-    while i < child_count - 1 {
-        if i > 1 { header = header + ", "; }
-        Node param = fn_children.get(i);
-        header = header + "void* " + param.value;
-        i = i + 1;
+    int param_count = child_count - 2;
+    if param_count == 0 {
+        header = header + "void";
+    } else {
+        mutable int i = 1;
+        while i < param_count + 1 {
+            if i > 1 { header = header + ", "; }
+            Node param = fn_children.get(i);
+            header = header + "void* " + param.value;
+            i = i + 1;
+        }
     }
     header = header + ") {";
     e = emit_line(e, header);

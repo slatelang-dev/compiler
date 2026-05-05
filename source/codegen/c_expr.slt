@@ -78,6 +78,17 @@ string emit_call(Node expr) {
     if fn_name == "yellow" { return "slate_yellow(" + emit_args(args, 0) + ")"; }
     if fn_name == "blue" { return "slate_blue(" + emit_args(args, 0) + ")"; }
     if fn_name == "gray" { return "slate_gray(" + emit_args(args, 0) + ")"; }
+    if fn_name == "slate" { return "slate_slate_color(" + emit_args(args, 0) + ")"; }
+    if fn_name == "orange" { return "slate_orange(" + emit_args(args, 0) + ")"; }
+    if fn_name == "purple" { return "slate_purple(" + emit_args(args, 0) + ")"; }
+    if fn_name == "white" { return "slate_white(" + emit_args(args, 0) + ")"; }
+    if fn_name == "black" { return "slate_black(" + emit_args(args, 0) + ")"; }
+    if fn_name == "dim" { return "slate_dim(" + emit_args(args, 0) + ")"; }
+    if fn_name == "italic" { return "slate_italic(" + emit_args(args, 0) + ")"; }
+    if fn_name == "underline" { return "slate_underline(" + emit_args(args, 0) + ")"; }
+    if fn_name == "bold_green" { return "slate_bold_green(" + emit_args(args, 0) + ")"; }
+    if fn_name == "bold_yellow" { return "slate_bold_yellow(" + emit_args(args, 0) + ")"; }
+    if fn_name == "bold_blue" { return "slate_bold_blue(" + emit_args(args, 0) + ")"; }
     if fn_name == "strlen" { return "slate_strlen(" + emit_args(args, 0) + ")"; }
     if fn_name == "empty" { return "slate_empty()"; }
     if fn_name == "table" { return "slate_table()"; }

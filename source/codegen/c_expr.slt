@@ -176,6 +176,7 @@ string emit_expr(Node expr) {
         string field = expr.value;
         if field == "success" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
         if field == "message" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
+        if field == "node" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
         if field == "errors" { return "((slate_AnalysisResult*)" + target_expr + ")->" + field; }
         if field == "warnings" { return "((slate_AnalysisResult*)" + target_expr + ")->" + field; }
         if field == "loaded" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
@@ -184,7 +185,7 @@ string emit_expr(Node expr) {
         if field == "path" { return "((slate_ModuleInfo*)" + target_expr + ")->" + field; }
         if field == "source" { return "((slate_ParseResult*)" + target_expr + ")->" + field; }
         if field == "ast" { return "((slate_LoadedModule*)" + target_expr + ")->" + field; }
-        return target_expr + "->" + field;
+        return "((void*)" + target_expr + ")->" + field;
     }
     
     if expr.kind == NodeKind.Interp {

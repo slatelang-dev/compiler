@@ -42,7 +42,7 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
 
 string walk_module(Node program, list(var) registry) {
     mutable CEmitter e = new_emitter();
-    e = emit_line(e, "#include \"slate_module.h\"");
+    e = emit_line(e, "#include \"slate_runtime.h\"");
     e = emit_line(e, "");
     
     mutable int i = 0;

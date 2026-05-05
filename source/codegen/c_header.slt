@@ -2,6 +2,7 @@ module c_header;
 
 use emitter;
 use c_types;
+use node;
 
 CEmitter emit_header_includes(CEmitter e) {
     e = emit_header(e, "#include <stdint.h>");
@@ -15,7 +16,7 @@ CEmitter emit_forward_decls(CEmitter e, list(var) registry) {
     mutable int i = 0;
     while i < registry.len() {
         var fn_def = registry.get(i);
-        if fn_def.kind == "fn" {
+        if fn_def.kind == NodeKind.FnDecl {
             string ret = c_type(fn_def.ret_type);
             string decl = "void* " + c_fn_name(fn_def.name) + "(";
             mutable int j = 0;

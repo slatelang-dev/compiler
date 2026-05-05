@@ -4,6 +4,7 @@ use emitter;
 use c_stmt;
 use c_types;
 use c_header;
+use node;
 
 CEmitter emit_function(CEmitter e, var fn_def) {
     e = set_fn(e, fn_def.name);
@@ -40,7 +41,7 @@ string walk_module(var program, list(var) registry) {
     mutable int i = 0;
     while i < program.children.len() {
         var node = program.children.get(i);
-        if node.kind == "fn" {
+        if node.kind == NodeKind.FnDecl {
             e = emit_function(e, node);
             e = emit_line(e, "");
         }

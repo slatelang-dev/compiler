@@ -6,25 +6,33 @@ use c_types;
 use c_header;
 use node;
 
-CEmitter emit_function(CEmitter e, var fn_def) {
-    e = set_fn(e, fn_def.name);
-    string ret = c_type(fn_def.ret_type);
-    string fn_name = c_fn_name(fn_def.name);
+CEmitter emit_function(CEmitter e, var fn_decl) {
+    string fn_name = fn_decl.value;
+    e = set_fn(e, fn_name);
     
-    string header = ret + " " + fn_name + "(";
-    mutable int i = 0;
-    while i < fn_def.params.len() {
-        if i > 0 { header = header + ", "; }
-        var p = fn_def.params.get(i);
-        header = header + c_type(p.param_type) + " " + p.name;
+    list(var) fn_children = fn_decl.children;
+    int child_count = fn_children.len();
+    
+    Node ret_type_node = fn_children.get(0);
+    string ret = c_type(ret_type_node.value);
+    
+    Node body = fn_children.get(child_count - 1);
+    
+    string header = ret + " slate__" + fn_name + "(";
+    mutable int i = 1;
+    while i < child_count - 1 {
+        if i > 1 { header = header + ", "; }
+        var param = fn_children.get(i);
+        Node param_type_node = param.children.get(0);
+        header = header + "void* " + param.value;
         i = i + 1;
     }
     header = header + ") {";
     e = emit_line(e, header);
     
     mutable int j = 0;
-    while j < fn_def.body.len() {
-        string stmt = emit_stmt(fn_def.body.get(j), e, 1);
+    while j < body.children.len() {
+        string stmt = emit_stmt(body.children.get(j), e, 1);
         e = emit_line(e, "    " + stmt);
         j = j + 1;
     }

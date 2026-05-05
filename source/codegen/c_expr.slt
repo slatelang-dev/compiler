@@ -47,9 +47,9 @@ string emit_call(Node expr) {
     string fn_name = expr.value;
     list(Node) args = expr.children;
     
-    if fn_name == "parse" { return "slate__parse(" + emit_args(args, 0) + ")"; }
-    if fn_name == "analyse" { return "slate__analyse(" + emit_args(args, 0) + ")"; }
-    if fn_name == "analyse_bare" { return "slate__analyse_bare(" + emit_args(args, 0) + ")"; }
+    if fn_name == "parse" { return "slate_parse(" + emit_args(args, 0) + ")"; }
+    if fn_name == "analyse" { return "slate_analyse(" + emit_args(args, 0) + ")"; }
+    if fn_name == "analyse_bare" { return "slate_analyse_bare(" + emit_args(args, 0) + ")"; }
     if fn_name == "print" { return "slate_print(" + emit_args(args, 0) + ")"; }
     if fn_name == "println" { return "slate_println()"; }
     if fn_name == "time" { return "slate_time()"; }
@@ -61,16 +61,16 @@ string emit_call(Node expr) {
     if fn_name == "str_to_int" { return "slate_str_to_int(" + emit_args(args, 0) + ")"; }
     if fn_name == "str_to_float" { return "slate_str_to_float(" + emit_args(args, 0) + ")"; }
     if fn_name == "hash" { return "slate_hash(" + emit_args(args, 0) + ")"; }
-    if fn_name == "render_all" { return "slate__render_all(" + emit_args(args, 0) + ")"; }
-    if fn_name == "load_module" { return "slate__load_module(" + emit_args(args, 0) + ")"; }
-    if fn_name == "load_entry" { return "slate__load_entry(" + emit_args(args, 0) + ")"; }
-    if fn_name == "load_project_file" { return "slate__load_project_file()"; }
-    if fn_name == "project_valid" { return "slate__project_valid(" + emit_args(args, 0) + ")"; }
-    if fn_name == "collect_module_asts" { return "slate__collect_module_asts(" + emit_args(args, 0) + ")"; }
-    if fn_name == "walk_module" { return "slate__walk_module(" + emit_args(args, 0) + ")"; }
-    if fn_name == "build_registry_from_modules" { return "slate__build_registry_from_modules(" + emit_args(args, 0) + ")"; }
-    if fn_name == "load_manifest" { return "slate__load_manifest(" + emit_args(args, 0) + ")"; }
-    if fn_name == "save_manifest" { return "slate__save_manifest(" + emit_args(args, 0) + ")"; }
+    if fn_name == "render_all" { return "slate_render_all(" + emit_args(args, 0) + ")"; }
+    if fn_name == "load_module" { return "slate_load_module(" + emit_args(args, 0) + ")"; }
+    if fn_name == "load_entry" { return "slate_load_entry(" + emit_args(args, 0) + ")"; }
+    if fn_name == "load_project_file" { return "slate_load_project_file()"; }
+    if fn_name == "project_valid" { return "slate_project_valid(" + emit_args(args, 0) + ")"; }
+    if fn_name == "collect_module_asts" { return "slate_collect_module_asts(" + emit_args(args, 0) + ")"; }
+    if fn_name == "walk_module" { return "slate_walk_module(" + emit_args(args, 0) + ")"; }
+    if fn_name == "build_registry_from_modules" { return "slate_build_registry_from_modules(" + emit_args(args, 0) + ")"; }
+    if fn_name == "load_manifest" { return "slate_load_manifest(" + emit_args(args, 0) + ")"; }
+    if fn_name == "save_manifest" { return "slate_save_manifest(" + emit_args(args, 0) + ")"; }
     if fn_name == "strlen" { return "slate_strlen(" + emit_args(args, 0) + ")"; }
     if fn_name == "empty" { return "slate_empty()"; }
     if fn_name == "table" { return "slate_table()"; }

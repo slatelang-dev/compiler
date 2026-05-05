@@ -128,8 +128,10 @@ string emit_stmt(Node stmt, int level) {
         return ind + "break;";
     }
     
-    if stmt.kind == NodeKind.Expr {
-        return ind + emit_expr(stmt.children.get(0)) + ";";
+    if stmt.kind == NodeKind.Expr
+    or stmt.kind == NodeKind.Call
+    or stmt.kind == NodeKind.MethodCall {
+        return ind + emit_expr(stmt) + ";";
     }
     
     return ind + "/* unknown stmt */;";

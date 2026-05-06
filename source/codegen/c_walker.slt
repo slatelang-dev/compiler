@@ -7,7 +7,6 @@ use node;
 
 CEmitter emit_function(CEmitter e, Node fn_decl) {
     string fn_name = fn_decl.value;
-    
     list(Node) fn_children = fn_decl.children;
     int child_count = fn_children.len();
     
@@ -16,22 +15,29 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
     
     Node body = fn_children.get(child_count - 1);
     
-    string header = ret + " " + fn_name + "(";
-    int param_count = child_count - 2;
-    
-    if param_count == 0 {
-        header = header + "void";
+    string header;
+    if fn_name == "main" {
+        header = ret + " main(int argc, char** argv) {";
+        e = emit_line(e, header);
+        e = emit_line(e, "    slate_init_args(argc, argv);");
     } else {
-        mutable int i = 1;
-        while i < param_count + 1 {
-            if i > 1 { header = header + ", "; }
-            Node param = fn_children.get(i);
-            header = header + "void* " + param.value;
-            i = i + 1;
+        header = ret + " " + fn_name + "(";
+        int param_count = child_count - 2;
+        
+        if param_count == 0 {
+            header = header + "void";
+        } else {
+            mutable int i = 1;
+            while i < param_count + 1 {
+                if i > 1 { header = header + ", "; }
+                Node param = fn_children.get(i);
+                header = header + "void* " + param.value;
+                i = i + 1;
+            }
         }
+        header = header + ") {";
+        e = emit_line(e, header);
     }
-    header = header + ") {";
-    e = emit_line(e, header);
     
     mutable int j = 0;
     while j < body.children.len() {

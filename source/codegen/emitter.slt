@@ -1,66 +1,80 @@
 module emitter;
 
+# TypedExpr — the result of emitting an expression.
+# code is the C source string; slate_type is the Slate type name
+# (e.g. "int", "string", "bool", "ParseResult", "ptr").
+# slate_type drives field access and method dispatch in the emitter.
+
+struct TypedExpr {
+    string code;
+    string slate_type;
+}
+
+TypedExpr typed(string code, string slate_type) {
+    return TypedExpr(code: code, slate_type: slate_type);
+}
+
+TypedExpr typed_ptr(string code) {
+    return TypedExpr(code: code, slate_type: "ptr");
+}
+
+TypedExpr typed_int(string code) {
+    return TypedExpr(code: code, slate_type: "int");
+}
+
+TypedExpr typed_str(string code) {
+    return TypedExpr(code: code, slate_type: "string");
+}
+
+TypedExpr typed_bool(string code) {
+    return TypedExpr(code: code, slate_type: "bool");
+}
+
+TypedExpr typed_void(string code) {
+    return TypedExpr(code: code, slate_type: "void");
+}
+
+# CEmitter — accumulates emitted lines during a walk.
+
 struct CEmitter {
     list(string) lines;
-    list(string) header_lines;
     int temp_counter;
-    list(string) local_vars;
     string current_fn;
 }
 
 CEmitter new_emitter() {
     return CEmitter(
-        lines: empty,
-        header_lines: empty,
+        lines:        empty,
         temp_counter: 0,
-        local_vars: empty,
-        current_fn: ""
+        current_fn:   ""
     );
 }
 
 CEmitter emit_line(CEmitter e, string line) {
-    mutable list(string) new_lines = e.lines.add(line);
     return CEmitter(
-        lines: new_lines,
-        header_lines: e.header_lines,
+        lines:        e.lines.add(line),
         temp_counter: e.temp_counter,
-        local_vars: e.local_vars,
-        current_fn: e.current_fn
-    );
-}
-
-CEmitter emit_header(CEmitter e, string line) {
-    mutable list(string) new_lines = e.header_lines.add(line);
-    return CEmitter(
-        lines: e.lines,
-        header_lines: new_lines,
-        temp_counter: e.temp_counter,
-        local_vars: e.local_vars,
-        current_fn: e.current_fn
-    );
-}
-
-string next_temp(CEmitter e) {
-    return "_t" + string(e.temp_counter);
-}
-
-CEmitter inc_temp(CEmitter e) {
-    return CEmitter(
-        lines: e.lines,
-        header_lines: e.header_lines,
-        temp_counter: e.temp_counter + 1,
-        local_vars: e.local_vars,
-        current_fn: e.current_fn
+        current_fn:   e.current_fn
     );
 }
 
 CEmitter set_fn(CEmitter e, string fn_name) {
     return CEmitter(
-        lines: e.lines,
-        header_lines: e.header_lines,
+        lines:        e.lines,
         temp_counter: 0,
-        local_vars: empty,
-        current_fn: fn_name
+        current_fn:   fn_name
+    );
+}
+
+string next_temp(CEmitter e) {
+    return "_tmp" + string(e.temp_counter);
+}
+
+CEmitter inc_temp(CEmitter e) {
+    return CEmitter(
+        lines:        e.lines,
+        temp_counter: e.temp_counter + 1,
+        current_fn:   e.current_fn
     );
 }
 

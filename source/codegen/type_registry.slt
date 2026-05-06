@@ -1,82 +1,74 @@
 module type_registry;
 
-struct FnSignature {
-    string return_type;
-    list(string) param_types;
-}
-
-struct FieldInfo {
-    string field_type;
-    int index;
-}
-
 struct Registry {
     table(string, string) fn_returns;
     table(string, string) field_types;
+    table(string, string) field_owners;
     table(string, string) field_indices;
     table(string, string) enum_variants;
     table(string, string) struct_names;
 }
 
 Registry new_registry() {
-    mutable table(string, string) fn_ret = empty;
-    mutable table(string, string) field_typ = empty;
-    mutable table(string, string) field_idx = empty;
-    mutable table(string, string) enum_vars = empty;
-    mutable table(string, string) structs = empty;
     return Registry(
-        fn_returns: fn_ret,
-        field_types: field_typ,
-        field_indices: field_idx,
-        enum_variants: enum_vars,
-        struct_names: structs
+        fn_returns:    empty,
+        field_types:   empty,
+        field_owners:  empty,
+        field_indices: empty,
+        enum_variants: empty,
+        struct_names:  empty
     );
 }
 
 Registry register_fn(Registry r, string name, string return_type) {
-    table(string, string) new_fn_returns = r.fn_returns.set(name, return_type);
     return Registry(
-        fn_returns: new_fn_returns,
-        field_types: r.field_types,
+        fn_returns:    r.fn_returns.set(name, return_type),
+        field_types:   r.field_types,
+        field_owners:  r.field_owners,
         field_indices: r.field_indices,
         enum_variants: r.enum_variants,
-        struct_names: r.struct_names
+        struct_names:  r.struct_names
     );
 }
 
 Registry register_field(Registry r, string struct_name, string field_name, string field_type, int index) {
-    string type_key = struct_name + "." + field_name;
-    string index_key = struct_name + "." + field_name + ".idx";
-    table(string, string) new_field_types = r.field_types.set(type_key, field_type);
-    table(string, string) new_field_indices = r.field_indices.set(index_key, string(index));
+    string type_key  = struct_name + "." + field_name;
+    string idx_key   = struct_name + "." + field_name + ".idx";
     return Registry(
-        fn_returns: r.fn_returns,
-        field_types: new_field_types,
-        field_indices: new_field_indices,
+        fn_returns:    r.fn_returns,
+        field_types:   r.field_types.set(type_key, field_type),
+        field_owners:  r.field_owners.set(type_key, struct_name),
+        field_indices: r.field_indices.set(idx_key, string(index)),
         enum_variants: r.enum_variants,
-        struct_names: r.struct_names
+        struct_names:  r.struct_names
+    );
+}
+
+Registry register_struct(Registry r, string struct_name) {
+    return Registry(
+        fn_returns:    r.fn_returns,
+        field_types:   r.field_types,
+        field_owners:  r.field_owners,
+        field_indices: r.field_indices,
+        enum_variants: r.enum_variants,
+        struct_names:  r.struct_names.set(struct_name, "1")
     );
 }
 
 Registry register_enum_variant(Registry r, string enum_name, string variant_name, int index) {
     string key = enum_name + "." + variant_name;
-    table(string, string) new_variants = r.enum_variants.set(key, string(index));
     return Registry(
-        fn_returns: r.fn_returns,
-        field_types: r.field_types,
+        fn_returns:    r.fn_returns,
+        field_types:   r.field_types,
+        field_owners:  r.field_owners,
         field_indices: r.field_indices,
-        enum_variants: new_variants,
-        struct_names: r.struct_names
+        enum_variants: r.enum_variants.set(key, string(index)),
+        struct_names:  r.struct_names
     );
 }
 
-int lookup_enum_variant(Registry r, string enum_name, string variant_name) {
-    string key = enum_name + "." + variant_name;
-    if r.enum_variants.has(key) {
-        return int(r.enum_variants.get(key));
-    }
-    return -1;
-}
+# Look up the return type of a function by name.
+# Returns "ptr" if unknown (safe default — void* in C).
 
 string lookup_fn_return(Registry r, string name) {
     if r.fn_returns.has(name) {
@@ -85,12 +77,25 @@ string lookup_fn_return(Registry r, string name) {
     return "ptr";
 }
 
+# Look up the Slate type of a field given its owning struct type.
+
 string lookup_field_type(Registry r, string struct_name, string field_name) {
     string key = struct_name + "." + field_name;
     if r.field_types.has(key) {
         return r.field_types.get(key);
     }
     return "ptr";
+}
+
+# Look up which struct owns a given field.
+# Used by the emitter to emit the correct cast: ((slate_StructName*)ptr)->field
+
+string lookup_field_owner(Registry r, string struct_name, string field_name) {
+    string key = struct_name + "." + field_name;
+    if r.field_owners.has(key) {
+        return r.field_owners.get(key);
+    }
+    return "";
 }
 
 int lookup_field_index(Registry r, string struct_name, string field_name) {
@@ -101,14 +106,79 @@ int lookup_field_index(Registry r, string struct_name, string field_name) {
     return -1;
 }
 
+int lookup_enum_variant(Registry r, string enum_name, string variant_name) {
+    string key = enum_name + "." + variant_name;
+    if r.enum_variants.has(key) {
+        return int(r.enum_variants.get(key));
+    }
+    return -1;
+}
+
 bool registry_has_struct(Registry r, string name) {
     return r.struct_names.has(name);
 }
 
-string lookup_field_type_by_index(Registry r, string struct_name, int index) {
-    string key = struct_name + "." + string(index);
-    if r.field_types.has(key) {
-        return r.field_types.get(key);
+# Emit a safe field access given a known struct type and field.
+# Produces: ((slate_StructName*)expr)->field
+# Falls back to: expr->field if struct unknown.
+
+string emit_field_access(Registry r, string struct_type, string target_expr, string field_name) {
+    if struct_type == "" or struct_type == "ptr" or struct_type == "unknown" {
+        return target_expr + "->" + field_name;
     }
-    return "ptr";
+    return "((slate_" + struct_type + "*)" + target_expr + ")->" + field_name;
+}
+
+# C keyword mangling — if a Slate identifier clashes with a C keyword,
+# append _s so the generated C is valid.
+
+bool is_c_keyword(string name) {
+    if name == "auto"     { return true; }
+    if name == "break"    { return true; }
+    if name == "case"     { return true; }
+    if name == "char"     { return true; }
+    if name == "const"    { return true; }
+    if name == "continue" { return true; }
+    if name == "default"  { return true; }
+    if name == "do"       { return true; }
+    if name == "double"   { return true; }
+    if name == "else"     { return true; }
+    if name == "enum"     { return true; }
+    if name == "extern"   { return true; }
+    if name == "float"    { return true; }
+    if name == "for"      { return true; }
+    if name == "goto"     { return true; }
+    if name == "if"       { return true; }
+    if name == "inline"   { return true; }
+    if name == "int"      { return true; }
+    if name == "long"     { return true; }
+    if name == "register" { return true; }
+    if name == "restrict" { return true; }
+    if name == "return"   { return true; }
+    if name == "short"    { return true; }
+    if name == "signed"   { return true; }
+    if name == "sizeof"   { return true; }
+    if name == "static"   { return true; }
+    if name == "struct"   { return true; }
+    if name == "switch"   { return true; }
+    if name == "typedef"  { return true; }
+    if name == "union"    { return true; }
+    if name == "unsigned" { return true; }
+    if name == "void"     { return true; }
+    if name == "volatile" { return true; }
+    if name == "while"    { return true; }
+    if name == "new"      { return true; }
+    if name == "delete"   { return true; }
+    if name == "class"    { return true; }
+    if name == "true"     { return true; }
+    if name == "false"    { return true; }
+    if name == "NULL"     { return true; }
+    return false;
+}
+
+string safe_ident(string name) {
+    if is_c_keyword(name) {
+        return name + "_s";
+    }
+    return name;
 }

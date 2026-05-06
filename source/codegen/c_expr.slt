@@ -63,10 +63,10 @@ string emit_call(Node expr) {
     string fn_name = expr.value;
     list(Node) args = expr.children;
 
-    # print() -> puts (automatically adds newline)
+    # print() -> printf with newline
     if fn_name == "print" {
-        if args.len() == 0 { return "puts(\"\")"; }
-        return "puts(" + emit_expr(args.get(0)) + ")";
+        if args.len() == 0 { return "printf(\"\\n\")"; }
+        return "printf(\"%s\\n\", " + emit_expr(args.get(0)) + ")";
     }
 
     # Builtin type conversions
@@ -106,9 +106,7 @@ string emit_call(Node expr) {
         return "slate_file(" + emit_args(args, 0) + ")";
     }
     if fn_name == "run" {
-        int arg_count = args.len();
-        if arg_count == 0 { return "slate_run_args(0, NULL)"; }
-        return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0) + ")";
+        return "slate_run_list(" + emit_args(args, 0) + ")";
     }
 
     # Low-level builtins
@@ -128,8 +126,8 @@ string emit_call(Node expr) {
     if fn_name == "json"         { return "slate_json(" + emit_args(args, 0) + ")"; }
     if fn_name == "toml"         { return "slate_toml(" + emit_args(args, 0) + ")"; }
 
-    # User-defined functions - emit as-is
-    return fn_name + "(" + emit_args(args, 0) + ")";
+    # User-defined functions get double underscore prefix
+    return "slate__" + fn_name + "(" + emit_args(args, 0) + ")";
 }
 
 string emit_method_call(Node target, string method, list(Node) args) {

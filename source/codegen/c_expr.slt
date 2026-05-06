@@ -77,8 +77,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg) {
     if expr.kind == NodeKind.Call {
         string fn_name = expr.value;
         string c_call = emit_call(expr);
-        option(string) ret_type = lookup_fn_return(reg, fn_name);
-        string slate_type = ret_type.or("int");
+        string slate_type = lookup_fn_return(reg, fn_name);
         return typed(c_call, slate_type);
     }
 

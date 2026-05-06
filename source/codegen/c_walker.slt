@@ -15,7 +15,7 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
     
     Node body = fn_children.get(child_count - 1);
     
-    string header;
+    string header = "";
     if fn_name == "main" {
         header = ret + " main(int argc, char** argv) {";
         e = emit_line(e, header);

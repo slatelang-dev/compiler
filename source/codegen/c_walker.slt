@@ -3,110 +3,144 @@ module c_walker;
 use emitter;
 use c_stmt;
 use c_types;
+use type_registry;
 use node;
 
-CEmitter emit_function(CEmitter e, Node fn_decl) {
-    string fn_name = fn_decl.value;
-    list(Node) fn_children = fn_decl.children;
-    int child_count = fn_children.len();
-    
-    Node ret_type_node = fn_children.get(0);
-    string ret = c_type(ret_type_node.value);
-    
-    Node body = fn_children.get(child_count - 1);
-    
-    string header = "";
-    if fn_name == "main" {
-        header = ret + " main(int argc, char** argv) {";
-        e = emit_line(e, header);
-        e = emit_line(e, "    slate_init_args(argc, argv);");
-    } else {
-        header = ret + " " + fn_name + "(";
-        int param_count = child_count - 2;
-        
-        if param_count == 0 {
-            header = header + "void";
-        } else {
-            mutable int i = 1;
-            while i < param_count + 1 {
-                if i > 1 { header = header + ", "; }
-                Node param = fn_children.get(i);
-                header = header + "void* " + param.value;
-                i = i + 1;
-            }
-        }
-        header = header + ") {";
-        e = emit_line(e, header);
+# Emit a single function declaration
+
+string emit_fn(Node fn_decl, Registry reg) {
+    string fn_name    = safe_ident(fn_decl.value);
+    list(Node) children = fn_decl.children;
+    int child_count   = children.len();
+    Node ret_type_node = children.get(0);
+    Node body          = children.get(child_count - 1);
+    string ret         = c_type(ret_type_node.value);
+
+    # Build parameter list — params are children 1..child_count-2
+    mutable string params = "";
+    mutable int i = 1;
+    while i < child_count - 1 {
+        Node param = children.get(i);
+        Node param_type = param.children.get(0);
+        string c_param_type = c_type(param_type.value);
+        string param_name   = safe_ident(param.value);
+        if params.len() > 0 { params = params + ", "; }
+        params = params + c_param_type + " " + param_name;
+        i = i + 1;
     }
-    
+    if params.len() == 0 { params = "void"; }
+
+    # main() needs argc/argv and slate_init_args
+    mutable string header = ret + " " + fn_name + "(" + params + ") {";
+    if fn_name == "main" {
+        header = "int main(int argc, char** argv) {";
+    }
+
+    mutable string result = header + "\n";
+
+    if fn_name == "main" {
+        result = result + "    slate_init_args(argc, argv);\n";
+    }
+
     mutable int j = 0;
     while j < body.children.len() {
-        string stmt = emit_stmt(body.children.get(j), 1);
-        e = emit_line(e, "    " + stmt);
+        result = result + emit_stmt(body.children.get(j), 1, reg) + "\n";
         j = j + 1;
     }
-    
-    e = emit_line(e, "}");
-    return e;
+
+    if fn_name == "main" {
+        result = result + "    return 0;\n";
+    }
+
+    result = result + "}\n";
+    return result;
 }
 
-CEmitter emit_struct(CEmitter e, Node struct_decl) {
+# Emit a struct definition
+
+string emit_struct(Node struct_decl) {
     string name = struct_decl.value;
-    e = emit_line(e, "typedef struct slate_" + name + " {");
-    
+    mutable string result = "typedef struct {\n";
     mutable int i = 0;
     while i < struct_decl.children.len() {
-        Node field = struct_decl.children.get(i);
-        if field.kind == NodeKind.Field {
-            Node type_node = field.children.get(0);
-            string field_type = c_type_for_field(type_node.value);
-            e = emit_line(e, "    " + field_type + " " + field.value + ";");
+        Node member = struct_decl.children.get(i);
+        if member.kind == NodeKind.Field {
+            Node type_node    = member.children.get(0);
+            string field_type = c_type(type_node.value);
+            string field_name = safe_ident(member.value);
+            result = result + "    " + field_type + " " + field_name + ";\n";
         }
         i = i + 1;
     }
-    
-    e = emit_line(e, "} slate_" + name + ";");
-    return e;
+    result = result + "} slate_" + name + ";\n";
+    return result;
 }
 
-string walk_module(Node program, list(var) registry) {
-    mutable bool has_decls = false;
-    mutable int check_i = 0;
-    while check_i < program.children.len() {
-        Node child = program.children.get(check_i);
+# Emit an enum as a C enum
+
+string emit_enum(Node enum_decl, Registry reg) {
+    string name = enum_decl.value;
+    mutable string result = "typedef enum {\n";
+    mutable int i = 0;
+    while i < enum_decl.children.len() {
+        Node variant = enum_decl.children.get(i);
+        result = result + "    " + name + "_" + variant.value;
+        if i < enum_decl.children.len() - 1 {
+            result = result + ",";
+        }
+        result = result + "\n";
+        i = i + 1;
+    }
+    result = result + "} " + name + ";\n";
+    return result;
+}
+
+# Check whether a program node has anything worth emitting
+
+bool has_emittable_decls(Node program) {
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node child = program.children.get(i);
         if child.kind == NodeKind.FnDecl
         or child.kind == NodeKind.StructDecl
         or child.kind == NodeKind.EnumDecl {
-            has_decls = true;
+            return true;
         }
-        check_i = check_i + 1;
+        i = i + 1;
     }
-    
-    if has_decls == false { return ""; }
-    
-    mutable CEmitter e = new_emitter();
-    e = emit_line(e, "#include \"slate_runtime.h\"");
-    e = emit_line(e, "");
-    
+    return false;
+}
+
+# Walk a full program node and produce a C translation unit.
+# Returns "" if there is nothing to emit (exports/lib files with only use/module stmts).
+
+string walk_module(Node program, Registry reg) {
+    if has_emittable_decls(program) == false {
+        return "";
+    }
+
+    mutable string structs = "";
+    mutable string enums   = "";
+    mutable string fns     = "";
+
     mutable int i = 0;
     while i < program.children.len() {
-        Node node = program.children.get(i);
-        if node.kind == NodeKind.StructDecl {
-            e = emit_struct(e, node);
-            e = emit_line(e, "");
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.StructDecl {
+            structs = structs + emit_struct(decl) + "\n";
+        }
+        if decl.kind == NodeKind.EnumDecl {
+            enums = enums + emit_enum(decl, reg) + "\n";
+        }
+        if decl.kind == NodeKind.FnDecl {
+            fns = fns + emit_fn(decl, reg) + "\n";
         }
         i = i + 1;
     }
-    
-    i = 0;
-    while i < program.children.len() {
-        Node node = program.children.get(i);
-        if node.kind == NodeKind.FnDecl {
-            e = emit_function(e, node);
-            e = emit_line(e, "");
-        }
-        i = i + 1;
-    }
-    
-    return join_lines(e.lines);
+
+    mutable string out = "#include \"slate_runtime.h\"\n\n";
+    if structs.len() > 0 { out = out + structs; }
+    if enums.len() > 0   { out = out + enums; }
+    if fns.len() > 0     { out = out + fns; }
+    return out;
 }

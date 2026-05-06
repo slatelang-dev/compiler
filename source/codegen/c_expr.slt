@@ -2,7 +2,111 @@ module c_expr;
 
 use c_types;
 use emitter;
+use type_registry;
 use node;
+
+# Emit a typed expression — returns both C code and Slate type
+TypedExpr emit_typed_expr(Node expr, Registry reg) {
+    if expr.kind == NodeKind.IntLit {
+        return typed_int(expr.value);
+    }
+    if expr.kind == NodeKind.FloatLit {
+        return typed(expr.value, "float");
+    }
+    if expr.kind == NodeKind.StringLit {
+        string val = expr.value;
+        val = val.replace("\\", "\\\\");
+        val = val.replace("\"", "\\\"");
+        val = val.replace("\n", "\\n");
+        val = val.replace("\r", "\\r");
+        val = val.replace("\t", "\\t");
+        return typed_str("\"" + val + "\"");
+    }
+    if expr.kind == NodeKind.CharLit {
+        return typed(expr.value, "char");
+    }
+    if expr.kind == NodeKind.BoolLit {
+        if expr.value == "true" { return typed_bool("1"); }
+        return typed_bool("0");
+    }
+    if expr.kind == NodeKind.None {
+        return typed("NULL", "option");
+    }
+
+    if expr.kind == NodeKind.Ident {
+        return typed(expr.value, "int");
+    }
+
+    if expr.kind == NodeKind.BinaryOp {
+        Node left = expr.children.get(0);
+        Node right = expr.children.get(1);
+        string op = expr.value;
+        TypedExpr left_te = emit_typed_expr(left, reg);
+        TypedExpr right_te = emit_typed_expr(right, reg);
+        string left_code = left_te.code;
+        string right_code = right_te.code;
+
+        if op == "+" {
+            if is_numeric_node(left) or is_numeric_node(right) {
+                return typed("(" + left_code + " + " + right_code + ")", left_te.slate_type);
+            }
+            return typed("slate_concat(" + left_code + ", " + right_code + ")", "string");
+        }
+        if op == "and" { return typed_bool("(" + left_code + " && " + right_code + ")"); }
+        if op == "or"  { return typed_bool("(" + left_code + " || " + right_code + ")"); }
+        if op == "=="  { return typed_bool("(" + left_code + " == " + right_code + ")"); }
+        if op == "!="  { return typed_bool("(" + left_code + " != " + right_code + ")"); }
+        if op == "<"   { return typed_bool("(" + left_code + " < " + right_code + ")"); }
+        if op == ">"   { return typed_bool("(" + left_code + " > " + right_code + ")"); }
+        if op == "<="  { return typed_bool("(" + left_code + " <= " + right_code + ")"); }
+        if op == ">="  { return typed_bool("(" + left_code + " >= " + right_code + ")"); }
+        if op == "-"   { return typed("(" + left_code + " - " + right_code + ")", left_te.slate_type); }
+        if op == "*"   { return typed("(" + left_code + " * " + right_code + ")", left_te.slate_type); }
+        if op == "/"   { return typed("(" + left_code + " / " + right_code + ")", left_te.slate_type); }
+        if op == "%"   { return typed("(" + left_code + " % " + right_code + ")", left_te.slate_type); }
+        return typed("(" + left_code + " " + op + " " + right_code + ")", left_te.slate_type);
+    }
+
+    if expr.kind == NodeKind.UnaryOp {
+        Node operand = expr.children.get(0);
+        TypedExpr inner = emit_typed_expr(operand, reg);
+        if expr.value == "not" { return typed_bool(emit_binop(expr.value) + "(" + inner.code + ")"); }
+        return typed(emit_binop(expr.value) + "(" + inner.code + ")", inner.slate_type);
+    }
+
+    if expr.kind == NodeKind.Call {
+        string fn_name = expr.value;
+        string c_call = emit_call(expr);
+        option(string) ret_type = lookup_fn_return(reg, fn_name);
+        string slate_type = ret_type.or("int");
+        return typed(c_call, slate_type);
+    }
+
+    if expr.kind == NodeKind.MethodCall {
+        Node target = expr.children.get(0);
+        string method = expr.value;
+        TypedExpr target_te = emit_typed_expr(target, reg);
+        string method_code = emit_method_call(target, method, expr.children);
+        return typed(method_code, "int");
+    }
+
+    if expr.kind == NodeKind.FieldAccess {
+        Node target = expr.children.get(0);
+        TypedExpr target_te = emit_typed_expr(target, reg);
+        string field_code = emit_field(expr.value, target_te.code);
+        return typed(field_code, "int");
+    }
+
+    if expr.kind == NodeKind.Interp {
+        return typed_str("\"" + expr.value + "\"");
+    }
+
+    if expr.kind == NodeKind.Empty {
+        return typed("NULL", "empty");
+    }
+
+    return typed("NULL", "int");
+}
 
 string emit_literal(Node n) {
     if n.kind == NodeKind.IntLit { return n.value; }

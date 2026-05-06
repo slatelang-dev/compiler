@@ -5,10 +5,10 @@ use c_types;
 use node;
 
 CEmitter emit_header_includes(CEmitter e) {
-    e = emit_header(e, "#include <stdint.h>");
-    e = emit_header(e, "#include <string.h>");
-    e = emit_header(e, "#include <stdio.h>");
-    e = emit_header(e, "#include \"slate_runtime.h\"");
+    e = emit_line(e, "#include <stdint.h>");
+    e = emit_line(e, "#include <string.h>");
+    e = emit_line(e, "#include <stdio.h>");
+    e = emit_line(e, "#include \"slate_runtime.h\"");
     return e;
 }
 
@@ -26,7 +26,7 @@ CEmitter emit_forward_decls(CEmitter e, list(var) registry) {
                 j = j + 1;
             }
             decl = decl + ");";
-            e = emit_header(e, decl);
+            e = emit_line(e, decl);
         }
         i = i + 1;
     }
@@ -35,14 +35,14 @@ CEmitter emit_forward_decls(CEmitter e, list(var) registry) {
 
 CEmitter emit_struct_def(CEmitter e, var struct_def) {
     string name = c_struct_name(struct_def.name);
-    e = emit_header(e, "typedef struct {");
+    e = emit_line(e, "typedef struct {");
     mutable int i = 0;
     while i < struct_def.fields.len() {
         var f = struct_def.fields.get(i);
-        e = emit_header(e, "    " + c_type_for_field(f.field_type) + " " + f.name + ";");
+        e = emit_line(e, "    " + c_type_for_field(f.field_type) + " " + f.name + ";");
         i = i + 1;
     }
-    e = emit_header(e, "} " + name + ";");
+    e = emit_line(e, "} " + name + ";");
     return e;
 }
 
@@ -58,10 +58,10 @@ CEmitter emit_structs(CEmitter e, list(var) structs) {
 string build_header(list(var) registry, list(var) structs) {
     mutable CEmitter e = new_emitter();
     e = emit_header_includes(e);
-    e = emit_header(e, "");
+    e = emit_line(e, "");
     e = emit_structs(e, structs);
-    e = emit_header(e, "");
+    e = emit_line(e, "");
     e = emit_forward_decls(e, registry);
-    e = emit_header(e, "");
-    return join_lines(e.header_lines);
+    e = emit_line(e, "");
+    return join_lines(e.lines);
 }

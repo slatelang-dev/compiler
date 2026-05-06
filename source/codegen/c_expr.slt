@@ -46,6 +46,11 @@ string emit_args(list(Node) args, int start) {
 string emit_call(Node expr) {
     string fn_name = expr.value;
     list(Node) args = expr.children;
+    
+    if fn_name == "print" { return "printf(" + emit_expr(args.get(0)) + ")"; }
+    if fn_name == "analyse" { return "analyse(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", 0)"; }
+    if fn_name == "analyse_bare" { return "analyse_bare(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
+    
     return fn_name + "(" + emit_args(args, 0) + ")";
 }
 
@@ -76,8 +81,19 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "exists" { return "slate_file_exists(" + target_expr + ")"; }
     if method == "read" { return "slate_file_read(" + target_expr + ")"; }
     if method == "write" { return "slate_file_write(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "print" { return "slate_print(" + target_expr + ")"; }
-    if method == "println" { return "slate_println()"; }
+    if method == "append" { return "slate_file_append(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "age" { return "slate_file_age(" + target_expr + ")"; }
+    if method == "list" { return "slate_file_list(" + target_expr + ")"; }
+    if method == "upper" { return "slate_str_upper(" + target_expr + ")"; }
+    if method == "lower" { return "slate_str_lower(" + target_expr + ")"; }
+    if method == "reverse" { return "slate_str_reverse(" + target_expr + ")"; }
+    if method == "chars" { return "slate_str_chars(" + target_expr + ")"; }
+    if method == "repeat" { return "slate_str_repeat(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "first" { return "slate_list_first(" + target_expr + ")"; }
+    if method == "last" { return "slate_list_last(" + target_expr + ")"; }
+    if method == "remove" { return "slate_list_remove(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "sort" { return "slate_list_sort(" + target_expr + ")"; }
+    if method == "merge" { return "slate_list_merge(" + target_expr + ", " + emit_args(args, 1) + ")"; }
     if method == "int" { return "slate_to_int(" + target_expr + ")"; }
     if method == "float" { return "slate_to_float(" + target_expr + ")"; }
     if method == "string" { return "slate_to_string(" + target_expr + ")"; }

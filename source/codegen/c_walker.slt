@@ -16,7 +16,7 @@ CEmitter emit_function(CEmitter e, Node fn_decl) {
     
     Node body = fn_children.get(child_count - 1);
     
-    string header = ret + " slate__" + fn_name + "(";
+    string header = ret + " " + fn_name + "(";
     int param_count = child_count - 2;
     
     if param_count == 0 {

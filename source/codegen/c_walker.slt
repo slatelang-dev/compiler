@@ -70,6 +70,20 @@ CEmitter emit_struct(CEmitter e, Node struct_decl) {
 }
 
 string walk_module(Node program, list(var) registry) {
+    mutable bool has_decls = false;
+    mutable int check_i = 0;
+    while check_i < program.children.len() {
+        Node child = program.children.get(check_i);
+        if child.kind == NodeKind.FnDecl
+        or child.kind == NodeKind.StructDecl
+        or child.kind == NodeKind.EnumDecl {
+            has_decls = true;
+        }
+        check_i = check_i + 1;
+    }
+    
+    if has_decls == false { return ""; }
+    
     mutable CEmitter e = new_emitter();
     e = emit_line(e, "#include \"slate_runtime.h\"");
     e = emit_line(e, "");

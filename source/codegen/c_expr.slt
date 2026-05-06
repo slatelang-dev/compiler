@@ -118,15 +118,6 @@ if fn_name == "run" {
     if fn_name == "strcmp" { return "slate_strcmp(" + emit_args(args, 0) + ")"; }
     if fn_name == "puts"   { return "puts(" + emit_args(args, 0) + ")"; }
 
-    # Analysis/parse (runtime stubs, single underscore)
-    if fn_name == "parse"        { return "slate_parse(" + emit_args(args, 0) + ")"; }
-    if fn_name == "analyse"      { return "slate_analyse(" + emit_args(args, 0) + ")"; }
-    if fn_name == "analyse_bare" { return "slate_analyse_bare(" + emit_args(args, 0) + ")"; }
-    if fn_name == "render_all"   { return "slate_render_all(" + emit_args(args, 0) + ")"; }
-    if fn_name == "tokenize"     { return "slate_tokenize(" + emit_args(args, 0) + ")"; }
-    if fn_name == "json"         { return "slate_json(" + emit_args(args, 0) + ")"; }
-    if fn_name == "toml"         { return "slate_toml(" + emit_args(args, 0) + ")"; }
-
     # User-defined functions - emit as-is
     return fn_name + "(" + emit_args(args, 0) + ")";
 }
@@ -188,30 +179,11 @@ string emit_method_call(Node target, string method, list(Node) args) {
     # Struct field accessors — use registry-agnostic arrow access
     # These are emitted as field accesses on void* — let the cast be done
     # by the struct-aware field access path in emit_expr instead.
-    return target_expr + "->slate__" + method + "(" + emit_args(args, 1) + ")";
+    return target_expr + "->" + method + "(" + emit_args(args, 1) + ")";
 }
 
-# Emit a field access. We use the registry to cast to the right struct type.
-# For known struct fields we emit a typed cast; unknown fields fall back to void*.
-
+# Emit a field access - just emit as generic dereference
 string emit_field(string field, string target_expr) {
-    # ParseResult fields
-    if field == "success"    { return "((slate_ParseResult*)" + target_expr + ")->success"; }
-    if field == "message"    { return "((slate_ParseResult*)" + target_expr + ")->message"; }
-    if field == "pos"        { return "((slate_ParseResult*)" + target_expr + ")->pos"; }
-
-    # AnalysisResult fields
-    if field == "errors"     { return "((slate_AnalysisResult*)" + target_expr + ")->errors"; }
-    if field == "warnings"   { return "((slate_AnalysisResult*)" + target_expr + ")->warnings"; }
-
-    # LoadedModule fields
-    if field == "loaded"     { return "((slate_LoadedModule*)" + target_expr + ")->loaded"; }
-    if field == "load_error" { return "((slate_LoadedModule*)" + target_expr + ")->load_error"; }
-    if field == "ast"        { return "((slate_LoadedModule*)" + target_expr + ")->ast"; }
-    if field == "source"     { return "((slate_LoadedModule*)" + target_expr + ")->source"; }
-
-    # Fall back: emit as generic void* dereference via macro
-    # The runtime header defines slate_field(ptr, field) for this.
     return target_expr + "->" + field;
 }
 

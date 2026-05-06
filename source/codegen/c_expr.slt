@@ -106,7 +106,9 @@ string emit_call(Node expr) {
         return "slate_file(" + emit_args(args, 0) + ")";
     }
     if fn_name == "run" {
-        return "slate_run_list(" + emit_args(args, 0) + ")";
+        int arg_count = args.len();
+        if arg_count == 0 { return "slate_run_args(0, NULL)"; }
+        return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0) + ")";
     }
 
     # Low-level builtins

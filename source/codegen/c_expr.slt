@@ -46,65 +46,6 @@ string emit_args(list(Node) args, int start) {
 string emit_call(Node expr) {
     string fn_name = expr.value;
     list(Node) args = expr.children;
-    
-    if fn_name == "parse" { return "parse(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "analyse" { return "analyse(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", 0)"; }
-    if fn_name == "analyse_bare" { return "analyse_bare(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
-    if fn_name == "print" { return "slate_print(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "println" { return "slate_println()"; }
-    if fn_name == "time" { return "slate_time()"; }
-    if fn_name == "env" { return "slate_env(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "home" { return "slate_home()"; }
-    if fn_name == "run" { return "slate_run_varargs(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "int_to_str" { return "slate_int_to_str(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "float_to_str" { return "slate_float_to_str(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "str_to_int" { return "slate_str_to_int(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "str_to_float" { return "slate_str_to_float(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "hash" { return "slate_hash(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "render_all" { return "render_all(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
-    if fn_name == "load_module" { return "load_module(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "load_entry" { return "load_entry(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "load_project_file" { return "load_project_file()"; }
-    if fn_name == "project_valid" { return "project_valid(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "collect_module_asts" { return "collect_module_asts(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
-    if fn_name == "walk_module" { return "walk_module(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "build_registry_from_modules" { return "build_registry_from_modules(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "load_manifest" { return "load_manifest(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "save_manifest" { return "save_manifest(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "string" { return "slate_int_to_str(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "strlen" { return "slate_strlen(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "empty" { return "slate_empty()"; }
-    if fn_name == "table" { return "slate_table()"; }
-    if fn_name == "list" { return "slate_list(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "split" { return "slate_split(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "trim" { return "slate_trim(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "contains" { return "slate_contains(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "replace" { return "slate_replace(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
-    if fn_name == "starts_with" { return "slate_starts_with(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "ends_with" { return "slate_ends_with(" + emit_expr(args.get(0)) + ", " + emit_expr(args.get(1)) + ")"; }
-    if fn_name == "to_int" { return "slate_str_to_int(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "to_float" { return "slate_str_to_float(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "to_string" { return "slate_int_to_str(" + emit_expr(args.get(0)) + ")"; }
-    
-    if fn_name == "bold_slate" { return "bold_slate(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "bold" { return "bold(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "red" { return "red(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "green" { return "green(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "yellow" { return "yellow(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "blue" { return "blue(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "gray" { return "gray(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "slate" { return "slate_color(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "orange" { return "orange(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "purple" { return "purple(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "white" { return "white(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "black" { return "black(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "dim" { return "dim(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "italic" { return "italic(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "underline" { return "underline(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "bold_green" { return "bold_green(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "bold_yellow" { return "bold_yellow(" + emit_expr(args.get(0)) + ")"; }
-    if fn_name == "bold_blue" { return "bold_blue(" + emit_expr(args.get(0)) + ")"; }
-    
     return fn_name + "(" + emit_args(args, 0) + ")";
 }
 
@@ -120,9 +61,18 @@ string emit_method_call(Node target, string method, list(Node) args) {
     string target_expr = emit_expr(target);
     
     if method == "len" { return "slate_len(" + target_expr + ")"; }
-    if method == "get" { return "slate_get(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
-    if method == "set" { return "slate_set(" + target_expr + ", " + emit_expr(args.get(1)) + ", " + emit_expr(args.get(2)) + ")"; }
-    if method == "add" { return "slate_add(" + target_expr + ", " + emit_expr(args.get(1)) + ")"; }
+    if method == "get" { return "slate_get(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "set" { return "slate_set(" + target_expr + ", " + emit_args(args, 1) + ", " + emit_args(args, 2) + ")"; }
+    if method == "add" { return "slate_add(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "has" { return "slate_has(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "keys" { return "slate_keys(" + target_expr + ")"; }
+    if method == "values" { return "slate_values(" + target_expr + ")"; }
+    if method == "split" { return "slate_split(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "contains" { return "slate_contains(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "trim" { return "slate_trim(" + target_expr + ")"; }
+    if method == "replace" { return "slate_replace(" + target_expr + ", " + emit_args(args, 1) + ", " + emit_args(args, 2) + ")"; }
+    if method == "starts_with" { return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "ends_with" { return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1) + ")"; }
     if method == "exists" { return "slate_file_exists(" + target_expr + ")"; }
     if method == "read" { return "slate_file_read(" + target_expr + ")"; }
     if method == "write" { return "slate_file_write(" + target_expr + ", " + emit_args(args, 1) + ")"; }
@@ -147,7 +97,7 @@ string emit_method_call(Node target, string method, list(Node) args) {
     if method == "entry" { return "((slate_Project*)" + target_expr + ")->entry"; }
     if method == "bin" { return "((slate_Project*)" + target_expr + ")->bin"; }
     
-    return "slate__" + method + "(" + target_expr + ")";
+    return target_expr + "->" + method + "()";
 }
 
 string emit_expr(Node expr) {
@@ -172,14 +122,7 @@ string emit_expr(Node expr) {
         string right_expr = emit_expr(right);
         
         if op == "+" {
-            if left.kind == NodeKind.StringLit or right.kind == NodeKind.StringLit 
-            or left.kind == NodeKind.Call or right.kind == NodeKind.Call
-            or left.kind == NodeKind.FieldAccess or right.kind == NodeKind.FieldAccess
-            or left.kind == NodeKind.MethodCall or right.kind == NodeKind.MethodCall
-            or left.kind == NodeKind.Interp or right.kind == NodeKind.Interp {
-                return "slate_concat(" + left_expr + ", " + right_expr + ")";
-            }
-            return "(" + left_expr + " + " + right_expr + ")";
+            return "slate_concat(" + left_expr + ", " + right_expr + ")";
         }
         if op == "and" { return "(" + left_expr + " && " + right_expr + ")"; }
         if op == "or" { return "(" + left_expr + " || " + right_expr + ")"; }

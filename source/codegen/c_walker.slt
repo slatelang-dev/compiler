@@ -7,6 +7,8 @@ use node;
 
 CEmitter emit_function(CEmitter e, Node fn_decl) {
     string fn_name = fn_decl.value;
+    if fn_name == "main" { fn_name = "slate_main"; }
+    
     list(Node) fn_children = fn_decl.children;
     int child_count = fn_children.len();
     

@@ -32,6 +32,12 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
     if expr.kind == NodeKind.None {
         return typed("NULL", "option");
     }
+    if expr.kind == NodeKind.Some
+    or expr.kind == NodeKind.Ok
+    or expr.kind == NodeKind.Error {
+        TypedExpr inner = emit_typed_expr(expr.children.get(0), reg, var_types);
+        return typed(inner.code, "option");
+    }
 
     if expr.kind == NodeKind.Ident {
         string name = safe_ident(expr.value);
@@ -321,6 +327,12 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
     or expr.kind == NodeKind.BoolLit
     or expr.kind == NodeKind.None {
         return emit_literal(expr);
+    }
+
+    if expr.kind == NodeKind.Some
+    or expr.kind == NodeKind.Ok
+    or expr.kind == NodeKind.Error {
+        return emit_expr(expr.children.get(0), reg, var_types);
     }
 
     if expr.kind == NodeKind.Ident {

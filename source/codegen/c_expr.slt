@@ -54,8 +54,18 @@ TypedExpr emit_typed_expr(Node expr, Registry reg) {
         }
         if op == "and" { return typed_bool("(" + left_code + " && " + right_code + ")"); }
         if op == "or"  { return typed_bool("(" + left_code + " || " + right_code + ")"); }
-        if op == "=="  { return typed_bool("(" + left_code + " == " + right_code + ")"); }
-        if op == "!="  { return typed_bool("(" + left_code + " != " + right_code + ")"); }
+        if op == "==" {
+            if left_te.slate_type == "string" or right_te.slate_type == "string" {
+                return typed_bool("(slate_strcmp(" + left_code + ", " + right_code + ") == 0)");
+            }
+            return typed_bool("(" + left_code + " == " + right_code + ")");
+        }
+        if op == "!=" {
+            if left_te.slate_type == "string" or right_te.slate_type == "string" {
+                return typed_bool("(slate_strcmp(" + left_code + ", " + right_code + ") != 0)");
+            }
+            return typed_bool("(" + left_code + " != " + right_code + ")");
+        }
         if op == "<"   { return typed_bool("(" + left_code + " < " + right_code + ")"); }
         if op == ">"   { return typed_bool("(" + left_code + " > " + right_code + ")"); }
         if op == "<="  { return typed_bool("(" + left_code + " <= " + right_code + ")"); }

@@ -92,10 +92,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
         if stmt.children.len() > 2 {
             Node else_part = stmt.children.get(2);
             if else_part.kind == NodeKind.If {
-                # else if — emit inline
-                string else_str = emit_stmt(else_part, level, reg);
-                # trim leading indent so it sits after the closing brace
-                result = result + " else " + else_str.replace(ind, "");
+                result = result + " else " + emit_stmt(else_part, level, reg);
             } else {
                 result = result + " else {\n";
                 result = result + emit_block_body(else_part, level + 1, reg);

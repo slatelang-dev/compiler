@@ -8,6 +8,6 @@ string walk_module(Node program, Registry reg) {
     return c_walker.walk_module(program, reg);
 }
 
-string walk_module_from_source(string source, Registry reg) {
-    return c_walker.walk_module_from_source(source, reg);
+string walk_module_from_source(string name, string source, Registry reg) {
+    return c_walker.walk_module_from_source(name, source, reg);
 }

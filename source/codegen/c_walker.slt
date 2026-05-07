@@ -151,8 +151,11 @@ string walk_module(Node program, Registry reg) {
     return out;
 }
 
-string walk_module_from_source(string source, Registry reg) {
+string walk_module_from_source(string name, string source, Registry reg) {
     ParseResult p = parse(source);
-    if p.success == false { return ""; }
+    if p.success == false {
+        print(red("parse failed") + ": " + name + ": " + p.message);
+        return "";
+    }
     return walk_module(p.node, reg);
 }

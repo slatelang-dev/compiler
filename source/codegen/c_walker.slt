@@ -132,27 +132,38 @@ bool key_belongs_to_struct(string key, string struct_name) {
 }
 
 string emit_registered_structs(Registry reg) {
+    # Structs defined in slate_runtime.h - skip to avoid redefinition
+    list(string) runtime_structs = ("ParseResult", "AnalysisResult", "LoadedModule", "Project", "ModuleInfo");
+
     mutable string result = "";
     list(string) struct_names = reg.struct_names.keys();
     mutable int i = 0;
     while i < struct_names.len() {
         string name = struct_names.get(i);
-        mutable string fields = "";
-        mutable bool has_fields = false;
-        mutable int fi = 0;
-        list(string) field_keys = reg.field_types.keys();
-        while fi < field_keys.len() {
-            string fk = field_keys.get(fi);
-            if key_belongs_to_struct(fk, name) {
-                string fname = fk.replace(name + ".", "");
-                string ftype = get_field_type(reg, name, fname);
-                fields = fields + "    " + c_type(ftype) + " " + fname + ";\n";
-                has_fields = true;
-            }
-            fi = fi + 1;
+        bool is_runtime = false;
+        mutable int r = 0;
+        while r < runtime_structs.len() {
+            if name == runtime_structs.get(r) { is_runtime = true; }
+            r = r + 1;
         }
-        if has_fields {
-            result = result + "typedef struct {\n" + fields + "} slate_" + name + ";\n\n";
+        if is_runtime == false {
+            mutable string fields = "";
+            mutable bool has_fields = false;
+            mutable int fi = 0;
+            list(string) field_keys = reg.field_types.keys();
+            while fi < field_keys.len() {
+                string fk = field_keys.get(fi);
+                if key_belongs_to_struct(fk, name) {
+                    string fname = fk.replace(name + ".", "");
+                    string ftype = get_field_type(reg, name, fname);
+                    fields = fields + "    " + c_type(ftype) + " " + fname + ";\n";
+                    has_fields = true;
+                }
+                fi = fi + 1;
+            }
+            if has_fields {
+                result = result + "typedef struct {\n" + fields + "} slate_" + name + ";\n\n";
+            }
         }
         i = i + 1;
     }
@@ -163,12 +174,27 @@ string emit_registered_structs(Registry reg) {
 # Returns "" if there is nothing to emit (exports/lib files with only use/module stmts).
 
 string emit_forward_decls(Registry reg, Node program) {
+    # C stdlib function names to exclude (already declared via system headers)
+    list(string) exclude = ("malloc", "free", "strlen", "strcmp", "memcpy",
+        "printf", "sprintf", "snprintf", "fopen", "fclose", "fread", "fwrite",
+        "fgets", "fputs", "fseek", "ftell", "feof", "fork", "wait", "waitpid",
+        "execvp", "exit", "getenv", "atoi", "atof", "atoll", "rand", "srand",
+        "time", "clock", "abs", "calloc", "realloc", "strcpy", "strncpy",
+        "strcat", "strdup", "strstr", "strchr", "strtol", "strtof", "isalnum",
+        "isalpha", "isblank", "isdigit", "isspace", "tolower", "toupper", "WEXITSTATUS");
+
     mutable string decls = "";
     list(string) fn_names = reg.fn_returns.keys();
     mutable int i = 0;
     while i < fn_names.len() {
         string fn_name = fn_names.get(i);
-        if safe_ident(fn_name) == fn_name {
+        bool is_excluded = false;
+        mutable int e = 0;
+        while e < exclude.len() {
+            if fn_name == exclude.get(e) { is_excluded = true; }
+            e = e + 1;
+        }
+        if is_excluded == false and safe_ident(fn_name) == fn_name {
             bool already_defined = false;
             mutable int j = 0;
             while j < program.children.len() {

@@ -198,23 +198,21 @@ list(LoadedModule) collect_module_asts(Node program, string base_path, list(stri
             visited = visited.set(mod_path, "1");
             string mod_name = extract_mod_name(mod_path);
             if file(mod_path).exists() {
-                LoadedModule m = load_module(mod_name, mod_path);
-                module_list = module_list.add(m);
-                if m.loaded {
-                    list(string) imports = scan_imports(m.source);
-                    mutable int j = 0;
-                    while j < imports.len() {
-                        string child_mod_name = imports.get(j);
-                        string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
-                        if module_already_loaded(visited, child_mod_path) == false {
-                            if module_already_loaded(queued, child_mod_path) == false {
-                                queue = queue.add(child_mod_path);
-                                queue_bases = queue_bases.add(resolve_parent(child_mod_path));
-                                queued = queued.set(child_mod_path, "1");
-                            }
+                string source = file(mod_path).read();
+                module_list = module_list.add(make_loaded_module(mod_name, mod_path, source, make_program(empty, 0, 0)));
+                list(string) imports = scan_imports(source);
+                mutable int j = 0;
+                while j < imports.len() {
+                    string child_mod_name = imports.get(j);
+                    string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
+                    if module_already_loaded(visited, child_mod_path) == false {
+                        if module_already_loaded(queued, child_mod_path) == false {
+                            queue = queue.add(child_mod_path);
+                            queue_bases = queue_bases.add(resolve_parent(child_mod_path));
+                            queued = queued.set(child_mod_path, "1");
                         }
-                        j = j + 1;
                     }
+                    j = j + 1;
                 }
             }
         }

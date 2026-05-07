@@ -39,6 +39,7 @@ Registry register_program(Registry r, Node program) {
             reg = register_fn(reg, decl.value, return_type);
         }
         if decl.kind == NodeKind.StructDecl {
+            reg = register_struct(reg, decl.value);
             reg = register_struct_fields(reg, decl);
         }
         if decl.kind == NodeKind.EnumDecl {

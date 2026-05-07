@@ -1,5 +1,6 @@
 module c_walker;
 
+use slate;
 use emitter;
 use c_stmt;
 use c_types;
@@ -148,4 +149,10 @@ string walk_module(Node program, Registry reg) {
     if enums.len() > 0   { out = out + enums; }
     if fns.len() > 0     { out = out + fns; }
     return out;
+}
+
+string walk_module_from_source(string source, Registry reg) {
+    ParseResult p = parse(source);
+    if p.success == false { return ""; }
+    return walk_module(p.node, reg);
 }

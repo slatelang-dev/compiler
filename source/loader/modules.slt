@@ -246,12 +246,8 @@ list(LoadedModule) load_modules(list(ModuleStub) stubs) {
             modules = modules.add(make_failed_module(s.name, s.path, "file not found"));
         } else {
             string source = file(s.path).read();
-            ParseResult p = parse(source);
-            if p.success {
-                modules = modules.add(make_loaded_module(s.name, s.path, source, p.node));
-            } else {
-                modules = modules.add(make_failed_module(s.name, s.path, p.message));
-            }
+            Node placeholder = make_program(empty, 0, 0);
+            modules = modules.add(make_loaded_module(s.name, s.path, source, placeholder));
         }
         i += 1;
     }

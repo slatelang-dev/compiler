@@ -41,7 +41,10 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         var_types = var_types.set(stmt.value, declared_type);
         mutable string c_var_type = c_type(declared_type);
         if init.kind == NodeKind.Empty {
-            return ind + c_var_type + " " + var_name + ";";
+            if type_node.kind == NodeKind.TypeList or type_node.kind == NodeKind.TypeTable {
+                return ind + c_var_type + " " + var_name + " = slate_empty_list();";
+            }
+            return ind + c_var_type + " " + var_name + " = NULL;";
         }
         TypedExpr init_te = emit_typed_expr(init, reg, var_types);
         if registry_has_struct(reg, declared_type) {

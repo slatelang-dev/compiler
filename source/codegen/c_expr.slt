@@ -107,7 +107,12 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
     if expr.kind == NodeKind.FieldAccess {
         Node target = expr.children.get(0);
         TypedExpr target_te = emit_typed_expr(target, reg, var_types);
-        string field_code = emit_field(expr.value, target_te.code);
+        string field_code;
+        if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
+            field_code = target.value + "_" + expr.value;
+        } else {
+            field_code = emit_field(expr.value, target_te.code);
+        }
         return typed(field_code, "int");
     }
 
@@ -374,6 +379,9 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
     if expr.kind == NodeKind.FieldAccess {
         Node target = expr.children.get(0);
         string target_expr = emit_expr(target, reg, var_types);
+        if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
+            return target.value + "_" + expr.value;
+        }
         return emit_field(expr.value, target_expr);
     }
 

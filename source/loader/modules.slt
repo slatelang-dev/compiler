@@ -227,6 +227,16 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
     return stub_list;
 }
 
+list(LoadedModule) reverse_modules(list(LoadedModule) modules) {
+    mutable list(LoadedModule) result = empty;
+    mutable int i = modules.len() - 1;
+    while i >= 0 {
+        result = result.add(modules.get(i));
+        i = i - 1;
+    }
+    return result;
+}
+
 list(LoadedModule) load_modules(list(ModuleStub) stubs) {
     mutable list(LoadedModule) modules = empty;
     mutable int i = 0;

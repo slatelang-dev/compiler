@@ -170,51 +170,6 @@ string emit_registered_structs(Registry reg) {
     return result;
 }
 
-# Walk a full program node and produce a C translation unit.
-# Returns "" if there is nothing to emit (exports/lib files with only use/module stmts).
-
-string emit_forward_decls(Registry reg, Node program) {
-    # C stdlib function names to exclude (already declared via system headers)
-    list(string) exclude = ("malloc", "free", "strlen", "strcmp", "memcpy",
-        "printf", "sprintf", "snprintf", "fopen", "fclose", "fread", "fwrite",
-        "fgets", "fputs", "fseek", "ftell", "feof", "fork", "wait", "waitpid",
-        "execvp", "exit", "getenv", "atoi", "atof", "atoll", "rand", "srand",
-        "time", "clock", "abs", "calloc", "realloc", "strcpy", "strncpy",
-        "strcat", "strdup", "strstr", "strchr", "strtol", "strtof", "isalnum",
-        "isalpha", "isblank", "isdigit", "isspace", "tolower", "toupper", "WEXITSTATUS");
-
-    mutable string decls = "";
-    list(string) fn_names = reg.fn_returns.keys();
-    mutable int i = 0;
-    while i < fn_names.len() {
-        string fn_name = fn_names.get(i);
-        bool is_excluded = false;
-        mutable int e = 0;
-        while e < exclude.len() {
-            if fn_name == exclude.get(e) { is_excluded = true; }
-            e = e + 1;
-        }
-        if is_excluded == false and safe_ident(fn_name) == fn_name {
-            bool already_defined = false;
-            mutable int j = 0;
-            while j < program.children.len() {
-                if program.children.get(j).kind == NodeKind.FnDecl
-                and program.children.get(j).value == fn_name {
-                    already_defined = true;
-                }
-                j = j + 1;
-            }
-            if already_defined == false {
-                string ret_type = c_type(lookup_fn_return(reg, fn_name));
-                if decls.len() > 0 { decls = decls + "\n"; }
-                decls = decls + ret_type + " " + fn_name + "(void);";
-            }
-        }
-        i = i + 1;
-    }
-    return decls;
-}
-
 string walk_module(Node program, Registry reg) {
     if has_emittable_decls(program) == false {
         return "";
@@ -244,8 +199,6 @@ string walk_module(Node program, Registry reg) {
     mutable string out = "#include \"slate_runtime.h\"\n\n";
     if structs.len() > 0 { out = out + structs; }
     if enums.len() > 0   { out = out + enums; }
-    string fwd_decls = emit_forward_decls(reg, program);
-    if fwd_decls.len() > 0 { out = out + fwd_decls + "\n\n"; }
     if fns.len() > 0     { out = out + fns; }
     return out;
 }

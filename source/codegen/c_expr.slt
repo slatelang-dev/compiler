@@ -229,29 +229,11 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
         return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0, reg, var_types) + ")";
     }
 
-    # Slate core functions — emit with slate_ prefix
-    if fn_name == "parse" {
-        return "slate_parse(" + emit_args(args, 0, reg, var_types) + ")";
-    }
-    if fn_name == "analyse" {
-        return "slate_analyse(" + emit_args(args, 0, reg, var_types) + ")";
-    }
-    if fn_name == "analyse_bare" {
-        return "slate_analyse_bare(" + emit_args(args, 0, reg, var_types) + ")";
-    }
-    if fn_name == "render_all" {
-        return "slate_render_all(" + emit_args(args, 0, reg, var_types) + ")";
-    }
-
-    # Low-level builtins
+    # Low-level builtins (no Slate source — defined in slate_runtime.h)
     if fn_name == "alloc"  { return "slate_alloc(" + emit_args(args, 0, reg, var_types) + ")"; }
     if fn_name == "free"   { return "slate_free(" + emit_args(args, 0, reg, var_types) + ")"; }
-    if fn_name == "memcpy" { return "memcpy(" + emit_args(args, 0, reg, var_types) + ")"; }
-    if fn_name == "strlen" { return "slate_strlen(" + emit_args(args, 0, reg, var_types) + ")"; }
-    if fn_name == "strcmp" { return "slate_strcmp(" + emit_args(args, 0, reg, var_types) + ")"; }
-    if fn_name == "puts"   { return "puts(" + emit_args(args, 0, reg, var_types) + ")"; }
 
-    # User-defined functions - emit as-is
+    # User-defined functions — emit as-is (resolved at link time from .o files)
     return fn_name + "(" + emit_args(args, 0, reg, var_types) + ")";
 }
 

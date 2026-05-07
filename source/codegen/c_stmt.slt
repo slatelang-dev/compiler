@@ -86,30 +86,30 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     if stmt.kind == NodeKind.If {
         TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node then_block   = stmt.children.get(1);
-        mutable string result = ind + "if (" + cond.code + ") {\n";
-        result = result + emit_block_body(then_block, level + 1, reg, var_types);
-        result = result + ind + "}";
+        mutable string res = ind + "if (" + cond.code + ") {\n";
+        res = res + emit_block_body(then_block, level + 1, reg, var_types);
+        res = res + ind + "}";
         if stmt.children.len() > 2 {
             Node else_part = stmt.children.get(2);
             if else_part.kind == NodeKind.If {
-                result = result + " else " + emit_stmt(else_part, level, reg, var_types);
+                res = res + " else " + emit_stmt(else_part, level, reg, var_types);
             } else {
-                result = result + " else {\n";
-                result = result + emit_block_body(else_part, level + 1, reg, var_types);
-                result = result + ind + "}";
+                res = res + " else {\n";
+                res = res + emit_block_body(else_part, level + 1, reg, var_types);
+                res = res + ind + "}";
             }
         }
-        return result;
+        return res;
     }
 
     # While
     if stmt.kind == NodeKind.While {
         TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node body      = stmt.children.get(1);
-        mutable string result = ind + "while (" + cond.code + ") {\n";
-        result = result + emit_block_body(body, level + 1, reg, var_types);
-        result = result + ind + "}";
-        return result;
+        mutable string res = ind + "while (" + cond.code + ") {\n";
+        res = res + emit_block_body(body, level + 1, reg, var_types);
+        res = res + ind + "}";
+        return res;
     }
 
     # For (range)
@@ -118,10 +118,10 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         TypedExpr start   = emit_typed_expr(stmt.children.get(0), reg, var_types);
         TypedExpr end_val = emit_typed_expr(stmt.children.get(1), reg, var_types);
         Node body         = stmt.children.get(2);
-        mutable string result = ind + "for (int64_t " + var_name + " = " + start.code + "; " + var_name + " < " + end_val.code + "; " + var_name + "++) {\n";
-        result = result + emit_block_body(body, level + 1, reg, var_types);
-        result = result + ind + "}";
-        return result;
+        mutable string res = ind + "for (int64_t " + var_name + " = " + start.code + "; " + var_name + " < " + end_val.code + "; " + var_name + "++) {\n";
+        res = res + emit_block_body(body, level + 1, reg, var_types);
+        res = res + ind + "}";
+        return res;
     }
 
     # ForIn
@@ -131,18 +131,18 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         Node body        = stmt.children.get(1);
         string len_var  = var_name + "_len";
         string idx_var  = var_name + "_idx";
-        mutable string result = ind + "int64_t " + len_var + " = slate_len(" + iter.code + ");\n";
-        result = result + ind + "for (int64_t " + idx_var + " = 0; " + idx_var + " < " + len_var + "; " + idx_var + "++) {\n";
-        result = result + indent(level + 1) + "void* " + var_name + " = slate_get(" + iter.code + ", " + idx_var + ");\n";
-        result = result + emit_block_body(body, level + 1, reg, var_types);
-        result = result + ind + "}";
-        return result;
+        mutable string res = ind + "int64_t " + len_var + " = slate_len(" + iter.code + ");\n";
+        res = res + ind + "for (int64_t " + idx_var + " = 0; " + idx_var + " < " + len_var + "; " + idx_var + "++) {\n";
+        res = res + indent(level + 1) + "void* " + var_name + " = slate_get(" + iter.code + ", " + idx_var + ");\n";
+        res = res + emit_block_body(body, level + 1, reg, var_types);
+        res = res + ind + "}";
+        return res;
     }
 
     # Match
     if stmt.kind == NodeKind.Match {
         TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
-        mutable string result = "";
+        mutable string res = "";
         mutable int i = 1;
         while i < stmt.children.len() {
             Node arm        = stmt.children.get(i);
@@ -152,42 +152,42 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
             if i == 1 {
                 branch = ind + "if ";
             } else if pattern == "else" {
-                result = result + " else {\n";
-                result = result + emit_block_body(arm_body, level + 1, reg, var_types);
-                result = result + ind + "}";
+                res = res + " else {\n";
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types);
+                res = res + ind + "}";
                 i = i + 1;
             } else {
                 branch = " else if ";
             }
             if pattern != "else" {
                 if pattern == "some" or pattern == "ok" {
-                    result = result + branch + "(" + val.code + " != NULL) {\n";
+                    res = res + branch + "(" + val.code + " != NULL) {\n";
                 } else if pattern == "none" or pattern == "error" {
-                    result = result + branch + "(" + val.code + " == NULL) {\n";
+                    res = res + branch + "(" + val.code + " == NULL) {\n";
                 } else if pattern == "expr" {
                     TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg, var_types);
                     if pat_val.slate_type == "string" {
-                        result = result + branch + "(slate_strcmp(" + val.code + ", " + pat_val.code + ") == 0) {\n";
+                        res = res + branch + "(slate_strcmp(" + val.code + ", " + pat_val.code + ") == 0) {\n";
                     } else {
-                        result = result + branch + "(" + val.code + " == " + pat_val.code + ") {\n";
+                        res = res + branch + "(" + val.code + " == " + pat_val.code + ") {\n";
                     }
                 } else {
-                    result = result + branch + "(0) {\n";
+                    res = res + branch + "(0) {\n";
                 }
-                result = result + emit_block_body(arm_body, level + 1, reg, var_types);
-                result = result + ind + "}";
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types);
+                res = res + ind + "}";
             }
             i = i + 1;
         }
-        return result;
+        return res;
     }
 
     # Block
     if stmt.kind == NodeKind.Block {
-        mutable string result = ind + "{\n";
-        result = result + emit_block_body(stmt, level + 1, reg, var_types);
-        result = result + ind + "}";
-        return result;
+        mutable string res = ind + "{\n";
+        res = res + emit_block_body(stmt, level + 1, reg, var_types);
+        res = res + ind + "}";
+        return res;
     }
 
     # Expression statement (call, method call used as stmt)

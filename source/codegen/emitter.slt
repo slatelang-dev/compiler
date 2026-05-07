@@ -79,12 +79,12 @@ CEmitter inc_temp(CEmitter e) {
 }
 
 string join_lines(list(string) lines) {
-    mutable string result = "";
+    mutable string out = "";
     mutable int i = 0;
     while i < lines.len() {
-        if i > 0 { result = result + "\n"; }
-        result = result + lines.get(i);
+        if i > 0 { out = out + "\n"; }
+        out = out + lines.get(i);
         i = i + 1;
     }
-    return result;
+    return out;
 }

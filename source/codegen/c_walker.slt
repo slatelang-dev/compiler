@@ -41,10 +41,10 @@ string emit_fn(Node fn_decl, Registry reg) {
         header = "int main(int argc, char** argv) {";
     }
 
-    mutable string result = header + "\n";
+    mutable string res = header + "\n";
 
     if fn_name == "main" {
-        result = result + "    slate_init_args(argc, argv);\n";
+        res = res + "    slate_init_args(argc, argv);\n";
     }
 
     mutable int j = 0;
@@ -53,23 +53,23 @@ string emit_fn(Node fn_decl, Registry reg) {
         if fn_name == "main" and stmt_code == "    return;" {
             stmt_code = "    return 1;";
         }
-        result = result + stmt_code + "\n";
+        res = res + stmt_code + "\n";
         j = j + 1;
     }
 
     if fn_name == "main" {
-        result = result + "    return 0;\n";
+        res = res + "    return 0;\n";
     }
 
-    result = result + "}\n";
-    return result;
+    res = res + "}\n";
+    return res;
 }
 
 # Emit a struct definition
 
 string emit_struct(Node struct_decl) {
     string name = struct_decl.value;
-    mutable string result = "typedef struct {\n";
+    mutable string res = "typedef struct {\n";
     mutable int i = 0;
     while i < struct_decl.children.len() {
         Node member = struct_decl.children.get(i);
@@ -77,31 +77,31 @@ string emit_struct(Node struct_decl) {
             Node type_node    = member.children.get(0);
             string field_type = c_type(type_node.value);
             string field_name = safe_ident(member.value);
-            result = result + "    " + field_type + " " + field_name + ";\n";
+            res = res + "    " + field_type + " " + field_name + ";\n";
         }
         i = i + 1;
     }
-    result = result + "} slate_" + name + ";\n";
-    return result;
+    res = res + "} slate_" + name + ";\n";
+    return res;
 }
 
 # Emit an enum as a C enum
 
 string emit_enum(Node enum_decl, Registry reg) {
     string name = enum_decl.value;
-    mutable string result = "typedef enum {\n";
+    mutable string res = "typedef enum {\n";
     mutable int i = 0;
     while i < enum_decl.children.len() {
         Node variant = enum_decl.children.get(i);
-        result = result + "    " + name + "_" + variant.value;
+        res = res + "    " + name + "_" + variant.value;
         if i < enum_decl.children.len() - 1 {
-            result = result + ",";
+            res = res + ",";
         }
-        result = result + "\n";
+        res = res + "\n";
         i = i + 1;
     }
-    result = result + "} " + name + ";\n";
-    return result;
+    res = res + "} " + name + ";\n";
+    return res;
 }
 
 # Check whether a program node has anything worth emitting

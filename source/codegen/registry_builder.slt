@@ -43,11 +43,13 @@ Registry build_registry_from_modules(list(LoadedModule) modules) {
 }
 
 list(LoadedModule) parse_modules(list(LoadedModule) modules) {
+    print("parse_modules called with " + string(modules.len()) + " modules");
     mutable list(LoadedModule) result = empty;
     mutable int i = 0;
     while i < modules.len() {
         LoadedModule m = modules.get(i);
         if m.loaded == false {
+            print("parsing: " + m.path);
             string src = file(m.path).read();
             ParseResult p = parse(src);
             if p.success {
@@ -60,6 +62,8 @@ list(LoadedModule) parse_modules(list(LoadedModule) modules) {
                     load_error: ""
                 );
             }
+        } else {
+            print("skipping already-loaded: " + m.path);
         }
         result = result.add(m);
         i = i + 1;

@@ -76,7 +76,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg) {
 
     if expr.kind == NodeKind.Call {
         string fn_name = expr.value;
-        string c_call = emit_call(expr);
+        string c_call = emit_call(expr, reg);
         string slate_type = lookup_fn_return(reg, fn_name);
         return typed(c_call, slate_type);
     }
@@ -135,12 +135,12 @@ string emit_binop(string op) {
     return op;
 }
 
-string emit_args(list(Node) args, int start) {
+string emit_args(list(Node) args, int start, Registry reg) {
     mutable string s = "";
     mutable int i = start;
     while i < args.len() {
         if i > start { s = s + ", "; }
-        s = s + emit_expr(args.get(i));
+        s = s + emit_expr(args.get(i), reg);
         i = i + 1;
     }
     return s;
@@ -162,14 +162,14 @@ bool is_numeric_node(Node n) {
     return false;
 }
 
-string emit_call(Node expr) {
+string emit_call(Node expr, Registry reg) {
     string fn_name = expr.value;
     list(Node) args = expr.children;
 
     # print() -> puts (automatically adds newline)
     if fn_name == "print" {
         if args.len() == 0 { return "puts(\"\")"; }
-        return "puts(" + emit_expr(args.get(0)) + ")";
+        return "puts(" + emit_expr(args.get(0), reg) + ")";
     }
 
     # Builtin type conversions
@@ -177,21 +177,21 @@ string emit_call(Node expr) {
         if args.len() == 0 { return "\"\""; }
         Node arg = args.get(0);
         if arg.kind == NodeKind.FloatLit or arg.kind == NodeKind.FloatLit {
-            return "slate_float_to_str(" + emit_expr(arg) + ")";
+            return "slate_float_to_str(" + emit_expr(arg, reg) + ")";
         }
-        return "slate_int_to_str(" + emit_expr(arg) + ")";
+        return "slate_int_to_str(" + emit_expr(arg, reg) + ")";
     }
     if fn_name == "int" {
         if args.len() == 0 { return "0"; }
-        return "slate_str_to_int(" + emit_expr(args.get(0)) + ")";
+        return "slate_str_to_int(" + emit_expr(args.get(0), reg) + ")";
     }
     if fn_name == "float" {
         if args.len() == 0 { return "0.0"; }
-        return "slate_str_to_float(" + emit_expr(args.get(0)) + ")";
+        return "slate_str_to_float(" + emit_expr(args.get(0), reg) + ")";
     }
     if fn_name == "bool" {
         if args.len() == 0 { return "0"; }
-        return "slate_str_to_int(" + emit_expr(args.get(0)) + ")";
+        return "slate_str_to_int(" + emit_expr(args.get(0), reg) + ")";
     }
 
     # IO builtins
@@ -200,18 +200,18 @@ string emit_call(Node expr) {
     if fn_name == "args"  { return "slate_args()"; }
     if fn_name == "read"  { return "slate_read()"; }
     if fn_name == "read_n" {
-        return "slate_read_n(" + emit_args(args, 0) + ")";
+        return "slate_read_n(" + emit_args(args, 0, reg) + ")";
     }
     if fn_name == "write" {
-        return "slate_write(" + emit_args(args, 0) + ")";
+        return "slate_write(" + emit_args(args, 0, reg) + ")";
     }
     if fn_name == "file" {
-        return "slate_file(" + emit_args(args, 0) + ")";
+        return "slate_file(" + emit_args(args, 0, reg) + ")";
     }
     if fn_name == "run" {
         int arg_count = args.len();
         if arg_count == 0 { return "slate_run_args(0, NULL)"; }
-        return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0) + ")";
+        return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0, reg) + ")";
     }
 
     # Slate core functions — emit with slate_ prefix
@@ -243,14 +243,14 @@ string emit_call(Node expr) {
 string emit_method_call(Node target, string method, list(Node) args, Registry reg) {
     # file(path).method() — special case
     if target.kind == NodeKind.Call and target.value == "file" {
-        string path_arg = emit_expr(target.children.get(0));
+        string path_arg = emit_expr(target.children.get(0), reg);
         if method == "exists" { return "slate_file_exists(" + path_arg + ")"; }
         if method == "read"   { return "slate_file_read(" + path_arg + ")"; }
-        if method == "write"  { return "slate_file_write(" + path_arg + ", " + emit_args(args, 1) + ")"; }
+        if method == "write"  { return "slate_file_write(" + path_arg + ", " + emit_args(args, 1, reg) + ")"; }
         if method == "path"   { return path_arg; }
     }
 
-    string target_expr = emit_expr(target);
+    string target_expr = emit_expr(target, reg);
 
     # Collection ops
     if method == "len" {
@@ -317,6 +317,14 @@ string emit_field(string field, string target_expr) {
 }
 
 string emit_expr(Node expr) {
+    return emit_expr_with_reg(expr, new_registry());
+}
+
+string emit_expr(Node expr, Registry reg) {
+    return emit_expr_with_reg(expr, reg);
+}
+
+string emit_expr_with_reg(Node expr, Registry reg) {
     if expr.kind == NodeKind.IntLit
     or expr.kind == NodeKind.FloatLit
     or expr.kind == NodeKind.StringLit
@@ -334,8 +342,8 @@ string emit_expr(Node expr) {
         Node left = expr.children.get(0);
         Node right = expr.children.get(1);
         string op = expr.value;
-        string left_expr = emit_expr(left);
-        string right_expr = emit_expr(right);
+        string left_expr = emit_expr(left, reg);
+        string right_expr = emit_expr(right, reg);
 
         if op == "+" {
             # If either operand is definitely numeric, use C addition
@@ -361,11 +369,11 @@ string emit_expr(Node expr) {
 
     if expr.kind == NodeKind.UnaryOp {
         Node operand = expr.children.get(0);
-        return emit_binop(expr.value) + "(" + emit_expr(operand) + ")";
+        return emit_binop(expr.value) + "(" + emit_expr(operand, reg) + ")";
     }
 
     if expr.kind == NodeKind.Call {
-        return emit_call(expr);
+        return emit_call(expr, reg);
     }
 
     if expr.kind == NodeKind.MethodCall {
@@ -376,7 +384,7 @@ string emit_expr(Node expr) {
 
     if expr.kind == NodeKind.FieldAccess {
         Node target = expr.children.get(0);
-        string target_expr = emit_expr(target);
+        string target_expr = emit_expr(target, reg);
         return emit_field(expr.value, target_expr);
     }
 

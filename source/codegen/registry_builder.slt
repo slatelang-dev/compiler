@@ -37,10 +37,34 @@ Registry build_registry_from_modules(list(LoadedModule) modules) {
         if m.loaded {
             r = register_program(r, m.ast);
         }
-        modules = modules.set(i, m);
         i = i + 1;
     }
     return r;
+}
+
+list(LoadedModule) parse_modules(list(LoadedModule) modules) {
+    mutable list(LoadedModule) result = empty;
+    mutable int i = 0;
+    while i < modules.len() {
+        LoadedModule m = modules.get(i);
+        if m.loaded == false {
+            string src = file(m.path).read();
+            ParseResult p = parse(src);
+            if p.success {
+                m = LoadedModule(
+                    name: m.name,
+                    path: m.path,
+                    source: src,
+                    ast: p.node,
+                    loaded: true,
+                    load_error: ""
+                );
+            }
+        }
+        result = result.add(m);
+        i = i + 1;
+    }
+    return result;
 }
 
 Registry register_program(Registry r, Node program) {

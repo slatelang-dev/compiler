@@ -120,10 +120,9 @@ string get_field_type(Registry reg, string struct_name, string field_name) {
 }
 
 bool key_belongs_to_struct(string key, string struct_name) {
-    if key.len() <= struct_name.len() + 1 { return false; }
-    if key.substring(0, struct_name.len()) != struct_name { return false; }
-    if key.char_at(struct_name.len()) != "." { return false; }
-    string remainder = key.substring(struct_name.len() + 1);
+    string prefix = struct_name + ".";
+    if key.starts_with(prefix) == false { return false; }
+    string remainder = key.replace(prefix, "");
     if remainder.contains(".") { return false; }
     return true;
 }
@@ -141,7 +140,7 @@ string emit_registered_structs(Registry reg) {
         while fi < field_keys.len() {
             string fk = field_keys.get(fi);
             if key_belongs_to_struct(fk, name) {
-                string fname = fk.substring(name.len() + 1);
+                string fname = fk.replace(name + ".", "");
                 string ftype = get_field_type(reg, name, fname);
                 fields = fields + "    " + c_type(ftype) + " " + fname + ";\n";
                 has_fields = true;

@@ -14,13 +14,12 @@ Registry build_registry(list(Node) programs) {
     return r;
 }
 
-Registry build_registry_from_modules(list(ModuleInfo) modules) {
+Registry build_registry_from_modules(list(LoadedModule) modules) {
     mutable Registry r = new_registry();
     r = seed_c_runtime(r);
     mutable int i = 0;
     while i < modules.len() {
-        ModuleInfo info = modules.get(i);
-        LoadedModule m = load_module(info.name, info.path);
+        LoadedModule m = modules.get(i);
         if m.loaded {
             r = register_program(r, m.ast);
         }
@@ -110,7 +109,7 @@ string node_type_to_slate(Node type_node) {
 Registry seed_c_runtime(Registry r) {
     mutable Registry reg = r;
 
-    # C stdlib primitives — no Slate source for these
+    # True C stdlib primitives — no Slate source for these
     reg = register_fn(reg, "malloc",     "ptr");
     reg = register_fn(reg, "free",       "void");
     reg = register_fn(reg, "strlen",     "int");
@@ -142,50 +141,24 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "time",      "int");
     reg = register_fn(reg, "clock",     "int");
     reg = register_fn(reg, "abs",       "int");
-    reg = register_fn(reg, "labs",      "int");
-    reg = register_fn(reg, "qsort",    "void");
-    reg = register_fn(reg, "bsearch",  "ptr");
     reg = register_fn(reg, "calloc",    "ptr");
     reg = register_fn(reg, "realloc",   "ptr");
-    reg = register_fn(reg, "sprintf",  "int");
-    reg = register_fn(reg, "snprintf", "int");
     reg = register_fn(reg, "strcpy",    "ptr");
     reg = register_fn(reg, "strncpy",   "ptr");
     reg = register_fn(reg, "strcat",    "ptr");
-    reg = register_fn(reg, "strncat",   "ptr");
     reg = register_fn(reg, "strdup",    "ptr");
     reg = register_fn(reg, "strstr",    "ptr");
-    reg = register_fn(reg, "strncmp",   "int");
-    reg = register_fn(reg, "strncmp",   "int");
     reg = register_fn(reg, "strchr",    "ptr");
-    reg = register_fn(reg, "strrchr",   "ptr");
-    reg = register_fn(reg, "strlen",    "int");
     reg = register_fn(reg, "strtol",    "int");
     reg = register_fn(reg, "strtof",    "float");
-    reg = register_fn(reg, "strtoll",   "int");
     reg = register_fn(reg, "isalnum",   "int");
     reg = register_fn(reg, "isalpha",   "int");
     reg = register_fn(reg, "isblank",   "int");
-    reg = register_fn(reg, "iscntrl",   "int");
     reg = register_fn(reg, "isdigit",   "int");
-    reg = register_fn(reg, "isgraph",   "int");
-    reg = register_fn(reg, "islower",   "int");
-    reg = register_fn(reg, "isprint",   "int");
-    reg = register_fn(reg, "ispunct",   "int");
     reg = register_fn(reg, "isspace",   "int");
-    reg = register_fn(reg, "isupper",   "int");
-    reg = register_fn(reg, "isxdigit",  "int");
     reg = register_fn(reg, "tolower",   "int");
     reg = register_fn(reg, "toupper",   "int");
-    reg = register_fn(reg, "va_start",  "void");
-    reg = register_fn(reg, "va_arg",     "ptr");
-    reg = register_fn(reg, "va_end",    "void");
-    reg = register_fn(reg, "va_copy",   "void");
     reg = register_fn(reg, "WEXITSTATUS", "int");
-    reg = register_fn(reg, "CLOCK_REALTIME", "int");
-
-    # All other functions are implemented in Slate source and will be
-    # registered automatically when build_registry_from_modules walks the AST
 
     return reg;
 }

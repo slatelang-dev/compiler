@@ -216,28 +216,28 @@ string emit_call(Node expr, Registry reg) {
 
     # Slate core functions — emit with slate_ prefix
     if fn_name == "parse" {
-        return "slate_parse(" + emit_args(args, 0) + ")";
+        return "slate_parse(" + emit_args(args, 0, reg) + ")";
     }
     if fn_name == "analyse" {
-        return "slate_analyse(" + emit_args(args, 0) + ")";
+        return "slate_analyse(" + emit_args(args, 0, reg) + ")";
     }
     if fn_name == "analyse_bare" {
-        return "slate_analyse_bare(" + emit_args(args, 0) + ")";
+        return "slate_analyse_bare(" + emit_args(args, 0, reg) + ")";
     }
     if fn_name == "render_all" {
-        return "slate_render_all(" + emit_args(args, 0) + ")";
+        return "slate_render_all(" + emit_args(args, 0, reg) + ")";
     }
 
     # Low-level builtins
-    if fn_name == "alloc"  { return "slate_alloc(" + emit_args(args, 0) + ")"; }
-    if fn_name == "free"   { return "slate_free(" + emit_args(args, 0) + ")"; }
-    if fn_name == "memcpy" { return "memcpy(" + emit_args(args, 0) + ")"; }
-    if fn_name == "strlen" { return "slate_strlen(" + emit_args(args, 0) + ")"; }
-    if fn_name == "strcmp" { return "slate_strcmp(" + emit_args(args, 0) + ")"; }
-    if fn_name == "puts"   { return "puts(" + emit_args(args, 0) + ")"; }
+    if fn_name == "alloc"  { return "slate_alloc(" + emit_args(args, 0, reg) + ")"; }
+    if fn_name == "free"   { return "slate_free(" + emit_args(args, 0, reg) + ")"; }
+    if fn_name == "memcpy" { return "memcpy(" + emit_args(args, 0, reg) + ")"; }
+    if fn_name == "strlen" { return "slate_strlen(" + emit_args(args, 0, reg) + ")"; }
+    if fn_name == "strcmp" { return "slate_strcmp(" + emit_args(args, 0, reg) + ")"; }
+    if fn_name == "puts"   { return "puts(" + emit_args(args, 0, reg) + ")"; }
 
     # User-defined functions - emit as-is
-    return fn_name + "(" + emit_args(args, 0) + ")";
+    return fn_name + "(" + emit_args(args, 0, reg) + ")";
 }
 
 string emit_method_call(Node target, string method, list(Node) args, Registry reg) {
@@ -257,7 +257,7 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
         return "slate_len(" + target_expr + ")";
     }
     if method == "get" {
-        string idx_arg = emit_args(args, 1);
+        string idx_arg = emit_args(args, 1, reg);
         TypedExpr target_te = emit_typed_expr(target, reg);
         if target_te.slate_type == "table" {
             return "slate_table_get(" + target_expr + ", " + idx_arg + ")";
@@ -265,28 +265,28 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
         return "slate_get(" + target_expr + ", " + idx_arg + ")";
     }
     if method == "set" {
-        return "slate_table_set(" + target_expr + ", " + emit_args(args, 1) + ")";
+        return "slate_table_set(" + target_expr + ", " + emit_args(args, 1, reg) + ")";
     }
-    if method == "add"        { return "slate_add(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "has"        { return "slate_has(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "add"        { return "slate_add(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
+    if method == "has"        { return "slate_has(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
     if method == "keys"       { return "slate_keys(" + target_expr + ")"; }
     if method == "values"     { return "slate_values(" + target_expr + ")"; }
-    if method == "contains"   { return "slate_contains(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "split"      { return "slate_split(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "replace"    { return "slate_replace(" + target_expr + ", " + emit_args(args, 1) + ", " + emit_args(args, 2) + ")"; }
-    if method == "starts_with" { return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "ends_with"  { return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "contains"   { return "slate_contains(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
+    if method == "split"      { return "slate_split(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
+    if method == "replace"    { return "slate_replace(" + target_expr + ", " + emit_args(args, 1, reg) + ", " + emit_args(args, 2, reg) + ")"; }
+    if method == "starts_with" { return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
+    if method == "ends_with"  { return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
     if method == "trim"       { return "slate_trim(" + target_expr + ")"; }
     if method == "upper"      { return "slate_str_upper(" + target_expr + ")"; }
     if method == "lower"      { return "slate_str_lower(" + target_expr + ")"; }
     if method == "reverse"    { return "slate_str_reverse(" + target_expr + ")"; }
     if method == "chars"      { return "slate_str_chars(" + target_expr + ")"; }
-    if method == "repeat"     { return "slate_str_repeat(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "repeat"     { return "slate_str_repeat(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
     if method == "first"      { return "slate_list_first(" + target_expr + ")"; }
     if method == "last"       { return "slate_list_last(" + target_expr + ")"; }
-    if method == "remove"     { return "slate_list_remove(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "remove"     { return "slate_list_remove(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
     if method == "sort"       { return "slate_list_sort(" + target_expr + ")"; }
-    if method == "merge"      { return "slate_list_merge(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "merge"      { return "slate_list_merge(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
     if method == "hash"       { return "slate_int_to_str(slate_hash(" + target_expr + "))"; }
 
     # Type coercions
@@ -297,18 +297,18 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     # File ops (non-literal receiver)
     if method == "exists" { return "slate_file_exists(" + target_expr + ")"; }
     if method == "read"   { return "slate_file_read(" + target_expr + ")"; }
-    if method == "write"  { return "slate_file_write(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "append" { return "slate_file_append(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "write"  { return "slate_file_write(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
+    if method == "append" { return "slate_file_append(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
     if method == "list"   { return "slate_file_list(" + target_expr + ")"; }
 
     # Option/result
     if method == "exists" { return "slate_option_exists(" + target_expr + ")"; }
-    if method == "or"     { return "slate_option_or(" + target_expr + ", " + emit_args(args, 1) + ")"; }
+    if method == "or"     { return "slate_option_or(" + target_expr + ", " + emit_args(args, 1, reg) + ")"; }
 
     # Struct field accessors — use registry-agnostic arrow access
     # These are emitted as field accesses on void* — let the cast be done
     # by the struct-aware field access path in emit_expr instead.
-    return target_expr + "->" + method + "(" + emit_args(args, 1) + ")";
+    return target_expr + "->" + method + "(" + emit_args(args, 1, reg) + ")";
 }
 
 # Emit a field access - just emit as generic dereference

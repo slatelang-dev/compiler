@@ -316,15 +316,7 @@ string emit_field(string field, string target_expr) {
     return target_expr + "->" + field;
 }
 
-string emit_expr(Node expr) {
-    return emit_expr_with_reg(expr, new_registry());
-}
-
 string emit_expr(Node expr, Registry reg) {
-    return emit_expr_with_reg(expr, reg);
-}
-
-string emit_expr_with_reg(Node expr, Registry reg) {
     if expr.kind == NodeKind.IntLit
     or expr.kind == NodeKind.FloatLit
     or expr.kind == NodeKind.StringLit

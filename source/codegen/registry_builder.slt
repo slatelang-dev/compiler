@@ -102,176 +102,173 @@ string node_type_to_slate(Node type_node) {
 
 Registry seed_c_runtime(Registry r) {
     mutable Registry reg = r;
+
     # C stdlib
     reg = register_fn(reg, "malloc", "ptr");
     reg = register_fn(reg, "free", "void");
     reg = register_fn(reg, "strlen", "int");
     reg = register_fn(reg, "strcmp", "int");
     reg = register_fn(reg, "puts", "void");
-    # Alloc
-    reg = register_fn(reg, "alloc", "ptr");
-    reg = register_fn(reg, "gc_alloc", "ptr");
-    reg = register_fn(reg, "slate_alloc", "ptr");
-    # Slate runtime
-    reg = register_fn(reg, "slate_print", "void");
-    reg = register_fn(reg, "slate_string", "ptr");
-    reg = register_fn(reg, "slate_string_new", "ptr");
-    reg = register_fn(reg, "slate_string_concat", "string");
-    reg = register_fn(reg, "bold", "string");
-    reg = register_fn(reg, "red", "string");
-    reg = register_fn(reg, "green", "string");
-    reg = register_fn(reg, "blue", "string");
-    reg = register_fn(reg, "yellow", "string");
-    reg = register_fn(reg, "orange", "string");
-    reg = register_fn(reg, "purple", "string");
-    reg = register_fn(reg, "gray", "string");
-    reg = register_fn(reg, "white", "string");
-    reg = register_fn(reg, "dim", "string");
-    reg = register_fn(reg, "italic", "string");
-    reg = register_fn(reg, "underline", "string");
-    reg = register_fn(reg, "bold_red", "string");
-    reg = register_fn(reg, "bold_green", "string");
-    reg = register_fn(reg, "bold_yellow", "string");
-    reg = register_fn(reg, "bold_blue", "string");
-    reg = register_fn(reg, "bold_slate", "string");
-    reg = register_fn(reg, "slate_color", "string");
-    reg = register_fn(reg, "replace", "string");
-    reg = register_fn(reg, "split", "string");
-    reg = register_fn(reg, "path", "string");
-    reg = register_fn(reg, "slate_string_data", "ptr");
-    reg = register_fn(reg, "slate_string_eq", "bool");
-    reg = register_fn(reg, "slate_string_len", "int");
-    reg = register_fn(reg, "slate_len", "int");
-    reg = register_fn(reg, "slate_chars", "list");
-    reg = register_fn(reg, "slate_contains", "bool");
+
+    # Slate core functions — with correct return types
+    reg = register_fn(reg, "parse",        "ParseResult");
+    reg = register_fn(reg, "analyse",      "AnalysisResult");
+    reg = register_fn(reg, "analyse_bare", "AnalysisResult");
+    reg = register_fn(reg, "render_all",   "string");
+    reg = register_fn(reg, "tokenize",    "list");
+    reg = register_fn(reg, "json",         "ptr");
+    reg = register_fn(reg, "toml",         "ptr");
+
+    # IO builtins
+    reg = register_fn(reg, "file",     "ptr");
+    reg = register_fn(reg, "home",     "ptr");
+    reg = register_fn(reg, "read",     "ptr");
+    reg = register_fn(reg, "read_n",   "ptr");
+    reg = register_fn(reg, "write",    "void");
+    reg = register_fn(reg, "run",      "void");
+    reg = register_fn(reg, "args",     "ptr");
+    reg = register_fn(reg, "time",     "int");
+    reg = register_fn(reg, "env",      "ptr");
+    reg = register_fn(reg, "exists",   "bool");
+    reg = register_fn(reg, "contains", "bool");
+
+    # String operations
+    reg = register_fn(reg, "replace",     "string");
+    reg = register_fn(reg, "split",       "list");
+    reg = register_fn(reg, "path",         "string");
+    reg = register_fn(reg, "hash",        "string");
+    reg = register_fn(reg, "starts_with", "bool");
+    reg = register_fn(reg, "ends_with",   "bool");
+
+    # List/table operations
+    reg = register_fn(reg, "len",          "int");
+    reg = register_fn(reg, "slate_len",   "int");
+    reg = register_fn(reg, "slate_get",    "ptr");
+    reg = register_fn(reg, "slate_add",    "ptr");
+    reg = register_fn(reg, "slate_has",    "bool");
+    reg = register_fn(reg, "slate_keys",   "ptr");
+    reg = register_fn(reg, "slate_values", "ptr");
+
+    # File operations
+    reg = register_fn(reg, "slate_file_path",   "string");
+    reg = register_fn(reg, "slate_file_read",   "string");
+    reg = register_fn(reg, "slate_file_write",  "void");
+    reg = register_fn(reg, "slate_file_exists",  "bool");
+
+    # String methods
+    reg = register_fn(reg, "slate_contains",  "bool");
     reg = register_fn(reg, "slate_starts_with", "bool");
     reg = register_fn(reg, "slate_ends_with", "bool");
-    reg = register_fn(reg, "slate_replace", "string");
-    reg = register_fn(reg, "slate_split", "list");
-    reg = register_fn(reg, "slate_or", "ptr");
-    reg = register_fn(reg, "slate_exists", "bool");
-    reg = register_fn(reg, "slate_file_path", "string");
-    reg = register_fn(reg, "slate_file_read", "string");
-    reg = register_fn(reg, "slate_file_write", "void");
-    reg = register_fn(reg, "slate_file_exists", "bool");
-    reg = register_fn(reg, "slate_home", "string");
-    reg = register_fn(reg, "slate_hash", "string");
-    reg = register_fn(reg, "slate_list_new", "ptr");
-    reg = register_fn(reg, "slate_list_add_ptr", "ptr");
-    reg = register_fn(reg, "slate_get_ptr", "ptr");
-    reg = register_fn(reg, "slate_list_len", "int");
-    reg = register_fn(reg, "slate_table_new", "ptr");
-    reg = register_fn(reg, "slate_table_get", "ptr");
-    reg = register_fn(reg, "slate_table_has", "bool");
-    reg = register_fn(reg, "slate_table_len", "int");
-    reg = register_fn(reg, "concat", "string");
-    reg = register_fn(reg, "hash", "string");
-    reg = register_fn(reg, "slate_get", "ptr");
-    reg = register_fn(reg, "slate_add", "ptr");
-    reg = register_fn(reg, "slate_has", "bool");
-    reg = register_fn(reg, "slate_set", "ptr");
-    reg = register_fn(reg, "slate_keys", "ptr");
-    reg = register_fn(reg, "slate_values", "ptr");
-    reg = register_fn(reg, "slate_args", "ptr");
-    # IO builtins
-    reg = register_fn(reg, "file", "ptr");
-    reg = register_fn(reg, "home", "ptr");
-    reg = register_fn(reg, "read", "ptr");
-    reg = register_fn(reg, "read_n", "ptr");
-    reg = register_fn(reg, "write", "void");
-    reg = register_fn(reg, "run", "void");
-    reg = register_fn(reg, "parse", "ptr");
-    reg = register_fn(reg, "toml", "ptr");
-    reg = register_fn(reg, "json", "ptr");
-    reg = register_fn(reg, "path", "ptr");
-    # Bool returns
-    reg = register_fn(reg, "exists", "bool");
-    reg = register_fn(reg, "contains", "bool");
-    reg = register_fn(reg, "starts_with", "bool");
-    reg = register_fn(reg, "ends_with", "bool");
-    # String operations
-    reg = register_fn(reg, "replace", "ptr");
-    reg = register_fn(reg, "split", "ptr");
-    # Builtin functions
-    reg = register_fn(reg, "slate_int", "int");
+    reg = register_fn(reg, "slate_replace",   "string");
+    reg = register_fn(reg, "slate_split",     "list");
+    reg = register_fn(reg, "slate_or",       "ptr");
+    reg = register_fn(reg, "slate_exists",    "bool");
+    reg = register_fn(reg, "slate_home",     "string");
+    reg = register_fn(reg, "slate_hash",     "string");
+    reg = register_fn(reg, "slate_chars",    "list");
+
+    # Type conversions
+    reg = register_fn(reg, "slate_int",   "int");
     reg = register_fn(reg, "slate_float", "float");
-    reg = register_fn(reg, "len", "int");
-    reg = register_fn(reg, "time", "int");
-    reg = register_fn(reg, "env", "ptr");
-    # Render functions
-    reg = register_fn(reg, "render_all", "ptr");
-    # Known struct fields
-    # args method
-    reg = register_fn(reg, "args", "ptr");
-    # Ink colors
-    reg = register_fn(reg, "bold", "ptr");
-    reg = register_fn(reg, "red", "ptr");
-    reg = register_fn(reg, "green", "ptr");
-    reg = register_fn(reg, "blue", "ptr");
-    reg = register_fn(reg, "yellow", "ptr");
-    reg = register_fn(reg, "orange", "ptr");
-    reg = register_fn(reg, "purple", "ptr");
-    reg = register_fn(reg, "gray", "ptr");
-    reg = register_fn(reg, "white", "ptr");
-    reg = register_fn(reg, "dim", "ptr");
-    reg = register_fn(reg, "italic", "ptr");
-    reg = register_fn(reg, "underline", "ptr");
-    reg = register_fn(reg, "bold_red", "ptr");
-    reg = register_fn(reg, "bold_green", "ptr");
-    reg = register_fn(reg, "bold_yellow", "ptr");
-    reg = register_fn(reg, "bold_blue", "ptr");
-    reg = register_fn(reg, "bold_slate", "ptr");
-    reg = register_fn(reg, "slate_color", "ptr");
+
+    # Table operations
+    reg = register_fn(reg, "slate_table_new",  "ptr");
+    reg = register_fn(reg, "slate_table_get",  "ptr");
+    reg = register_fn(reg, "slate_table_has",  "bool");
+    reg = register_fn(reg, "slate_table_len",  "int");
+    reg = register_fn(reg, "slate_set",        "ptr");
+
+    # List constructors
+    reg = register_fn(reg, "slate_list_new",     "ptr");
+    reg = register_fn(reg, "slate_list_add_ptr", "ptr");
+    reg = register_fn(reg, "slate_get_ptr",       "ptr");
+    reg = register_fn(reg, "slate_list_len",      "int");
+
+    # String internals
+    reg = register_fn(reg, "slate_string",       "ptr");
+    reg = register_fn(reg, "slate_string_new",   "ptr");
+    reg = register_fn(reg, "slate_string_concat", "string");
+    reg = register_fn(reg, "slate_string_data",  "ptr");
+    reg = register_fn(reg, "slate_string_eq",    "bool");
+    reg = register_fn(reg, "slate_string_len",   "int");
+
+    # Color functions
+    reg = register_fn(reg, "bold",       "string");
+    reg = register_fn(reg, "red",         "string");
+    reg = register_fn(reg, "green",      "string");
+    reg = register_fn(reg, "blue",       "string");
+    reg = register_fn(reg, "yellow",      "string");
+    reg = register_fn(reg, "orange",      "string");
+    reg = register_fn(reg, "purple",      "string");
+    reg = register_fn(reg, "gray",        "string");
+    reg = register_fn(reg, "white",       "string");
+    reg = register_fn(reg, "dim",        "string");
+    reg = register_fn(reg, "italic",      "string");
+    reg = register_fn(reg, "underline",   "string");
+    reg = register_fn(reg, "bold_red",    "string");
+    reg = register_fn(reg, "bold_green",  "string");
+    reg = register_fn(reg, "bold_yellow", "string");
+    reg = register_fn(reg, "bold_blue",   "string");
+    reg = register_fn(reg, "bold_slate",   "string");
+    reg = register_fn(reg, "slate_color", "string");
+
     # Loader functions
-    reg = register_fn(reg, "load_project_file", "ptr");
-    reg = register_fn(reg, "load_project", "ptr");
-    reg = register_fn(reg, "load_entry", "ptr");
-    reg = register_fn(reg, "load_module", "ptr");
-    reg = register_fn(reg, "project_valid", "bool");
-    reg = register_fn(reg, "project_display", "ptr");
-    reg = register_fn(reg, "collect_module_asts", "ptr");
-    reg = register_fn(reg, "walk_all", "ptr");
-    reg = register_fn(reg, "walk_module", "ptr");
-    reg = register_fn(reg, "build_registry", "ptr");
+    reg = register_fn(reg, "load_project_file",      "ptr");
+    reg = register_fn(reg, "load_project",           "ptr");
+    reg = register_fn(reg, "load_entry",            "ptr");
+    reg = register_fn(reg, "load_module",            "ptr");
+    reg = register_fn(reg, "project_valid",          "bool");
+    reg = register_fn(reg, "project_display",        "ptr");
+    reg = register_fn(reg, "collect_module_asts",    "ptr");
+    reg = register_fn(reg, "walk_all",              "ptr");
+    reg = register_fn(reg, "walk_module",           "ptr");
+    reg = register_fn(reg, "build_registry",         "ptr");
     reg = register_fn(reg, "build_registry_from_modules", "ptr");
-    reg = register_fn(reg, "load_entry", "ptr");
-    reg = register_fn(reg, "load_project_file", "ptr");
-    reg = register_fn(reg, "project_valid", "bool");
-    reg = register_fn(reg, "analyse_bare", "ptr");
-    reg = register_fn(reg, "render_all", "ptr");
-    # Analysis functions
-    reg = register_fn(reg, "analyse", "ptr");
-    reg = register_fn(reg, "analyse_bare", "ptr");
-    reg = register_fn(reg, "parse", "ptr");
-# Render functions
-    reg = register_fn(reg, "render_all", "ptr");
-    # Known struct fields
-    reg = register_field(reg, "ParseResult", "node", "ptr", 0);
-    reg = register_field(reg, "ParseResult", "pos", "int", 1);
-    reg = register_field(reg, "ParseResult", "success", "bool", 2);
-    reg = register_field(reg, "ParseResult", "message", "string", 3);
-    reg = register_field(reg, "AnalysisResult", "errors", "ptr", 0);
-    reg = register_field(reg, "AnalysisResult", "warnings", "ptr", 1);
-    reg = register_field(reg, "LoadedModule", "name", "string", 0);
-    reg = register_field(reg, "LoadedModule", "path", "string", 1);
-    reg = register_field(reg, "LoadedModule", "source", "string", 2);
-    reg = register_field(reg, "LoadedModule", "ast", "ptr", 3);
-    reg = register_field(reg, "LoadedModule", "loaded", "bool", 4);
+
+    # Alloc
+    reg = register_fn(reg, "alloc",     "ptr");
+    reg = register_fn(reg, "gc_alloc",  "ptr");
+    reg = register_fn(reg, "slate_alloc", "ptr");
+
+    # Struct fields for ParseResult
+    reg = register_field(reg, "ParseResult", "success",  "bool",   0);
+    reg = register_field(reg, "ParseResult", "message",   "string", 1);
+    reg = register_field(reg, "ParseResult", "node",      "ptr",    2);
+    reg = register_field(reg, "ParseResult", "source",   "string", 3);
+
+    # Struct fields for AnalysisResult
+    reg = register_field(reg, "AnalysisResult", "errors",   "ptr",    0);
+    reg = register_field(reg, "AnalysisResult", "warnings", "ptr",    1);
+    reg = register_field(reg, "AnalysisResult", "source",   "string", 2);
+
+    # Struct fields for LoadedModule
+    reg = register_field(reg, "LoadedModule", "name",       "string", 0);
+    reg = register_field(reg, "LoadedModule", "path",       "string", 1);
+    reg = register_field(reg, "LoadedModule", "source",     "string", 2);
+    reg = register_field(reg, "LoadedModule", "ast",        "ptr",    3);
+    reg = register_field(reg, "LoadedModule", "loaded",     "bool",   4);
     reg = register_field(reg, "LoadedModule", "load_error", "string", 5);
-    reg = register_field(reg, "Token", "kind", "int", 0);
+
+    # Struct fields for Token
+    reg = register_field(reg, "Token", "kind",  "int",    0);
     reg = register_field(reg, "Token", "value", "string", 1);
-    reg = register_field(reg, "Token", "line", "int", 2);
-    reg = register_field(reg, "Token", "col", "int", 3);
-    reg = register_field(reg, "Node", "kind", "int", 0);
-    reg = register_field(reg, "Node", "value", "string", 1);
-    reg = register_field(reg, "Node", "line", "int", 2);
-    reg = register_field(reg, "Node", "col", "int", 3);
-    reg = register_field(reg, "Node", "children", "list", 4);
-    reg = register_field(reg, "Project", "name", "string", 0);
-    reg = register_field(reg, "Project", "version", "string", 1);
+    reg = register_field(reg, "Token", "line",   "int",    2);
+    reg = register_field(reg, "Token", "col",    "int",    3);
+
+    # Struct fields for Node
+    reg = register_field(reg, "Node", "kind",      "int",    0);
+    reg = register_field(reg, "Node", "value",     "string", 1);
+    reg = register_field(reg, "Node", "line",      "int",    2);
+    reg = register_field(reg, "Node", "col",       "int",    3);
+    reg = register_field(reg, "Node", "children",  "list",   4);
+
+    # Struct fields for Project
+    reg = register_field(reg, "Project", "name",        "string", 0);
+    reg = register_field(reg, "Project", "version",     "string", 1);
     reg = register_field(reg, "Project", "description", "string", 2);
-    reg = register_field(reg, "Project", "entry", "string", 3);
-    reg = register_field(reg, "Project", "bin", "string", 4);
-    reg = register_field(reg, "Project", "bare", "bool", 5);
+    reg = register_field(reg, "Project", "entry",       "string", 3);
+    reg = register_field(reg, "Project", "bin",         "string", 4);
+    reg = register_field(reg, "Project", "bare",        "bool",   5);
+
     return reg;
 }

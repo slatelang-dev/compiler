@@ -208,11 +208,26 @@ string emit_call(Node expr) {
     if fn_name == "file" {
         return "slate_file(" + emit_args(args, 0) + ")";
     }
-if fn_name == "run" {
+    if fn_name == "run" {
         int arg_count = args.len();
         if arg_count == 0 { return "slate_run_args(0, NULL)"; }
         return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0) + ")";
     }
+
+    # Slate core functions — emit with slate_ prefix
+    if fn_name == "parse" {
+        return "slate_parse(" + emit_args(args, 0) + ")";
+    }
+    if fn_name == "analyse" {
+        return "slate_analyse(" + emit_args(args, 0) + ")";
+    }
+    if fn_name == "analyse_bare" {
+        return "slate_analyse_bare(" + emit_args(args, 0) + ")";
+    }
+    if fn_name == "render_all" {
+        return "slate_render_all(" + emit_args(args, 0) + ")";
+    }
+
     # Low-level builtins
     if fn_name == "alloc"  { return "slate_alloc(" + emit_args(args, 0) + ")"; }
     if fn_name == "free"   { return "slate_free(" + emit_args(args, 0) + ")"; }

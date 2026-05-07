@@ -16,6 +16,8 @@ string emit_fn(Node fn_decl, Registry reg) {
     Node body          = children.get(child_count - 1);
     string ret         = c_type(ret_type_node.value);
 
+    mutable table(string, string) var_types = empty;
+
     # Build parameter list — params are children 1..child_count-2
     mutable string params = "";
     mutable int i = 1;
@@ -24,13 +26,13 @@ string emit_fn(Node fn_decl, Registry reg) {
         Node param_type = param.children.get(0);
         string c_param_type = c_type(param_type.value);
         string param_name   = safe_ident(param.value);
+        var_types = var_types.set(param.value, param_type.value);
         if params.len() > 0 { params = params + ", "; }
         params = params + c_param_type + " " + param_name;
         i = i + 1;
     }
     if params.len() == 0 { params = "void"; }
 
-    # main() needs argc/argv and slate_init_args
     mutable string header = ret + " " + fn_name + "(" + params + ") {";
     if fn_name == "main" {
         header = "int main(int argc, char** argv) {";
@@ -44,7 +46,7 @@ string emit_fn(Node fn_decl, Registry reg) {
 
     mutable int j = 0;
     while j < body.children.len() {
-        string stmt_code = emit_stmt(body.children.get(j), 1, reg);
+        string stmt_code = emit_stmt(body.children.get(j), 1, reg, var_types);
         if fn_name == "main" and stmt_code == "    return;" {
             stmt_code = "    return 1;";
         }
@@ -115,61 +117,6 @@ bool has_emittable_decls(Node program) {
     return false;
 }
 
-string get_field_type(Registry reg, string struct_name, string field_name) {
-    string key = struct_name + "." + field_name;
-    if reg.field_types.has(key) {
-        return reg.field_types.get(key);
-    }
-    return "ptr";
-}
-
-bool key_belongs_to_struct(string key, string struct_name) {
-    string prefix = struct_name + ".";
-    if key.starts_with(prefix) == false { return false; }
-    string remainder = key.replace(prefix, "");
-    if remainder.contains(".") { return false; }
-    return true;
-}
-
-string emit_registered_structs(Registry reg) {
-    # Structs defined in slate_runtime.h - skip to avoid redefinition
-    list(string) runtime_structs = ("ParseResult", "AnalysisResult", "LoadedModule", "Project", "ModuleInfo");
-
-    mutable string result = "";
-    list(string) struct_names = reg.struct_names.keys();
-    mutable int i = 0;
-    while i < struct_names.len() {
-        string name = struct_names.get(i);
-        bool is_runtime = false;
-        mutable int r = 0;
-        while r < runtime_structs.len() {
-            if name == runtime_structs.get(r) { is_runtime = true; }
-            r = r + 1;
-        }
-        if is_runtime == false {
-            mutable string fields = "";
-            mutable bool has_fields = false;
-            mutable int fi = 0;
-            list(string) field_keys = reg.field_types.keys();
-            while fi < field_keys.len() {
-                string fk = field_keys.get(fi);
-                if key_belongs_to_struct(fk, name) {
-                    string fname = fk.replace(name + ".", "");
-                    string ftype = get_field_type(reg, name, fname);
-                    fields = fields + "    " + c_type(ftype) + " " + fname + ";\n";
-                    has_fields = true;
-                }
-                fi = fi + 1;
-            }
-            if has_fields {
-                result = result + "typedef struct {\n" + fields + "} slate_" + name + ";\n\n";
-            }
-        }
-        i = i + 1;
-    }
-    return result;
-}
-
 string walk_module(Node program, Registry reg) {
     if has_emittable_decls(program) == false {
         return "";
@@ -178,8 +125,6 @@ string walk_module(Node program, Registry reg) {
     mutable string structs = "";
     mutable string enums   = "";
     mutable string fns     = "";
-
-    structs = structs + emit_registered_structs(reg);
 
     mutable int i = 0;
     while i < program.children.len() {

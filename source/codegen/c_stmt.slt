@@ -16,17 +16,17 @@ string indent(int level) {
     return s;
 }
 
-string emit_block_body(Node block, int level, Registry reg) {
+string emit_block_body(Node block, int level, Registry reg, table(string, string) var_types) {
     mutable string s = "";
     mutable int i = 0;
     while i < block.children.len() {
-        s = s + emit_stmt(block.children.get(i), level, reg) + "\n";
+        s = s + emit_stmt(block.children.get(i), level, reg, var_types) + "\n";
         i = i + 1;
     }
     return s;
 }
 
-string emit_stmt(Node stmt, int level, Registry reg) {
+string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_types) {
     string ind = indent(level);
 
     # Variable declarations
@@ -38,11 +38,12 @@ string emit_stmt(Node stmt, int level, Registry reg) {
         Node type_node  = stmt.children.get(0);
         Node init       = stmt.children.get(1);
         string declared_type = type_node.value;
+        var_types = var_types.set(stmt.value, declared_type);
         mutable string c_var_type = c_type(declared_type);
         if init.kind == NodeKind.Empty {
             return ind + c_var_type + " " + var_name + ";";
         }
-        TypedExpr init_te = emit_typed_expr(init, reg);
+        TypedExpr init_te = emit_typed_expr(init, reg, var_types);
         if registry_has_struct(reg, declared_type) {
             c_var_type = "slate_" + declared_type + "*";
         } else if registry_has_struct(reg, init_te.slate_type) {
@@ -54,7 +55,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
     # Assignment
     if stmt.kind == NodeKind.Assign {
         string var_name = safe_ident(stmt.value);
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg);
+        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
         return ind + var_name + " = " + val.code + ";";
     }
 
@@ -63,8 +64,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
         list(string) parts = stmt.value.split(" ");
         string var_name = safe_ident(parts.get(0));
         string op       = parts.get(1);
-        TypedExpr val   = emit_typed_expr(stmt.children.get(0), reg);
-        # Always emit as var = var op val so C type doesn't matter
+        TypedExpr val   = emit_typed_expr(stmt.children.get(0), reg, var_types);
         return ind + var_name + " = " + var_name + " " + op + " " + val.code + ";";
     }
 
@@ -73,7 +73,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
         if stmt.children.len() == 0 {
             return ind + "return;";
         }
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg);
+        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
         return ind + "return " + val.code + ";";
     }
 
@@ -84,18 +84,18 @@ string emit_stmt(Node stmt, int level, Registry reg) {
 
     # If / else if / else
     if stmt.kind == NodeKind.If {
-        TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg);
+        TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node then_block   = stmt.children.get(1);
         mutable string result = ind + "if (" + cond.code + ") {\n";
-        result = result + emit_block_body(then_block, level + 1, reg);
+        result = result + emit_block_body(then_block, level + 1, reg, var_types);
         result = result + ind + "}";
         if stmt.children.len() > 2 {
             Node else_part = stmt.children.get(2);
             if else_part.kind == NodeKind.If {
-                result = result + " else " + emit_stmt(else_part, level, reg);
+                result = result + " else " + emit_stmt(else_part, level, reg, var_types);
             } else {
                 result = result + " else {\n";
-                result = result + emit_block_body(else_part, level + 1, reg);
+                result = result + emit_block_body(else_part, level + 1, reg, var_types);
                 result = result + ind + "}";
             }
         }
@@ -104,10 +104,10 @@ string emit_stmt(Node stmt, int level, Registry reg) {
 
     # While
     if stmt.kind == NodeKind.While {
-        TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg);
+        TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node body      = stmt.children.get(1);
         mutable string result = ind + "while (" + cond.code + ") {\n";
-        result = result + emit_block_body(body, level + 1, reg);
+        result = result + emit_block_body(body, level + 1, reg, var_types);
         result = result + ind + "}";
         return result;
     }
@@ -115,11 +115,11 @@ string emit_stmt(Node stmt, int level, Registry reg) {
     # For (range)
     if stmt.kind == NodeKind.For {
         string var_name   = safe_ident(stmt.value);
-        TypedExpr start   = emit_typed_expr(stmt.children.get(0), reg);
-        TypedExpr end_val = emit_typed_expr(stmt.children.get(1), reg);
+        TypedExpr start   = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr end_val = emit_typed_expr(stmt.children.get(1), reg, var_types);
         Node body         = stmt.children.get(2);
         mutable string result = ind + "for (int64_t " + var_name + " = " + start.code + "; " + var_name + " < " + end_val.code + "; " + var_name + "++) {\n";
-        result = result + emit_block_body(body, level + 1, reg);
+        result = result + emit_block_body(body, level + 1, reg, var_types);
         result = result + ind + "}";
         return result;
     }
@@ -127,23 +127,21 @@ string emit_stmt(Node stmt, int level, Registry reg) {
     # ForIn
     if stmt.kind == NodeKind.ForIn {
         string var_name  = safe_ident(stmt.value);
-        TypedExpr iter   = emit_typed_expr(stmt.children.get(0), reg);
+        TypedExpr iter   = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node body        = stmt.children.get(1);
-        # Emit as indexed while loop since C has no for-in
         string len_var  = var_name + "_len";
         string idx_var  = var_name + "_idx";
         mutable string result = ind + "int64_t " + len_var + " = slate_len(" + iter.code + ");\n";
         result = result + ind + "for (int64_t " + idx_var + " = 0; " + idx_var + " < " + len_var + "; " + idx_var + "++) {\n";
         result = result + indent(level + 1) + "void* " + var_name + " = slate_get(" + iter.code + ", " + idx_var + ");\n";
-        result = result + emit_block_body(body, level + 1, reg);
+        result = result + emit_block_body(body, level + 1, reg, var_types);
         result = result + ind + "}";
         return result;
     }
 
     # Match
     if stmt.kind == NodeKind.Match {
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg);
-        # Emit as if/else chain — cleaner than switch for mixed pattern types
+        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
         mutable string result = "";
         mutable int i = 1;
         while i < stmt.children.len() {
@@ -155,7 +153,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
                 branch = ind + "if ";
             } else if pattern == "else" {
                 result = result + " else {\n";
-                result = result + emit_block_body(arm_body, level + 1, reg);
+                result = result + emit_block_body(arm_body, level + 1, reg, var_types);
                 result = result + ind + "}";
                 i = i + 1;
             } else {
@@ -167,8 +165,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
                 } else if pattern == "none" or pattern == "error" {
                     result = result + branch + "(" + val.code + " == NULL) {\n";
                 } else if pattern == "expr" {
-                    TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg);
-                    # String comparison needs strcmp
+                    TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg, var_types);
                     if pat_val.slate_type == "string" {
                         result = result + branch + "(slate_strcmp(" + val.code + ", " + pat_val.code + ") == 0) {\n";
                     } else {
@@ -177,7 +174,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
                 } else {
                     result = result + branch + "(0) {\n";
                 }
-                result = result + emit_block_body(arm_body, level + 1, reg);
+                result = result + emit_block_body(arm_body, level + 1, reg, var_types);
                 result = result + ind + "}";
             }
             i = i + 1;
@@ -188,7 +185,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
     # Block
     if stmt.kind == NodeKind.Block {
         mutable string result = ind + "{\n";
-        result = result + emit_block_body(stmt, level + 1, reg);
+        result = result + emit_block_body(stmt, level + 1, reg, var_types);
         result = result + ind + "}";
         return result;
     }
@@ -196,7 +193,7 @@ string emit_stmt(Node stmt, int level, Registry reg) {
     # Expression statement (call, method call used as stmt)
     if stmt.kind == NodeKind.Call
     or stmt.kind == NodeKind.MethodCall {
-        TypedExpr te = emit_typed_expr(stmt, reg);
+        TypedExpr te = emit_typed_expr(stmt, reg, var_types);
         return ind + te.code + ";";
     }
 

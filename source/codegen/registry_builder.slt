@@ -40,7 +40,7 @@ Registry register_program(Registry r, Node program) {
             reg = register_fn(reg, decl.value, return_type);
         }
         if decl.kind == NodeKind.StructDecl {
-            reg = register_struct(reg, decl);
+            reg = register_struct_fields(reg, decl);
         }
         if decl.kind == NodeKind.EnumDecl {
             mutable int variant_idx = 0;
@@ -58,6 +58,21 @@ Registry register_program(Registry r, Node program) {
 }
 
 Registry register_struct(Registry reg, Node struct_decl) {
+    return register_struct(reg, struct_decl.value);
+}
+
+Registry register_struct(Registry reg, string struct_name) {
+    return Registry(
+        fn_returns:    reg.fn_returns,
+        field_types:   reg.field_types,
+        field_owners:  reg.field_owners,
+        field_indices: reg.field_indices,
+        enum_variants: reg.enum_variants,
+        struct_names:  reg.struct_names.set(struct_name, "1")
+    );
+}
+
+Registry register_struct_fields(Registry reg, Node struct_decl) {
     string struct_name = struct_decl.value;
     mutable Registry r = reg;
     mutable int field_index = 0;
@@ -235,6 +250,10 @@ Registry seed_c_runtime(Registry r) {
     reg = register_field(reg, "ParseResult", "message",   "string", 1);
     reg = register_field(reg, "ParseResult", "node",      "ptr",    2);
     reg = register_field(reg, "ParseResult", "source",   "string", 3);
+
+    # Register ParseResult and AnalysisResult as known structs
+    reg = register_struct(reg, "ParseResult");
+    reg = register_struct(reg, "AnalysisResult");
 
     # Struct fields for AnalysisResult
     reg = register_field(reg, "AnalysisResult", "errors",   "ptr",    0);

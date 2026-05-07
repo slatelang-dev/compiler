@@ -111,6 +111,51 @@ bool has_emittable_decls(Node program) {
     return false;
 }
 
+string get_field_type(Registry reg, string struct_name, string field_name) {
+    string key = struct_name + "." + field_name;
+    if reg.field_types.has(key) {
+        return reg.field_types.get(key);
+    }
+    return "ptr";
+}
+
+bool key_belongs_to_struct(string key, string struct_name) {
+    if key.len() <= struct_name.len() + 1 { return false; }
+    if key.substring(0, struct_name.len()) != struct_name { return false; }
+    if key.char_at(struct_name.len()) != "." { return false; }
+    string remainder = key.substring(struct_name.len() + 1);
+    if remainder.contains(".") { return false; }
+    return true;
+}
+
+string emit_registered_structs(Registry reg) {
+    mutable string result = "";
+    list(string) struct_names = reg.struct_names.keys();
+    mutable int i = 0;
+    while i < struct_names.len() {
+        string name = struct_names.get(i);
+        mutable string fields = "";
+        mutable bool has_fields = false;
+        mutable int fi = 0;
+        list(string) field_keys = reg.field_types.keys();
+        while fi < field_keys.len() {
+            string fk = field_keys.get(fi);
+            if key_belongs_to_struct(fk, name) {
+                string fname = fk.substring(name.len() + 1);
+                string ftype = get_field_type(reg, name, fname);
+                fields = fields + "    " + c_type(ftype) + " " + fname + ";\n";
+                has_fields = true;
+            }
+            fi = fi + 1;
+        }
+        if has_fields {
+            result = result + "typedef struct {\n" + fields + "} slate_" + name + ";\n\n";
+        }
+        i = i + 1;
+    }
+    return result;
+}
+
 # Walk a full program node and produce a C translation unit.
 # Returns "" if there is nothing to emit (exports/lib files with only use/module stmts).
 
@@ -122,6 +167,8 @@ string walk_module(Node program, Registry reg) {
     mutable string structs = "";
     mutable string enums   = "";
     mutable string fns     = "";
+
+    structs = structs + emit_registered_structs(reg);
 
     mutable int i = 0;
     while i < program.children.len() {

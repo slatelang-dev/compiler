@@ -85,7 +85,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg) {
         Node target = expr.children.get(0);
         string method = expr.value;
         TypedExpr target_te = emit_typed_expr(target, reg);
-        string method_code = emit_method_call(target, method, expr.children);
+        string method_code = emit_method_call(target, method, expr.children, reg);
         return typed(method_code, "int");
     }
 
@@ -240,7 +240,7 @@ string emit_call(Node expr) {
     return fn_name + "(" + emit_args(args, 0) + ")";
 }
 
-string emit_method_call(Node target, string method, list(Node) args) {
+string emit_method_call(Node target, string method, list(Node) args, Registry reg) {
     # file(path).method() — special case
     if target.kind == NodeKind.Call and target.value == "file" {
         string path_arg = emit_expr(target.children.get(0));
@@ -253,9 +253,20 @@ string emit_method_call(Node target, string method, list(Node) args) {
     string target_expr = emit_expr(target);
 
     # Collection ops
-    if method == "len"        { return "slate_len(" + target_expr + ")"; }
-    if method == "get"        { return "slate_get(" + target_expr + ", " + emit_args(args, 1) + ")"; }
-    if method == "set"        { return "slate_table_set(" + target_expr + ", " + emit_args(args, 1) + ", " + emit_args(args, 2) + ")"; }
+    if method == "len" {
+        return "slate_len(" + target_expr + ")";
+    }
+    if method == "get" {
+        string idx_arg = emit_args(args, 1);
+        TypedExpr target_te = emit_typed_expr(target, reg);
+        if target_te.slate_type == "table" {
+            return "slate_table_get(" + target_expr + ", " + idx_arg + ")";
+        }
+        return "slate_get(" + target_expr + ", " + idx_arg + ")";
+    }
+    if method == "set" {
+        return "slate_table_set(" + target_expr + ", " + emit_args(args, 1) + ")";
+    }
     if method == "add"        { return "slate_add(" + target_expr + ", " + emit_args(args, 1) + ")"; }
     if method == "has"        { return "slate_has(" + target_expr + ", " + emit_args(args, 1) + ")"; }
     if method == "keys"       { return "slate_keys(" + target_expr + ")"; }
@@ -360,7 +371,7 @@ string emit_expr(Node expr) {
     if expr.kind == NodeKind.MethodCall {
         Node target = expr.children.get(0);
         string method = expr.value;
-        return emit_method_call(target, method, expr.children);
+        return emit_method_call(target, method, expr.children, reg);
     }
 
     if expr.kind == NodeKind.FieldAccess {

@@ -199,7 +199,14 @@ list(LoadedModule) collect_module_asts(Node program, string base_path, list(stri
             string mod_name = extract_mod_name(mod_path);
             if file(mod_path).exists() {
                 string source = file(mod_path).read();
-                module_list = module_list.add(make_loaded_module(mod_name, mod_path, source, make_program(empty, 0, 0)));
+                module_list = module_list.add(LoadedModule(
+                    name: mod_name,
+                    path: mod_path,
+                    source: source,
+                    ast: make_program(empty, 0, 0),
+                    loaded: false,
+                    load_error: ""
+                ));
                 list(string) imports = scan_imports(source);
                 mutable int j = 0;
                 while j < imports.len() {

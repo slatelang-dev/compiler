@@ -160,15 +160,19 @@ string emit_enums_only(Node program, Registry reg) {
     return out;
 }
 
-# Emit only function prototypes from a program
+# Emit only function prototypes from a program, skipping duplicates
 
-string emit_fn_prototypes_only(Node program) {
+string emit_fn_prototypes_only(Node program, string seen_names) {
     mutable string out = "";
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.FnDecl {
-            out = out + emit_fn_prototype(decl);
+            string fn_name = decl.value;
+            if seen_names.contains("|" + fn_name + "|") == false {
+                out = out + emit_fn_prototype(decl);
+                seen_names = seen_names + "|" + fn_name + "|";
+            }
         }
         i = i + 1;
     }

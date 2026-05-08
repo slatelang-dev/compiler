@@ -173,23 +173,16 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
 
-    string slate_path = resolve_module_path("slate", base_path, home_dir);
-    queue = queue.add(slate_path);
-    queue_bases = queue_bases.add(resolve_parent(slate_path));
-    queued = queued.set(slate_path, "1");
-
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
-            if mod_name != "slate" {
-                string mod_path = resolve_module_path(mod_name, base_path, home_dir);
-                if module_already_loaded(queued, mod_path) == false {
-                    queue = queue.add(mod_path);
-                    queue_bases = queue_bases.add(resolve_parent(mod_path));
-                    queued = queued.set(mod_path, "1");
-                }
+            string mod_path = resolve_module_path(mod_name, base_path, home_dir);
+            if module_already_loaded(queued, mod_path) == false {
+                queue = queue.add(mod_path);
+                queue_bases = queue_bases.add(resolve_parent(mod_path));
+                queued = queued.set(mod_path, "1");
             }
         }
         i += 1;

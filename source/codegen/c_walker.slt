@@ -67,7 +67,7 @@ string emit_fn(Node fn_decl, Registry reg) {
 
 string emit_struct(Node struct_decl) {
     string name = struct_decl.value;
-    mutable string res = "typedef struct {\n";
+    mutable string res = "typedef struct slate_" + name + " {\n";
     mutable int i = 0;
     while i < struct_decl.children.len() {
         Node member = struct_decl.children.get(i);
@@ -98,7 +98,7 @@ string emit_enum(Node enum_decl, Registry reg) {
         res = res + "\n";
         i = i + 1;
     }
-    res = res + "} " + name + ";\n";
+    res = res + "} slate_" + name + ";\n";
     return res;
 }
 
@@ -128,6 +128,51 @@ string emit_fn_prototype(Node fn_decl) {
         return "int main(int argc, char** argv);\n";
     }
     return ret + " " + fn_name + "(" + params + ");\n";
+}
+
+# Emit only struct definitions from a program
+
+string emit_structs_only(Node program) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.StructDecl {
+            out = out + emit_struct(decl) + "\n";
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+# Emit only enum definitions from a program
+
+string emit_enums_only(Node program, Registry reg) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.EnumDecl {
+            out = out + emit_enum(decl, reg) + "\n";
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+# Emit only function prototypes from a program
+
+string emit_fn_prototypes_only(Node program) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            out = out + emit_fn_prototype(decl);
+        }
+        i = i + 1;
+    }
+    return out;
 }
 
 # Emit header content for a module (structs, enums, fn prototypes)

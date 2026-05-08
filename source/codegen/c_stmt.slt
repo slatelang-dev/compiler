@@ -22,19 +22,27 @@ string emit_block_body(Node block, int level, Registry reg, table(string, string
     mutable int i = 0;
     while i < block.children.len() {
         Node stmt = block.children.get(i);
-        s = s + emit_stmt(stmt, level, reg, local_types, is_main) + "\n";
+        mutable bool ad = false;
         if stmt.kind == NodeKind.VarDecl
         or stmt.kind == NodeKind.MutableDecl
         or stmt.kind == NodeKind.ConstDecl
         or stmt.kind == NodeKind.AffineDecl {
-            local_types = local_types.set(stmt.value, stmt.children.get(0).value);
+            Node type_node = stmt.children.get(0);
+            string type_str = type_node.value;
+            if type_str == "" {
+                if type_node.kind == NodeKind.TypeList { type_str = "list"; }
+                if type_node.kind == NodeKind.TypeTable { type_str = "table"; }
+            }
+            ad = local_types.has(stmt.value);
+            local_types = local_types.set(stmt.value, type_str);
         }
+        s = s + emit_stmt(stmt, level, reg, local_types, is_main, ad) + "\n";
         i = i + 1;
     }
     return s;
 }
 
-string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_types, bool is_main) {
+string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_types, bool is_main, bool already_declared) {
     string ind = indent(level);
 
     # Variable declarations
@@ -46,7 +54,10 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         Node type_node  = stmt.children.get(0);
         Node init       = stmt.children.get(1);
         string declared_type = type_node.value;
-        bool already_declared = var_types.has(stmt.value);
+        if declared_type == "" {
+            if type_node.kind == NodeKind.TypeList { declared_type = "list"; }
+            if type_node.kind == NodeKind.TypeTable { declared_type = "table"; }
+        }
         var_types = var_types.set(stmt.value, declared_type);
         mutable string c_var_type = c_type_with_reg(declared_type, reg);
         if init.kind == NodeKind.Empty {
@@ -112,7 +123,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         if stmt.children.len() > 2 {
             Node else_part = stmt.children.get(2);
             if else_part.kind == NodeKind.If {
-                res = res + " else " + emit_stmt(else_part, level, reg, var_types, is_main);
+                res = res + " else " + emit_stmt(else_part, level, reg, var_types, is_main, false);
             } else {
                 res = res + " else {\n";
                 res = res + emit_block_body(else_part, level + 1, reg, var_types, is_main);

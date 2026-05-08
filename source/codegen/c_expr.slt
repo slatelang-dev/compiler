@@ -289,13 +289,6 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
         if method == "path"   { return path_arg; }
     }
 
-    # Module-qualified calls: module.function(args) — strip module prefix
-    if target.kind == NodeKind.Ident and var_types.has(target.value) == false
-       and registry_has_struct(reg, target.value) == false
-       and registry_has_enum(reg, target.value) == false {
-        return method + "(" + emit_args(args, 1, reg, var_types) + ")";
-    }
-
     string target_expr = emit_expr(target, reg, var_types);
 
     # Collection ops

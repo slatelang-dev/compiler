@@ -116,7 +116,8 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
             return typed(target.value + "_" + expr.value, "int");
         }
-        return typed(emit_field(expr.value, target_te.code, reg, target_te.slate_type), "int");
+        string field_slate_type = lookup_field_type(reg, target_te.slate_type, expr.value);
+        return typed(emit_field(expr.value, target_te.code, reg, target_te.slate_type), field_slate_type);
     }
 
     if expr.kind == NodeKind.Interp {

@@ -270,6 +270,16 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
 }
 
 string emit_method_call(Node target, string method, list(Node) args, Registry reg, table(string, string) var_types) {
+    # toml(source).parse() / json(source).parse() — parse functions
+    if target.kind == NodeKind.Call {
+        if target.value == "toml" and method == "parse" {
+            return "slate_toml_parse(" + emit_expr(target.children.get(0), reg, var_types) + ")";
+        }
+        if target.value == "json" and method == "parse" {
+            return "slate_json_parse(" + emit_expr(target.children.get(0), reg, var_types) + ")";
+        }
+    }
+
     # file(path).method() — special case
     if target.kind == NodeKind.Call and target.value == "file" {
         string path_arg = emit_expr(target.children.get(0), reg, var_types);
@@ -277,6 +287,13 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
         if method == "read"   { return "slate_file_read(" + path_arg + ")"; }
         if method == "write"  { return "slate_file_write(" + path_arg + ", " + emit_args(args, 1, reg, var_types) + ")"; }
         if method == "path"   { return path_arg; }
+    }
+
+    # Module-qualified calls: module.function(args) — strip module prefix
+    if target.kind == NodeKind.Ident and var_types.has(target.value) == false
+       and registry_has_struct(reg, target.value) == false
+       and registry_has_enum(reg, target.value) == false {
+        return method + "(" + emit_args(args, 1, reg, var_types) + ")";
     }
 
     string target_expr = emit_expr(target, reg, var_types);
@@ -288,13 +305,25 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     if method == "get" {
         string idx_arg = emit_args(args, 1, reg, var_types);
         TypedExpr target_te = emit_typed_expr(target, reg, var_types);
-        if target_te.slate_type == "table" {
+        if target_te.slate_type.starts_with("table") {
+            if target_te.slate_type.contains(", int") {
+                return "slate_unbox_int(slate_table_get(" + target_expr + ", " + idx_arg + "))";
+            }
             return "slate_table_get(" + target_expr + ", " + idx_arg + ")";
         }
         return "slate_get(" + target_expr + ", " + idx_arg + ")";
     }
     if method == "set" {
-        return "slate_table_set(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+        string key_arg = emit_expr(args.get(1), reg, var_types);
+        string val_arg = emit_expr(args.get(2), reg, var_types);
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type.starts_with("table") {
+            if target_te.slate_type.contains(", int") {
+                return "slate_table_set(" + target_expr + ", " + key_arg + ", slate_box_int(" + val_arg + "))";
+            }
+            return "slate_table_set(" + target_expr + ", " + key_arg + ", " + val_arg + ")";
+        }
+        return "slate_table_set(" + target_expr + ", " + key_arg + ", " + val_arg + ")";
     }
     if method == "add"        { return "slate_add(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "has"        { return "slate_has(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }

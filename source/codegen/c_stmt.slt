@@ -18,9 +18,17 @@ string indent(int level) {
 
 string emit_block_body(Node block, int level, Registry reg, table(string, string) var_types, bool is_main) {
     mutable string s = "";
+    mutable table(string, string) local_types = var_types;
     mutable int i = 0;
     while i < block.children.len() {
-        s = s + emit_stmt(block.children.get(i), level, reg, var_types, is_main) + "\n";
+        Node stmt = block.children.get(i);
+        s = s + emit_stmt(stmt, level, reg, local_types, is_main) + "\n";
+        if stmt.kind == NodeKind.VarDecl
+        or stmt.kind == NodeKind.MutableDecl
+        or stmt.kind == NodeKind.ConstDecl
+        or stmt.kind == NodeKind.AffineDecl {
+            local_types = local_types.set(stmt.value, stmt.children.get(0).value);
+        }
         i = i + 1;
     }
     return s;

@@ -2,6 +2,7 @@ module registry_builder;
 
 use node;
 use type_registry;
+use slate;
 
 Registry build_registry(list(Node) programs) {
     mutable Registry r = new_registry();
@@ -21,7 +22,10 @@ Registry build_registry_from_modules(list(LoadedModule) modules) {
     while i < modules.len() {
         LoadedModule m = modules.get(i);
         if m.success {
-            r = register_program(r, m.ast);
+            ParseResult p = parse(m.source);
+            if p.success {
+                r = register_program(r, p.node);
+            }
         }
         i = i + 1;
     }

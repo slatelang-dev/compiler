@@ -115,7 +115,8 @@ list(string) scan_imports(string source) {
     return imports;
 }
 
-string normalize_path(string p) {
+string normalize_path(string path) {
+    mutable string p = path;
     while p.contains("//") {
         p = p.replace("//", "/");
     }

@@ -8,4 +8,3 @@ use emitter;
 use c_expr;
 use c_stmt;
 use c_walker;
-use c_header;

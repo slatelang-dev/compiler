@@ -200,5 +200,5 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         return ind + te.code + ";";
     }
 
-    return ind + "/* unhandled stmt kind */;";
+    return ind + "{ fprintf(stderr, \"codegen: unhandled stmt kind\\n\"); }";
 }

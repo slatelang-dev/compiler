@@ -137,7 +137,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         return typed("NULL", "empty");
     }
 
-    return typed("NULL", "int");
+    return typed("(fprintf(stderr, \"codegen: unhandled expr kind\\n\"), NULL)", "int");
 }
 
 string emit_literal(Node n) {
@@ -422,5 +422,5 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
         return "NULL";
     }
 
-    return "NULL";
+    return "(fprintf(stderr, \"codegen: unhandled expr kind\\n\"), NULL)";
 }

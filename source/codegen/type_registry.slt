@@ -159,7 +159,14 @@ string emit_field_access(Registry r, string struct_type, string target_expr, str
         }
         return target_expr + "->" + field_name;
     }
-    return "((slate_" + struct_type + "*)" + target_expr + ")->" + field_name;
+    if registry_has_struct(r, struct_type) {
+        return "((slate_" + struct_type + "*)" + target_expr + ")->" + field_name;
+    }
+    string owner = find_field_owner(r, field_name);
+    if owner != "" {
+        return "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+    }
+    return target_expr + "->" + field_name;
 }
 
 # C keyword mangling — if a Slate identifier clashes with a C keyword,

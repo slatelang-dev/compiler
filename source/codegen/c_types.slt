@@ -1,6 +1,7 @@
 module c_types;
 
 string c_type(string slate_type) {
+    if slate_type == "" { return "void*"; }
     if slate_type == "int" { return "int64_t"; }
     if slate_type == "float" { return "double"; }
     if slate_type == "bool" { return "int8_t"; }

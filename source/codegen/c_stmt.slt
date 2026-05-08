@@ -38,12 +38,15 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         Node type_node  = stmt.children.get(0);
         Node init       = stmt.children.get(1);
         string declared_type = type_node.value;
+        bool already_declared = var_types.has(stmt.value);
         var_types = var_types.set(stmt.value, declared_type);
-        mutable string c_var_type = c_type(declared_type);
+        mutable string c_var_type = c_type_with_reg(declared_type, reg);
         if init.kind == NodeKind.Empty {
             if type_node.kind == NodeKind.TypeList or type_node.kind == NodeKind.TypeTable {
+                if already_declared { return ind + var_name + " = slate_empty_list();"; }
                 return ind + c_var_type + " " + var_name + " = slate_empty_list();";
             }
+            if already_declared { return ind + var_name + " = NULL;"; }
             return ind + c_var_type + " " + var_name + " = NULL;";
         }
         TypedExpr init_te = emit_typed_expr(init, reg, var_types);
@@ -51,6 +54,9 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
             c_var_type = "slate_" + declared_type + "*";
         } else if registry_has_struct(reg, init_te.slate_type) {
             c_var_type = "slate_" + init_te.slate_type + "*";
+        }
+        if already_declared {
+            return ind + var_name + " = " + init_te.code + ";";
         }
         return ind + c_var_type + " " + var_name + " = " + init_te.code + ";";
     }

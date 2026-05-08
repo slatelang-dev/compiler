@@ -147,6 +147,19 @@ bool registry_has_struct(Registry r, string name) {
     return r.struct_names.has(name);
 }
 
+bool registry_has_enum(Registry r, string name) {
+    mutable list(string) keys = r.enum_variants.keys();
+    string prefix = name + ".";
+    mutable int i = 0;
+    while i < keys.len() {
+        if keys.get(i).starts_with(prefix) {
+            return true;
+        }
+        i = i + 1;
+    }
+    return false;
+}
+
 # Emit a safe field access given a known struct type and field.
 # Produces: ((slate_StructName*)expr)->field
 # Falls back to: expr->field if struct unknown.

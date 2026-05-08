@@ -61,19 +61,8 @@ Registry register_program(Registry r, Node program) {
     return reg;
 }
 
-Registry register_struct(Registry reg, Node struct_decl) {
+Registry register_struct_from_node(Registry reg, Node struct_decl) {
     return register_struct(reg, struct_decl.value);
-}
-
-Registry register_struct(Registry reg, string struct_name) {
-    return Registry(
-        fn_returns:    reg.fn_returns,
-        field_types:   reg.field_types,
-        field_owners:  reg.field_owners,
-        field_indices: reg.field_indices,
-        enum_variants: reg.enum_variants,
-        struct_names:  reg.struct_names.set(struct_name, "1")
-    );
 }
 
 Registry register_struct_fields(Registry reg, Node struct_decl) {

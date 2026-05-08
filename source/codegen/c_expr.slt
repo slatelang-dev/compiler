@@ -251,17 +251,17 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
     if fn_name == "alloc"  { return "slate_alloc(" + emit_args(args, 0, reg, var_types) + ")"; }
     if fn_name == "free"   { return "slate_free(" + emit_args(args, 0, reg, var_types) + ")"; }
 
-    # Struct constructors — emit as compound literal
+    # Struct constructors — heap-allocate, assign fields, return pointer
     if registry_has_struct(reg, fn_name) {
-        mutable string fields = "";
+        mutable string assigns = "";
         mutable int fi = 0;
         while fi < args.len() {
-            if fi > 0 { fields = fields + ", "; }
+            if fi > 0 { assigns = assigns + "; "; }
             string fname = safe_ident(find_field_name(reg, fn_name, fi));
-            fields = fields + "." + fname + " = " + emit_expr(args.get(fi), reg, var_types);
+            assigns = assigns + "_tmp->" + fname + " = " + emit_expr(args.get(fi), reg, var_types);
             fi = fi + 1;
         }
-        return "(slate_" + fn_name + "){ " + fields + " }";
+        return "({ slate_" + fn_name + "* _tmp = malloc(sizeof(slate_" + fn_name + ")); " + assigns + "; _tmp; })";
     }
 
     # User-defined functions — emit as-is (resolved at link time from .o files)
@@ -301,7 +301,7 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     if method == "values"     { return "slate_values(" + target_expr + ")"; }
     if method == "contains"   { return "slate_contains(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "split"      { return "slate_split(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
-    if method == "replace"    { return "slate_replace(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ", " + emit_args(args, 2, reg, var_types) + ")"; }
+    if method == "replace"    { return "slate_replace(" + target_expr + ", " + emit_expr(args.get(1), reg, var_types) + ", " + emit_expr(args.get(2), reg, var_types) + ")"; }
     if method == "starts_with" { return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "ends_with"  { return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "trim"       { return "slate_trim(" + target_expr + ")"; }

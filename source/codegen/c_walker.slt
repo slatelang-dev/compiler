@@ -102,6 +102,75 @@ string emit_enum(Node enum_decl, Registry reg) {
     return res;
 }
 
+# Emit a function prototype (signature only, ends with ;)
+
+string emit_fn_prototype(Node fn_decl) {
+    string fn_name    = safe_ident(fn_decl.value);
+    list(Node) children = fn_decl.children;
+    int child_count   = children.len();
+    Node ret_type_node = children.get(0);
+    string ret         = c_type(ret_type_node.value);
+
+    mutable string params = "";
+    mutable int i = 1;
+    while i < child_count - 1 {
+        Node param = children.get(i);
+        Node param_type = param.children.get(0);
+        string c_param_type = c_type(param_type.value);
+        string param_name   = safe_ident(param.value);
+        if params.len() > 0 { params = params + ", "; }
+        params = params + c_param_type + " " + param_name;
+        i = i + 1;
+    }
+    if params.len() == 0 { params = "void"; }
+
+    if fn_name == "main" {
+        return "int main(int argc, char** argv);\n";
+    }
+    return ret + " " + fn_name + "(" + params + ");\n";
+}
+
+# Emit header content for a module (structs, enums, fn prototypes)
+# Used to build the shared slate_fwd.h
+
+string emit_header(Node program, Registry reg) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.StructDecl {
+            out = out + emit_struct(decl) + "\n";
+        }
+        if decl.kind == NodeKind.EnumDecl {
+            out = out + emit_enum(decl, reg) + "\n";
+        }
+        if decl.kind == NodeKind.FnDecl {
+            out = out + emit_fn_prototype(decl);
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+# Emit source content for a module (fn bodies only)
+# The .c file includes slate_fwd.h instead of slate_runtime.h
+
+string emit_source(Node program, Registry reg) {
+    mutable string fns = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            fns = fns + emit_fn(decl, reg) + "\n";
+        }
+        i = i + 1;
+    }
+    if fns.len() == 0 {
+        return "";
+    }
+    return "#include \"slate_fwd.h\"\n\n" + fns;
+}
+
 # Check whether a program node has anything worth emitting
 
 bool has_emittable_decls(Node program) {
@@ -119,34 +188,7 @@ bool has_emittable_decls(Node program) {
 }
 
 string walk_module(Node program, Registry reg) {
-    if has_emittable_decls(program) == false {
-        return "";
-    }
-
-    mutable string structs = "";
-    mutable string enums   = "";
-    mutable string fns     = "";
-
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.StructDecl {
-            structs = structs + emit_struct(decl) + "\n";
-        }
-        if decl.kind == NodeKind.EnumDecl {
-            enums = enums + emit_enum(decl, reg) + "\n";
-        }
-        if decl.kind == NodeKind.FnDecl {
-            fns = fns + emit_fn(decl, reg) + "\n";
-        }
-        i = i + 1;
-    }
-
-    mutable string out = "#include \"slate_runtime.h\"\n\n";
-    if structs.len() > 0 { out = out + structs; }
-    if enums.len() > 0   { out = out + enums; }
-    if fns.len() > 0     { out = out + fns; }
-    return out;
+    return emit_source(program, reg);
 }
 
 string walk_module_from_source(string name, string source, Registry reg) {

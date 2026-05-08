@@ -123,6 +123,16 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         return typed_str("\"" + expr.value + "\"");
     }
 
+    if expr.kind == NodeKind.Block {
+        mutable string code = "slate_empty_list()";
+        mutable int bi = 0;
+        while bi < expr.children.len() {
+            code = "slate_add(" + code + ", " + emit_typed_expr(expr.children.get(bi), reg, var_types).code + ")";
+            bi = bi + 1;
+        }
+        return typed(code, "list");
+    }
+
     if expr.kind == NodeKind.Empty {
         return typed("NULL", "empty");
     }
@@ -396,6 +406,16 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
 
     if expr.kind == NodeKind.Interp {
         return "\"" + expr.value + "\"";
+    }
+
+    if expr.kind == NodeKind.Block {
+        mutable string code = "slate_empty_list()";
+        mutable int bi = 0;
+        while bi < expr.children.len() {
+            code = "slate_add(" + code + ", " + emit_expr(expr.children.get(bi), reg, var_types) + ")";
+            bi = bi + 1;
+        }
+        return code;
     }
 
     if expr.kind == NodeKind.Empty {

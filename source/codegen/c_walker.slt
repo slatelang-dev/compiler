@@ -47,12 +47,10 @@ string emit_fn(Node fn_decl, Registry reg) {
         res = res + "    slate_init_args(argc, argv);\n";
     }
 
+    bool is_main_fn = (fn_name == "main");
     mutable int j = 0;
     while j < body.children.len() {
-        string stmt_code = emit_stmt(body.children.get(j), 1, reg, var_types);
-        if fn_name == "main" and stmt_code == "    return;" {
-            stmt_code = "    return 1;";
-        }
+        string stmt_code = emit_stmt(body.children.get(j), 1, reg, var_types, is_main_fn);
         res = res + stmt_code + "\n";
         j = j + 1;
     }

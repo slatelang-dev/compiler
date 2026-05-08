@@ -108,7 +108,7 @@ string node_type_to_slate(Node type_node) {
     if val == "ptr"    { return "ptr"; }
     if val == "void"   { return "void"; }
     if val == "char"   { return "int"; }
-    return "ptr";
+    return val;
 }
 
 Registry seed_c_runtime(Registry r) {

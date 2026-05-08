@@ -116,7 +116,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
             return typed(target.value + "_" + expr.value, "int");
         }
-        return typed(emit_field(expr.value, target_te.code), "int");
+        return typed(emit_field(expr.value, target_te.code, reg, target_te.slate_type), "int");
     }
 
     if expr.kind == NodeKind.Interp {
@@ -251,6 +251,19 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
     if fn_name == "alloc"  { return "slate_alloc(" + emit_args(args, 0, reg, var_types) + ")"; }
     if fn_name == "free"   { return "slate_free(" + emit_args(args, 0, reg, var_types) + ")"; }
 
+    # Struct constructors — emit as compound literal
+    if registry_has_struct(reg, fn_name) {
+        mutable string fields = "";
+        mutable int fi = 0;
+        while fi < args.len() {
+            if fi > 0 { fields = fields + ", "; }
+            string fname = safe_ident(find_field_name(reg, fn_name, fi));
+            fields = fields + "." + fname + " = " + emit_expr(args.get(fi), reg, var_types);
+            fi = fi + 1;
+        }
+        return "(slate_" + fn_name + "){ " + fields + " }";
+    }
+
     # User-defined functions — emit as-is (resolved at link time from .o files)
     return fn_name + "(" + emit_args(args, 0, reg, var_types) + ")";
 }
@@ -324,9 +337,9 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     return target_expr + "->" + method + "(" + emit_args(args, 1, reg, var_types) + ")";
 }
 
-# Emit a field access - just emit as generic dereference
-string emit_field(string field, string target_expr) {
-    return target_expr + "->" + field;
+# Emit a field access with type-aware casting
+string emit_field(string field, string target_expr, Registry reg, string target_type) {
+    return emit_field_access(reg, target_type, target_expr, field);
 }
 
 string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
@@ -401,7 +414,7 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
         if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
             return target.value + "_" + expr.value;
         }
-        return emit_field(expr.value, target_expr);
+        return emit_field(expr.value, target_expr, reg, "");
     }
 
     if expr.kind == NodeKind.Interp {

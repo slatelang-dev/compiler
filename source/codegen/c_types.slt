@@ -12,8 +12,7 @@ string c_type(string slate_type) {
     if slate_type == "table" { return "void*"; }
     if slate_type == "option" { return "void*"; }
     if slate_type == "result" { return "void*"; }
-    if slate_type == "Node" { return "void*"; }
-    return "void*";
+    return "slate_" + slate_type + "*";
 }
 
 string c_type_for_field(string slate_type) {
@@ -22,7 +21,7 @@ string c_type_for_field(string slate_type) {
     if slate_type == "bool" { return "int8_t"; }
     if slate_type == "char" { return "int32_t"; }
     if slate_type == "string" { return "char*"; }
-    return "void*";
+    return "slate_" + slate_type + "*";
 }
 
 string c_fn_name(string fn_name) {

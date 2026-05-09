@@ -164,6 +164,7 @@ string resolve_module_path(string mod_name, string base_path, string home_path) 
 }
 
 list(ModuleStub) discover_modules(Node program, string base_path, list(string) seen) {
+    print("  [discover] checkpoint 1: home()");
     string home_dir = home();
     mutable table(string, string) visited = empty;
     mutable int vi = 0;
@@ -173,12 +174,14 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
     mutable list(string) queue = empty;
     mutable list(string) queue_bases = empty;
 
+    print("  [discover] checkpoint 2: starting use scan, children=" + string(program.children.len()));
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
             string mod_path = resolve_module_path(mod_name, base_path, home_dir);
+            print("  [discover]   use " + mod_name + " -> " + mod_path);
             if module_already_loaded(queued, mod_path) == false {
                 queue = queue.add(mod_path);
                 queue_bases = queue_bases.add(resolve_parent(mod_path));
@@ -188,8 +191,10 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
         i += 1;
     }
 
+    print("  [discover] checkpoint 3: use scan done, queue=" + string(queue.len()) + " stubs=" + string(stub_list.len()));
     mutable int head = 0;
     while head < queue.len() {
+        if head % 5 == 0 { print("  [discover] BFS head=" + string(head) + "/" + string(queue.len())); }
         string mod_path = queue.get(head);
         string sub_base = queue_bases.get(head);
         head = head + 1;
@@ -199,9 +204,12 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
             visited = visited.set(mod_path, "1");
             string mod_name = extract_mod_name(mod_path);
             if file(mod_path).exists() {
+                print("  [discover]   before read: " + mod_path);
                 stub_list = stub_list.add(ModuleStub(name: mod_name, path: mod_path));
                 string source = file(mod_path).read();
+                print("  [discover]   before scan_imports, source.len=" + string(source.len()));
                 list(string) imports = scan_imports(source);
+                print("  [discover]   after scan_imports: " + string(imports.len()) + " imports");
                 mutable int j = 0;
                 while j < imports.len() {
                     string child_mod_name = imports.get(j);
@@ -215,9 +223,11 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
                     }
                     j = j + 1;
                 }
+                print("  [discover]   after processing " + string(j) + " imports");
             }
         }
     }
+    print("  [discover] checkpoint 4: BFS done, returning " + string(stub_list.len()) + " stubs");
     return stub_list;
 }
 

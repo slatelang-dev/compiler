@@ -78,11 +78,20 @@ string lookup_fn_return(Registry r, string name) {
 }
 
 # Look up the Slate type of a field given its owning struct type.
+# Falls back to find_field_owner when struct_name is unknown (e.g. "ptr")
+# so that field access on expressions with unknown types still resolves correctly.
 
 string lookup_field_type(Registry r, string struct_name, string field_name) {
     string key = struct_name + "." + field_name;
     if r.field_types.has(key) {
         return r.field_types.get(key);
+    }
+    string owner = find_field_owner(r, field_name, struct_name);
+    if owner != "" {
+        string owner_key = owner + "." + field_name;
+        if r.field_types.has(owner_key) {
+            return r.field_types.get(owner_key);
+        }
     }
     return "ptr";
 }

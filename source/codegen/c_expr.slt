@@ -274,6 +274,12 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
         return "slate_file(" + emit_args(args, 0, reg, var_types) + ")";
     }
     if fn_name == "run" {
+        if args.len() == 1 {
+            TypedExpr arg_te = emit_typed_expr(args.get(0), reg, var_types);
+            if arg_te.slate_type == "list" or arg_te.slate_type.starts_with("list") {
+                return "slate_run_list(" + arg_te.code + ")";
+            }
+        }
         int arg_count = args.len();
         if arg_count == 0 { return "slate_run_args(0, NULL)"; }
         return "slate_run_args(" + string(arg_count) + ", " + emit_args(args, 0, reg, var_types) + ")";

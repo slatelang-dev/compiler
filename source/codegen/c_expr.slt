@@ -469,14 +469,19 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     if method == "string" { return "slate_to_string(" + target_expr + ")"; }
 
     # File ops (non-literal receiver)
-    if method == "exists" { return "slate_file_exists(" + target_expr + ")"; }
     if method == "read"   { return "slate_file_read(" + target_expr + ")"; }
     if method == "write"  { return "slate_file_write(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "append" { return "slate_file_append(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "list"   { return "slate_file_list(" + target_expr + ")"; }
 
     # Option/result
-    if method == "exists" { return "slate_option_exists(" + target_expr + ")"; }
+    if method == "exists" {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_file_exists(" + target_expr + ")";
+        }
+        return "slate_option_exists(" + target_expr + ")";
+    }
     if method == "or"     { return "slate_option_or(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
 
     # Struct field accessors — use registry-agnostic arrow access

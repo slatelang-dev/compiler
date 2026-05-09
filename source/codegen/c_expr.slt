@@ -175,6 +175,7 @@ string emit_literal(Node n) {
         val = val.replace("\n", "\\n");
         val = val.replace("\r", "\\r");
         val = val.replace("\t", "\\t");
+        val = val.replace("\u001b", "\\x1b");
         return "\"" + val + "\"";
     }
     if n.kind == NodeKind.CharLit { return n.value; }

@@ -1,6 +1,6 @@
 [project]
 name = "compiler"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 entry = "source/main.slt"
 

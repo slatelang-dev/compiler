@@ -332,6 +332,10 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
 
     # Collection ops
     if method == "len" {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_strlen(" + target_expr + ")";
+        }
         return "slate_len(" + target_expr + ")";
     }
     if method == "get" {
@@ -375,23 +379,89 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     if method == "has"        { return "slate_has(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "keys"       { return "slate_keys(" + target_expr + ")"; }
     if method == "values"     { return "slate_values(" + target_expr + ")"; }
-    if method == "contains"   { return "slate_contains(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
-    if method == "split"      { return "slate_split(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
+    if method == "contains" {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_contains(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+        }
+        return "slate_contains(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+    }
+    if method == "split" {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_split(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+        }
+        return "slate_split(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+    }
     if method == "replace"    { return "slate_replace(" + target_expr + ", " + emit_expr(args.get(1), reg, var_types) + ", " + emit_expr(args.get(2), reg, var_types) + ")"; }
-    if method == "starts_with" { return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
-    if method == "ends_with"  { return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
-    if method == "trim"       { return "slate_trim(" + target_expr + ")"; }
-    if method == "upper"      { return "slate_str_upper(" + target_expr + ")"; }
-    if method == "lower"      { return "slate_str_lower(" + target_expr + ")"; }
-    if method == "reverse"    { return "slate_str_reverse(" + target_expr + ")"; }
-    if method == "chars"      { return "slate_str_chars(" + target_expr + ")"; }
-    if method == "repeat"     { return "slate_str_repeat(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
+    if method == "starts_with" {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+        }
+        return "slate_starts_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+    }
+    if method == "ends_with"  {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+        }
+        return "slate_ends_with(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+    }
+    if method == "trim"       {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_trim(" + target_expr + ")";
+        }
+        return "slate_trim(" + target_expr + ")";
+    }
+    if method == "upper"      {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_str_upper(" + target_expr + ")";
+        }
+        return "slate_str_upper(" + target_expr + ")";
+    }
+    if method == "lower"      {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_str_lower(" + target_expr + ")";
+        }
+        return "slate_str_lower(" + target_expr + ")";
+    }
+    if method == "reverse"    {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_str_reverse(" + target_expr + ")";
+        }
+        return "slate_str_reverse(" + target_expr + ")";
+    }
+    if method == "chars"      {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_str_chars(" + target_expr + ")";
+        }
+        return "slate_str_chars(" + target_expr + ")";
+    }
+    if method == "repeat"     {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_str_repeat(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+        }
+        return "slate_str_repeat(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")";
+    }
     if method == "first"      { return "slate_list_first(" + target_expr + ")"; }
     if method == "last"       { return "slate_list_last(" + target_expr + ")"; }
     if method == "remove"     { return "slate_list_remove(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
     if method == "sort"       { return "slate_list_sort(" + target_expr + ")"; }
     if method == "merge"      { return "slate_list_merge(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
-    if method == "hash"       { return "slate_int_to_str(slate_hash(" + target_expr + "))"; }
+    if method == "hash"       {
+        TypedExpr target_te = emit_typed_expr(target, reg, var_types);
+        if target_te.slate_type == "string" {
+            return "slate_int_to_str(slate_hash(" + target_expr + "))";
+        }
+        return "slate_int_to_str(slate_hash(" + target_expr + "))";
+    }
 
     # Type coercions
     if method == "int"    { return "slate_to_int(" + target_expr + ")"; }

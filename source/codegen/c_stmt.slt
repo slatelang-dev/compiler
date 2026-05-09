@@ -28,7 +28,7 @@ string emit_block_body(Node block, int level, Registry reg, table(string, string
         or stmt.kind == NodeKind.ConstDecl
         or stmt.kind == NodeKind.AffineDecl {
             Node type_node = stmt.children.get(0);
-            string type_str = type_node.value;
+            mutable string type_str = type_node.value;
             if type_str == "" {
                 if type_node.kind == NodeKind.TypeList { type_str = "list"; }
                 if type_node.kind == NodeKind.TypeTable { type_str = "table"; }
@@ -53,7 +53,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         string var_name = safe_ident(stmt.value);
         Node type_node  = stmt.children.get(0);
         Node init       = stmt.children.get(1);
-        string declared_type = type_node.value;
+        mutable string declared_type = type_node.value;
         if declared_type == "" {
             if type_node.kind == NodeKind.TypeList { declared_type = "list"; }
             if type_node.kind == NodeKind.TypeTable { declared_type = "table"; }

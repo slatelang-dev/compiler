@@ -74,7 +74,7 @@ string lookup_fn_return(Registry r, string name) {
     if r.fn_returns.has(name) {
         return r.fn_returns.get(name);
     }
-    return "ptr";
+    return "int";
 }
 
 # Look up the Slate type of a field given its owning struct type.

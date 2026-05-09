@@ -63,9 +63,13 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         var_types = var_types.set(stmt.value, declared_type);
         mutable string c_var_type = c_type_with_reg(declared_type, reg);
         if init.kind == NodeKind.Empty {
-            if type_node.kind == NodeKind.TypeList or type_node.kind == NodeKind.TypeTable {
+            if type_node.kind == NodeKind.TypeList {
                 if already_declared { return ind + var_name + " = slate_empty_list();"; }
                 return ind + c_var_type + " " + var_name + " = slate_empty_list();";
+            }
+            if type_node.kind == NodeKind.TypeTable {
+                if already_declared { return ind + var_name + " = slate_table_new();"; }
+                return ind + c_var_type + " " + var_name + " = slate_table_new();";
             }
             if already_declared { return ind + var_name + " = NULL;"; }
             return ind + c_var_type + " " + var_name + " = NULL;";

@@ -480,7 +480,7 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
         if target_te.slate_type == "string" {
             return "slate_file_exists(" + target_expr + ")";
         }
-        return "slate_option_exists(" + target_expr + ")";
+        return "(" + target_expr + " != NULL)";
     }
     if method == "or"     { return "slate_option_or(" + target_expr + ", " + emit_args(args, 1, reg, var_types) + ")"; }
 

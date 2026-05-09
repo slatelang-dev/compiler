@@ -16,6 +16,20 @@ string indent(int level) {
     return s;
 }
 
+string strip_outer_parens(string code) {
+    if code.len() >= 2 and code.starts_with("(") and code.ends_with(")") {
+        mutable list(string) ch = code.chars();
+        mutable list(string) inner = empty;
+        mutable int ci = 1;
+        while ci < ch.len() - 1 {
+            inner = inner.add(ch.get(ci));
+            ci = ci + 1;
+        }
+        return inner.merge("");
+    }
+    return code;
+}
+
 string emit_block_body(Node block, int level, Registry reg, table(string, string) var_types, bool is_main, string fn_ret_slate_type) {
     mutable string s = "";
     mutable table(string, string) local_types = var_types;
@@ -126,7 +140,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     if stmt.kind == NodeKind.If {
         TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node then_block   = stmt.children.get(1);
-        mutable string res = ind + "if (" + cond.code + ") {\n";
+        mutable string res = ind + "if (" + strip_outer_parens(cond.code) + ") {\n";
         res = res + emit_block_body(then_block, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         if stmt.children.len() > 2 {
@@ -146,7 +160,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     if stmt.kind == NodeKind.While {
         TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node body      = stmt.children.get(1);
-        mutable string res = ind + "while (" + cond.code + ") {\n";
+        mutable string res = ind + "while (" + strip_outer_parens(cond.code) + ") {\n";
         res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;

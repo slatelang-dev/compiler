@@ -108,7 +108,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         }
         TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
         if registry_has_enum(reg, val.slate_type) and fn_ret_slate_type == "string" {
-            return ind + "return " + val.slate_type + "_to_str(" + val.code + ");";
+            return ind + "return slate_" + val.slate_type + "_to_str(" + val.code + ");";
         }
         return ind + "return " + val.code + ";";
     }

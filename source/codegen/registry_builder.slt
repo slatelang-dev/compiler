@@ -4,34 +4,6 @@ use node;
 use type_registry;
 use slate;
 
-Registry build_registry(list(Node) programs) {
-    mutable Registry r = new_registry();
-    r = seed_c_runtime(r);
-    mutable int i = 0;
-    while i < programs.len() {
-        r = register_program(r, programs.get(i));
-        i += 1;
-    }
-    return r;
-}
-
-Registry build_registry_from_modules(list(LoadedModule) modules) {
-    mutable Registry r = new_registry();
-    r = seed_c_runtime(r);
-    mutable int i = 0;
-    while i < modules.len() {
-        LoadedModule m = modules.get(i);
-        if m.success {
-            ParseResult p = parse(m.source);
-            if p.success {
-                r = register_program(r, p.node);
-            }
-        }
-        i = i + 1;
-    }
-    return r;
-}
-
 Registry register_program(Registry r, Node program) {
     mutable Registry reg = r;
     mutable int i = 0;
@@ -59,10 +31,6 @@ Registry register_program(Registry r, Node program) {
         i += 1;
     }
     return reg;
-}
-
-Registry register_struct_from_node(Registry reg, Node struct_decl) {
-    return register_struct(reg, struct_decl.value);
 }
 
 Registry register_struct_fields(Registry reg, Node struct_decl) {

@@ -96,25 +96,6 @@ string lookup_field_type(Registry r, string struct_name, string field_name) {
     return "ptr";
 }
 
-# Look up which struct owns a given field.
-# Used by the emitter to emit the correct cast: ((slate_StructName*)ptr)->field
-
-string lookup_field_owner(Registry r, string struct_name, string field_name) {
-    string key = struct_name + "." + field_name;
-    if r.field_owners.has(key) {
-        return r.field_owners.get(key);
-    }
-    return "";
-}
-
-int lookup_field_index(Registry r, string struct_name, string field_name) {
-    string key = struct_name + "." + field_name + ".idx";
-    if r.field_indices.has(key) {
-        return int(r.field_indices.get(key));
-    }
-    return -1;
-}
-
 string find_field_name(Registry r, string struct_name, int target_idx) {
     mutable list(string) keys = r.field_indices.keys();
     mutable int ki = 0;

@@ -14,10 +14,6 @@ TypedExpr typed(string code, string slate_type) {
     return TypedExpr(code: code, slate_type: slate_type);
 }
 
-TypedExpr typed_ptr(string code) {
-    return TypedExpr(code: code, slate_type: "ptr");
-}
-
 TypedExpr typed_int(string code) {
     return TypedExpr(code: code, slate_type: "int");
 }
@@ -28,63 +24,4 @@ TypedExpr typed_str(string code) {
 
 TypedExpr typed_bool(string code) {
     return TypedExpr(code: code, slate_type: "bool");
-}
-
-TypedExpr typed_void(string code) {
-    return TypedExpr(code: code, slate_type: "void");
-}
-
-# CEmitter — accumulates emitted lines during a walk.
-
-struct CEmitter {
-    list(string) lines;
-    int temp_counter;
-    string current_fn;
-}
-
-CEmitter new_emitter() {
-    return CEmitter(
-        lines:        empty,
-        temp_counter: 0,
-        current_fn:   ""
-    );
-}
-
-CEmitter emit_line(CEmitter e, string line) {
-    return CEmitter(
-        lines:        e.lines.add(line),
-        temp_counter: e.temp_counter,
-        current_fn:   e.current_fn
-    );
-}
-
-CEmitter set_fn(CEmitter e, string fn_name) {
-    return CEmitter(
-        lines:        e.lines,
-        temp_counter: 0,
-        current_fn:   fn_name
-    );
-}
-
-string next_temp(CEmitter e) {
-    return "_tmp" + string(e.temp_counter);
-}
-
-CEmitter inc_temp(CEmitter e) {
-    return CEmitter(
-        lines:        e.lines,
-        temp_counter: e.temp_counter + 1,
-        current_fn:   e.current_fn
-    );
-}
-
-string join_lines(list(string) lines) {
-    mutable string out = "";
-    mutable int i = 0;
-    while i < lines.len() {
-        if i > 0 { out = out + "\n"; }
-        out = out + lines.get(i);
-        i = i + 1;
-    }
-    return out;
 }

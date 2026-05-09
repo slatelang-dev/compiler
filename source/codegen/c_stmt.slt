@@ -16,7 +16,7 @@ string indent(int level) {
     return s;
 }
 
-string emit_block_body(Node block, int level, Registry reg, table(string, string) var_types, bool is_main) {
+string emit_block_body(Node block, int level, Registry reg, table(string, string) var_types, bool is_main, string fn_ret_slate_type) {
     mutable string s = "";
     mutable table(string, string) local_types = var_types;
     mutable table(string, string) current_scope = empty;
@@ -38,13 +38,13 @@ string emit_block_body(Node block, int level, Registry reg, table(string, string
             current_scope = current_scope.set(stmt.value, type_str);
             local_types = local_types.set(stmt.value, type_str);
         }
-        s = s + emit_stmt(stmt, level, reg, local_types, is_main, ad) + "\n";
+        s = s + emit_stmt(stmt, level, reg, local_types, is_main, ad, fn_ret_slate_type) + "\n";
         i = i + 1;
     }
     return s;
 }
 
-string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_types, bool is_main, bool already_declared) {
+string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_types, bool is_main, bool already_declared, string fn_ret_slate_type) {
     string ind = indent(level);
 
     # Variable declarations
@@ -107,6 +107,9 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
             return ind + "return;";
         }
         TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        if registry_has_enum(reg, val.slate_type) and fn_ret_slate_type == "string" {
+            return ind + "return " + val.slate_type + "_to_str(" + val.code + ");";
+        }
         return ind + "return " + val.code + ";";
     }
 
@@ -120,15 +123,15 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node then_block   = stmt.children.get(1);
         mutable string res = ind + "if (" + cond.code + ") {\n";
-        res = res + emit_block_body(then_block, level + 1, reg, var_types, is_main);
+        res = res + emit_block_body(then_block, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         if stmt.children.len() > 2 {
             Node else_part = stmt.children.get(2);
             if else_part.kind == NodeKind.If {
-                res = res + " else " + emit_stmt(else_part, level, reg, var_types, is_main, false);
+                res = res + " else " + emit_stmt(else_part, level, reg, var_types, is_main, false, fn_ret_slate_type);
             } else {
                 res = res + " else {\n";
-                res = res + emit_block_body(else_part, level + 1, reg, var_types, is_main);
+                res = res + emit_block_body(else_part, level + 1, reg, var_types, is_main, fn_ret_slate_type);
                 res = res + ind + "}";
             }
         }
@@ -140,7 +143,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg, var_types);
         Node body      = stmt.children.get(1);
         mutable string res = ind + "while (" + cond.code + ") {\n";
-        res = res + emit_block_body(body, level + 1, reg, var_types, is_main);
+        res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
@@ -152,7 +155,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         TypedExpr end_val = emit_typed_expr(stmt.children.get(1), reg, var_types);
         Node body         = stmt.children.get(2);
         mutable string res = ind + "for (int64_t " + var_name + " = " + start.code + "; " + var_name + " < " + end_val.code + "; " + var_name + "++) {\n";
-        res = res + emit_block_body(body, level + 1, reg, var_types, is_main);
+        res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
@@ -167,7 +170,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         mutable string res = ind + "int64_t " + len_var + " = slate_len(" + iter.code + ");\n";
         res = res + ind + "for (int64_t " + idx_var + " = 0; " + idx_var + " < " + len_var + "; " + idx_var + "++) {\n";
         res = res + indent(level + 1) + "void* " + var_name + " = slate_get(" + iter.code + ", " + idx_var + ");\n";
-        res = res + emit_block_body(body, level + 1, reg, var_types, is_main);
+        res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
@@ -186,7 +189,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
                 branch = ind + "if ";
             } else if pattern == "else" {
                 res = res + " else {\n";
-                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main);
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
                 res = res + ind + "}";
                 i = i + 1;
             } else {
@@ -207,7 +210,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
                 } else {
                     res = res + branch + "(0) {\n";
                 }
-                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main);
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
                 res = res + ind + "}";
             }
             i = i + 1;
@@ -218,7 +221,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     # Block
     if stmt.kind == NodeKind.Block {
         mutable string res = ind + "{\n";
-        res = res + emit_block_body(stmt, level + 1, reg, var_types, is_main);
+        res = res + emit_block_body(stmt, level + 1, reg, var_types, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }

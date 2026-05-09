@@ -61,21 +61,43 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
             if is_numeric_node(left) or is_numeric_node(right) {
                 return typed("(" + left_code + " + " + right_code + ")", left_te.slate_type);
             }
-            return typed("slate_concat(" + left_code + ", " + right_code + ")", "string");
+            string cat_lc = left_code;
+            string cat_rc = right_code;
+            if registry_has_enum(reg, left_te.slate_type) {
+                cat_lc = left_te.slate_type + "_to_str(" + cat_lc + ")";
+            }
+            if registry_has_enum(reg, right_te.slate_type) {
+                cat_rc = right_te.slate_type + "_to_str(" + cat_rc + ")";
+            }
+            return typed("slate_concat(" + cat_lc + ", " + cat_rc + ")", "string");
         }
         if op == "and" { return typed_bool("(" + left_code + " && " + right_code + ")"); }
         if op == "or"  { return typed_bool("(" + left_code + " || " + right_code + ")"); }
         if op == "==" {
-            if left_te.slate_type == "string" or right_te.slate_type == "string" {
-                return typed_bool("(slate_strcmp(" + left_code + ", " + right_code + ") == 0)");
+            string eq_lc = left_code;
+            string eq_rc = right_code;
+            if registry_has_enum(reg, left_te.slate_type) and right_te.slate_type == "string" {
+                eq_lc = left_te.slate_type + "_to_str(" + eq_lc + ")";
+            } else if registry_has_enum(reg, right_te.slate_type) and left_te.slate_type == "string" {
+                eq_rc = right_te.slate_type + "_to_str(" + eq_rc + ")";
             }
-            return typed_bool("(" + left_code + " == " + right_code + ")");
+            if left_te.slate_type == "string" or right_te.slate_type == "string" {
+                return typed_bool("(slate_strcmp(" + eq_lc + ", " + eq_rc + ") == 0)");
+            }
+            return typed_bool("(" + eq_lc + " == " + eq_rc + ")");
         }
         if op == "!=" {
-            if left_te.slate_type == "string" or right_te.slate_type == "string" {
-                return typed_bool("(slate_strcmp(" + left_code + ", " + right_code + ") != 0)");
+            string neq_lc = left_code;
+            string neq_rc = right_code;
+            if registry_has_enum(reg, left_te.slate_type) and right_te.slate_type == "string" {
+                neq_lc = left_te.slate_type + "_to_str(" + neq_lc + ")";
+            } else if registry_has_enum(reg, right_te.slate_type) and left_te.slate_type == "string" {
+                neq_rc = right_te.slate_type + "_to_str(" + neq_rc + ")";
             }
-            return typed_bool("(" + left_code + " != " + right_code + ")");
+            if left_te.slate_type == "string" or right_te.slate_type == "string" {
+                return typed_bool("(slate_strcmp(" + neq_lc + ", " + neq_rc + ") != 0)");
+            }
+            return typed_bool("(" + neq_lc + " != " + neq_rc + ")");
         }
         if op == "<"   { return typed_bool("(" + left_code + " < " + right_code + ")"); }
         if op == ">"   { return typed_bool("(" + left_code + " > " + right_code + ")"); }
@@ -204,17 +226,25 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
     # print() -> puts (automatically adds newline)
     if fn_name == "print" {
         if args.len() == 0 { return "puts(\"\")"; }
-        return "puts(" + emit_expr(args.get(0), reg, var_types) + ")";
+        TypedExpr arg_te = emit_typed_expr(args.get(0), reg, var_types);
+        if registry_has_enum(reg, arg_te.slate_type) {
+            return "puts(" + arg_te.slate_type + "_to_str(" + arg_te.code + "))";
+        }
+        return "puts(" + arg_te.code + ")";
     }
 
     # Builtin type conversions
     if fn_name == "string" {
         if args.len() == 0 { return "\"\""; }
         Node arg = args.get(0);
-        if arg.kind == NodeKind.FloatLit or arg.kind == NodeKind.FloatLit {
-            return "slate_float_to_str(" + emit_expr(arg, reg, var_types) + ")";
+        TypedExpr arg_te = emit_typed_expr(arg, reg, var_types);
+        if registry_has_enum(reg, arg_te.slate_type) {
+            return arg_te.slate_type + "_to_str(" + arg_te.code + ")";
         }
-        return "slate_int_to_str(" + emit_expr(arg, reg, var_types) + ")";
+        if arg.kind == NodeKind.FloatLit or arg.kind == NodeKind.FloatLit {
+            return "slate_float_to_str(" + arg_te.code + ")";
+        }
+        return "slate_int_to_str(" + arg_te.code + ")";
     }
     if fn_name == "int" {
         if args.len() == 0 { return "0"; }

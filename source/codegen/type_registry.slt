@@ -175,16 +175,31 @@ string emit_field_access(Registry r, string struct_type, string target_expr, str
     if struct_type == "" or struct_type == "ptr" or struct_type == "var" or struct_type == "unknown" {
         string owner = find_field_owner(r, field_name, struct_type);
         if owner != "" {
-            return "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+            string access = "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+            string field_type = lookup_field_type(r, owner, field_name);
+            if registry_has_enum(r, field_type) {
+                return "slate_" + field_type + "_to_str(" + access + ")";
+            }
+            return access;
         }
         return target_expr + "->" + field_name;
     }
     if registry_has_struct(r, struct_type) {
-        return "((slate_" + struct_type + "*)" + target_expr + ")->" + field_name;
+        string access = "((slate_" + struct_type + "*)" + target_expr + ")->" + field_name;
+        string field_type = lookup_field_type(r, struct_type, field_name);
+        if registry_has_enum(r, field_type) {
+            return "slate_" + field_type + "_to_str(" + access + ")";
+        }
+        return access;
     }
     string owner = find_field_owner(r, field_name, struct_type);
     if owner != "" {
-        return "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+        string access = "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+        string field_type = lookup_field_type(r, owner, field_name);
+        if registry_has_enum(r, field_type) {
+            return "slate_" + field_type + "_to_str(" + access + ")";
+        }
+        return access;
     }
     return target_expr + "->" + field_name;
 }

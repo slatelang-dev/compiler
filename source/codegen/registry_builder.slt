@@ -154,5 +154,41 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "toupper",   "int");
     reg = register_fn(reg, "WEXITSTATUS", "int");
 
+    # Slate builtin conversions
+    reg = register_fn(reg, "print",     "int");
+    reg = register_fn(reg, "string",    "string");
+    reg = register_fn(reg, "int",       "int");
+    reg = register_fn(reg, "float",     "float");
+    reg = register_fn(reg, "bool",      "bool");
+
+    # Common method return types (used by c_expr.slt emit_method_call)
+    reg = register_fn(reg, "len",       "int");
+    reg = register_fn(reg, "get",       "ptr");
+    reg = register_fn(reg, "set",       "ptr");
+    reg = register_fn(reg, "add",       "list");
+    reg = register_fn(reg, "has",       "bool");
+    reg = register_fn(reg, "keys",      "list");
+    reg = register_fn(reg, "values",    "list");
+    reg = register_fn(reg, "split",     "list");
+    reg = register_fn(reg, "contains",  "bool");
+    reg = register_fn(reg, "starts_with", "bool");
+    reg = register_fn(reg, "ends_with", "bool");
+    reg = register_fn(reg, "trim",      "string");
+    reg = register_fn(reg, "upper",     "string");
+    reg = register_fn(reg, "lower",     "string");
+    reg = register_fn(reg, "chars",     "list");
+    reg = register_fn(reg, "first",     "ptr");
+    reg = register_fn(reg, "last",      "ptr");
+    reg = register_fn(reg, "remove",    "list");
+    reg = register_fn(reg, "sort",      "list");
+    reg = register_fn(reg, "merge",     "list");
+    reg = register_fn(reg, "replace",   "string");
+    reg = register_fn(reg, "reverse",   "string");
+    reg = register_fn(reg, "repeat",    "string");
+    reg = register_fn(reg, "exists",    "bool");
+    reg = register_fn(reg, "read",      "string");
+    reg = register_fn(reg, "write",     "int");
+    reg = register_fn(reg, "append",    "int");
+
     return reg;
 }

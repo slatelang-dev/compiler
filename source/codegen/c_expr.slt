@@ -20,6 +20,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         val = val.replace("\n", "\\n");
         val = val.replace("\r", "\\r");
         val = val.replace("\t", "\\t");
+        val = val.replace("\u001b", "\\x1b");
         return typed_str("\"" + val + "\"");
     }
     if expr.kind == NodeKind.CharLit {

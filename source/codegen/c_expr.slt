@@ -107,7 +107,8 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         string method = expr.value;
         TypedExpr target_te = emit_typed_expr(target, reg, var_types);
         string method_code = emit_method_call(target, method, expr.children, reg, var_types);
-        return typed(method_code, "int");
+        string method_type = lookup_fn_return(reg, method);
+        return typed(method_code, method_type);
     }
 
     if expr.kind == NodeKind.FieldAccess {
@@ -304,17 +305,31 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
             }
             return "slate_table_get(" + target_expr + ", " + idx_arg + ")";
         }
-        return "slate_get(" + target_expr + ", " + idx_arg + ")";
+        if args.len() > 1 {
+            TypedExpr idx_te = emit_typed_expr(args.get(1), reg, var_types);
+            if idx_te.slate_type == "int" {
+                return "slate_get(" + target_expr + ", " + idx_arg + ")";
+            }
+        }
+        return "slate_table_get(" + target_expr + ", " + idx_arg + ")";
     }
     if method == "set" {
         string key_arg = emit_expr(args.get(1), reg, var_types);
         string val_arg = emit_expr(args.get(2), reg, var_types);
+        bool is_val_int = false;
+        if args.len() > 2 {
+            TypedExpr val_te = emit_typed_expr(args.get(2), reg, var_types);
+            is_val_int = val_te.slate_type == "int";
+        }
         TypedExpr target_te = emit_typed_expr(target, reg, var_types);
         if target_te.slate_type.starts_with("table") {
-            if target_te.slate_type.contains(", int") {
+            if target_te.slate_type.contains(", int") or is_val_int {
                 return "slate_table_set(" + target_expr + ", " + key_arg + ", slate_box_int(" + val_arg + "))";
             }
             return "slate_table_set(" + target_expr + ", " + key_arg + ", " + val_arg + ")";
+        }
+        if is_val_int {
+            return "slate_table_set(" + target_expr + ", " + key_arg + ", slate_box_int(" + val_arg + "))";
         }
         return "slate_table_set(" + target_expr + ", " + key_arg + ", " + val_arg + ")";
     }

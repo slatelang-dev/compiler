@@ -48,11 +48,9 @@ string emit_fn(Node fn_decl, Registry reg) {
     }
 
     bool is_main_fn = (fn_name == "main");
-    mutable int j = 0;
-    while j < body.children.len() {
-        string stmt_code = emit_stmt(body.children.get(j), 1, reg, var_types, is_main_fn, false);
-        res = res + stmt_code + "\n";
-        j = j + 1;
+    string block_code = emit_block_body(body, 1, reg, var_types, is_main_fn);
+    if block_code.len() > 0 {
+        res = res + block_code + "\n";
     }
 
     if fn_name == "main" {

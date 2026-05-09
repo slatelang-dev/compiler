@@ -490,7 +490,11 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
         if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
             return target.value + "_" + expr.value;
         }
-        return emit_field(expr.value, target_expr, reg, "");
+        string target_type = "";
+        if target.kind == NodeKind.Ident and var_types.has(target.value) {
+            target_type = var_types.get(target.value);
+        }
+        return emit_field(expr.value, target_expr, reg, target_type);
     }
 
     if expr.kind == NodeKind.Interp {

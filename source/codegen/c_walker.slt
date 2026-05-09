@@ -140,6 +140,36 @@ string emit_fn_prototype(Node fn_decl, Registry reg) {
     return ret + " " + fn_name + "(" + params + ");\n";
 }
 
+# Emit only struct definitions from a program
+
+string emit_structs_only(Node program, Registry reg) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.StructDecl {
+            out = out + emit_struct(decl, reg) + "\n";
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
+# Emit only enum definitions from a program
+
+string emit_enums_only(Node program, Registry reg) {
+    mutable string out = "";
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.EnumDecl {
+            out = out + emit_enum(decl, reg) + "\n";
+        }
+        i = i + 1;
+    }
+    return out;
+}
+
 # Emit source content for a module (fn bodies only)
 # The .c file includes slate_fwd.h instead of slate_runtime.h
 

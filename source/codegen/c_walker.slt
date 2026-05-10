@@ -98,7 +98,7 @@ string emit_enum(Node enum_decl, Registry reg) {
         i = i + 1;
     }
     res = res + "} slate_" + name + ";\n";
-    res = res + "static inline const char* slate_" + name + "_to_str(slate_" + name + " val) {\n";
+    res = res + "static inline char* slate_" + name + "_to_str(slate_" + name + " val) {\n";
     res = res + "    switch (val) {\n";
     i = 0;
     while i < enum_decl.children.len() {

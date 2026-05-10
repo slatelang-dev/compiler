@@ -63,34 +63,6 @@ LoadedModule load_entry(Project p) {
     return load_module(p.name, p.entry);
 }
 
-bool all_modules_ok(list(LoadedModule) modules) {
-    mutable bool all_ok = true;
-    mutable int i = 0;
-    while i < modules.len() {
-        if modules.get(i).success == false {
-            all_ok = false;
-        }
-        i += 1;
-    }
-    return all_ok;
-}
-
-string first_module_error(list(LoadedModule) modules) {
-    mutable int i = 0;
-    while i < modules.len() {
-        LoadedModule m = modules.get(i);
-        if m.success == false {
-            return m.error;
-        }
-        i += 1;
-    }
-    return "";
-}
-
-bool module_already_loaded(table(string, string) seen, string path) {
-    return seen.has(path);
-}
-
 string extract_mod_name(string mod_path) {
     list(string) parts = mod_path.split("/");
     string name = parts.get(parts.len() - 1);
@@ -184,7 +156,7 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
         if decl.kind == NodeKind.Use {
             string mod_name = decl.value;
             string mod_path = resolve_module_path(mod_name, base_path, home_dir);
-            if module_already_loaded(queued, mod_path) == false {
+            if queued.has(mod_path) == false {
                 queue = queue.add(mod_path);
                 queue_bases = queue_bases.add(resolve_parent(mod_path));
                 queued = queued.set(mod_path, "1");
@@ -199,7 +171,7 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
         string sub_base = queue_bases.get(head);
         head = head + 1;
 
-        if module_already_loaded(visited, mod_path) {
+        if visited.has(mod_path) {
         } else {
             visited = visited.set(mod_path, "1");
             string mod_name = extract_mod_name(mod_path);
@@ -211,8 +183,8 @@ list(ModuleStub) discover_modules(Node program, string base_path, list(string) s
                 while j < imports.len() {
                     string child_mod_name = imports.get(j);
                     string child_mod_path = resolve_module_path(child_mod_name, sub_base, home_dir);
-                    if module_already_loaded(visited, child_mod_path) == false {
-                        if module_already_loaded(queued, child_mod_path) == false {
+                    if visited.has(child_mod_path) == false {
+                        if queued.has(child_mod_path) == false {
                             queue = queue.add(child_mod_path);
                             queue_bases = queue_bases.add(resolve_parent(child_mod_path));
                             queued = queued.set(child_mod_path, "1");

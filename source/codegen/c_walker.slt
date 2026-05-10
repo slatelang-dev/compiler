@@ -188,6 +188,3 @@ string emit_source(Node program, Registry reg) {
     return "#include \"slate_fwd.h\"\n\n" + fns;
 }
 
-string walk_module(Node program, Registry reg) {
-    return emit_source(program, reg);
-}

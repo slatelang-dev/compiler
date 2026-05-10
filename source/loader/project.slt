@@ -58,17 +58,7 @@ Project load_project(string toml_source) {
     return make_project(name, version, description, entry, bin, is_bare);
 }
 
-# Load project from slate.toml in current directory
-
-Project load_project_file() {
-    string toml_source = file("slate.toml").read();
-    return load_project(toml_source);
-}
-
 bool project_valid(Project p) {
     return p.name.len() > 0 and p.entry.len() > 0;
 }
 
-string project_display(Project p) {
-    return p.name + " v" + p.version;
-}

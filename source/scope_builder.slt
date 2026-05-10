@@ -65,6 +65,28 @@ string find_source_root(string path) {
     return "";
 }
 
+string find_module_in_project(string mod_name, string source_root) {
+    string proj_root = resolve_parent(source_root);
+    if file(proj_root + "/slate.toml").exists() == false { return ""; }
+    string toml_content = file(proj_root + "/slate.toml").read();
+    Project p = load_project(toml_content);
+    if p.entry == "" { return ""; }
+    string entry_path = proj_root + "/" + p.entry;
+    if file(entry_path).exists() == false { return ""; }
+    string entry_source = file(entry_path).read();
+    ParseResult entry_pr = parse(entry_source);
+    if entry_pr.success == false { return ""; }
+    list(ModuleStub) all_stubs = discover_modules(entry_pr.node, source_root, empty);
+    mutable int si = 0;
+    while si < all_stubs.len() {
+        if extract_mod_name(all_stubs.get(si).path) == mod_name {
+            return all_stubs.get(si).path;
+        }
+        si += 1;
+    }
+    return "";
+}
+
 Scope register_transitive(
     Node prog,
     string base_path,
@@ -73,7 +95,9 @@ Scope register_transitive(
 ) {
     mutable Scope out_scope = init_scope;
     mutable table(string, int) visited_set = visited;
-    mutable list(string) mod_queue = empty;
+    mutable list(string) queue_paths = empty;
+    mutable list(string) queue_bases = empty;
+    mutable string resolved_root = "";
 
     mutable int ti = 0;
     while ti < prog.children.len() {
@@ -84,12 +108,17 @@ Scope register_transitive(
                 string base_root = find_source_root(base_path);
                 if base_root != "" {
                     mod_path = resolve_module_path(outer_decl.value, base_root, home());
+                    if file(mod_path).exists() == false {
+                        if resolved_root == "" { resolved_root = base_root; }
+                        mod_path = find_module_in_project(outer_decl.value, base_root);
+                    }
                 }
             }
             if mod_path != "" {
                 if visited_set.has(mod_path) == false {
                     visited_set = visited_set.set(mod_path, 1);
-                    mod_queue = mod_queue.add(mod_path);
+                    queue_paths = queue_paths.add(mod_path);
+                    queue_bases = queue_bases.add(resolve_parent(mod_path));
                 }
             }
         }
@@ -97,27 +126,33 @@ Scope register_transitive(
     }
 
     mutable int qi = 0;
-    while qi < mod_queue.len() {
-        string mod_file = mod_queue.get(qi);
+    while qi < queue_paths.len() {
+        string mod_file = queue_paths.get(qi);
+        string mod_base = queue_bases.get(qi);
         string mod_source = file(mod_file).read();
         if mod_source != "" {
             ParseResult pr = parse(mod_source);
             if pr.success {
                 out_scope = register_module_symbols(pr.node, out_scope);
-                string mod_parent = resolve_parent(mod_file);
-                string mod_root = find_source_root(mod_file);
                 mutable int dj = 0;
                 while dj < pr.node.children.len() {
                     Node inner_decl = pr.node.children.get(dj);
                     if inner_decl.kind == NodeKind.Use {
-                        mutable string dep_path = resolve_module_path(inner_decl.value, mod_parent, home());
-                        if file(dep_path).exists() == false and mod_root != "" {
-                            dep_path = resolve_module_path(inner_decl.value, mod_root, home());
+                        mutable string dep_path = resolve_module_path(inner_decl.value, mod_base, home());
+                        if file(dep_path).exists() == false {
+                            string dep_root = find_source_root(mod_file);
+                            if dep_root != "" {
+                                dep_path = resolve_module_path(inner_decl.value, dep_root, home());
+                            }
+                        }
+                        if file(dep_path).exists() == false and resolved_root != "" {
+                            dep_path = find_module_in_project(inner_decl.value, resolved_root);
                         }
                         if dep_path != "" {
                             if visited_set.has(dep_path) == false {
                                 visited_set = visited_set.set(dep_path, 1);
-                                mod_queue = mod_queue.add(dep_path);
+                                queue_paths = queue_paths.add(dep_path);
+                                queue_bases = queue_bases.add(resolve_parent(dep_path));
                             }
                         }
                     }

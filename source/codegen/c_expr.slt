@@ -274,6 +274,9 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
     if fn_name == "file" {
         return "slate_file(" + emit_args(args, 0, reg, var_types) + ")";
     }
+    if fn_name == "exec" {
+        return "slate_exec(" + emit_args(args, 0, reg, var_types) + ")";
+    }
     if fn_name == "run" {
         if args.len() == 1 {
             TypedExpr arg_te = emit_typed_expr(args.get(0), reg, var_types);

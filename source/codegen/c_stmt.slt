@@ -59,6 +59,7 @@ string emit_block_body(Node block, int level, Registry reg, table(string, string
 }
 
 string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_types, bool is_main, bool already_declared, string fn_ret_slate_type) {
+    mutable table(string, string) var_types_m = var_types;
     string ind = indent(level);
 
     # Variable declarations
@@ -74,7 +75,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
             if type_node.kind == NodeKind.TypeList { declared_type = "list"; }
             if type_node.kind == NodeKind.TypeTable { declared_type = "table"; }
         }
-        var_types = var_types.set(stmt.value, declared_type);
+        var_types_m = var_types_m.set(stmt.value, declared_type);
         mutable string c_var_type = c_type_with_reg(declared_type, reg);
         if init.kind == NodeKind.Empty {
             if type_node.kind == NodeKind.TypeList {
@@ -88,7 +89,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
             if already_declared { return ind + var_name + " = NULL;"; }
             return ind + c_var_type + " " + var_name + " = NULL;";
         }
-        TypedExpr init_te = emit_typed_expr(init, reg, var_types);
+        TypedExpr init_te = emit_typed_expr(init, reg, var_types_m);
         if registry_has_struct(reg, declared_type) {
             c_var_type = "slate_" + declared_type + "*";
         } else if registry_has_struct(reg, init_te.slate_type) {
@@ -103,7 +104,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     # Assignment
     if stmt.kind == NodeKind.Assign {
         string var_name = safe_ident(stmt.value);
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         return ind + var_name + " = " + val.code + ";";
     }
 
@@ -112,7 +113,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         list(string) parts = stmt.value.split(" ");
         string var_name = safe_ident(parts.get(0));
         string op       = parts.get(1);
-        TypedExpr val   = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr val   = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         return ind + var_name + " = " + var_name + " " + op + " " + val.code + ";";
     }
 
@@ -124,7 +125,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
             }
             return ind + "return;";
         }
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         if registry_has_enum(reg, val.slate_type) and fn_ret_slate_type == "string" {
             return ind + "return slate_" + val.slate_type + "_to_str(" + val.code + ");";
         }
@@ -138,18 +139,18 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
 
     # If / else if / else
     if stmt.kind == NodeKind.If {
-        TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr cond    = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         Node then_block   = stmt.children.get(1);
         mutable string res = ind + "if (" + strip_outer_parens(cond.code) + ") {\n";
-        res = res + emit_block_body(then_block, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+        res = res + emit_block_body(then_block, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         if stmt.children.len() > 2 {
             Node else_part = stmt.children.get(2);
             if else_part.kind == NodeKind.If {
-                res = res + " else " + emit_stmt(else_part, level, reg, var_types, is_main, false, fn_ret_slate_type);
+                res = res + " else " + emit_stmt(else_part, level, reg, var_types_m, is_main, false, fn_ret_slate_type);
             } else {
                 res = res + " else {\n";
-                res = res + emit_block_body(else_part, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+                res = res + emit_block_body(else_part, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
                 res = res + ind + "}";
             }
         }
@@ -158,10 +159,10 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
 
     # While
     if stmt.kind == NodeKind.While {
-        TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr cond = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         Node body      = stmt.children.get(1);
         mutable string res = ind + "while (" + strip_outer_parens(cond.code) + ") {\n";
-        res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+        res = res + emit_block_body(body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
@@ -169,11 +170,11 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     # For (range)
     if stmt.kind == NodeKind.For {
         string var_name   = safe_ident(stmt.value);
-        TypedExpr start   = emit_typed_expr(stmt.children.get(0), reg, var_types);
-        TypedExpr end_val = emit_typed_expr(stmt.children.get(1), reg, var_types);
+        TypedExpr start   = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
+        TypedExpr end_val = emit_typed_expr(stmt.children.get(1), reg, var_types_m);
         Node body         = stmt.children.get(2);
         mutable string res = ind + "for (int64_t " + var_name + " = " + start.code + "; " + var_name + " < " + end_val.code + "; " + var_name + "++) {\n";
-        res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+        res = res + emit_block_body(body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
@@ -181,21 +182,21 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     # ForIn
     if stmt.kind == NodeKind.ForIn {
         string var_name  = safe_ident(stmt.value);
-        TypedExpr iter   = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr iter   = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         Node body        = stmt.children.get(1);
         string len_var  = var_name + "_len";
         string idx_var  = var_name + "_idx";
         mutable string res = ind + "int64_t " + len_var + " = slate_len(" + iter.code + ");\n";
         res = res + ind + "for (int64_t " + idx_var + " = 0; " + idx_var + " < " + len_var + "; " + idx_var + "++) {\n";
         res = res + indent(level + 1) + "void* " + var_name + " = slate_get(" + iter.code + ", " + idx_var + ");\n";
-        res = res + emit_block_body(body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+        res = res + emit_block_body(body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
 
     # Match
     if stmt.kind == NodeKind.Match {
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types);
+        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
         mutable string res = "";
         mutable int i = 1;
         while i < stmt.children.len() {
@@ -207,7 +208,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
                 branch = ind + "if ";
             } else if pattern == "else" {
                 res = res + " else {\n";
-                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
                 res = res + ind + "}";
                 i = i + 1;
             } else {
@@ -219,7 +220,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
                 } else if pattern == "none" or pattern == "error" {
                     res = res + branch + "(" + val.code + " == NULL) {\n";
                 } else if pattern == "expr" {
-                    TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg, var_types);
+                    TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg, var_types_m);
                     if pat_val.slate_type == "string" {
                         res = res + branch + "(slate_strcmp(" + val.code + ", " + pat_val.code + ") == 0) {\n";
                     } else {
@@ -228,7 +229,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
                 } else {
                     res = res + branch + "(0) {\n";
                 }
-                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
                 res = res + ind + "}";
             }
             i = i + 1;
@@ -239,7 +240,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     # Block
     if stmt.kind == NodeKind.Block {
         mutable string res = ind + "{\n";
-        res = res + emit_block_body(stmt, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+        res = res + emit_block_body(stmt, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
         res = res + ind + "}";
         return res;
     }
@@ -247,7 +248,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
     # Expression statement (call, method call used as stmt)
     if stmt.kind == NodeKind.Call
     or stmt.kind == NodeKind.MethodCall {
-        TypedExpr te = emit_typed_expr(stmt, reg, var_types);
+        TypedExpr te = emit_typed_expr(stmt, reg, var_types_m);
         return ind + te.code + ";";
     }
 

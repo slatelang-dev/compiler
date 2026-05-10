@@ -14,7 +14,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         return typed(expr.value, "float");
     }
     if expr.kind == NodeKind.StringLit {
-        string val = expr.value;
+        mutable string val = expr.value;
         val = val.replace("\\", "\\\\");
         val = val.replace("\"", "\\\"");
         val = val.replace("\n", "\\n");
@@ -62,8 +62,8 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
             if is_numeric_node(left) or is_numeric_node(right) {
                 return typed("(" + left_code + " + " + right_code + ")", left_te.slate_type);
             }
-            string cat_lc = left_code;
-            string cat_rc = right_code;
+            mutable string cat_lc = left_code;
+            mutable string cat_rc = right_code;
             if registry_has_enum(reg, left_te.slate_type) {
                 cat_lc = "slate_" + left_te.slate_type + "_to_str(" + cat_lc + ")";
             }
@@ -75,8 +75,8 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         if op == "and" { return typed_bool("(" + left_code + " && " + right_code + ")"); }
         if op == "or"  { return typed_bool("(" + left_code + " || " + right_code + ")"); }
         if op == "==" {
-            string eq_lc = left_code;
-            string eq_rc = right_code;
+            mutable string eq_lc = left_code;
+            mutable string eq_rc = right_code;
             if registry_has_enum(reg, left_te.slate_type) and right_te.slate_type == "string" {
                 eq_lc = "slate_" + left_te.slate_type + "_to_str(" + eq_lc + ")";
             } else if registry_has_enum(reg, right_te.slate_type) and left_te.slate_type == "string" {
@@ -88,8 +88,8 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
             return typed_bool("(" + eq_lc + " == " + eq_rc + ")");
         }
         if op == "!=" {
-            string neq_lc = left_code;
-            string neq_rc = right_code;
+            mutable string neq_lc = left_code;
+            mutable string neq_rc = right_code;
             if registry_has_enum(reg, left_te.slate_type) and right_te.slate_type == "string" {
                 neq_lc = "slate_" + left_te.slate_type + "_to_str(" + neq_lc + ")";
             } else if registry_has_enum(reg, right_te.slate_type) and left_te.slate_type == "string" {
@@ -168,7 +168,7 @@ string emit_literal(Node n) {
     if n.kind == NodeKind.IntLit { return n.value; }
     if n.kind == NodeKind.FloatLit { return n.value; }
     if n.kind == NodeKind.StringLit {
-        string val = n.value;
+        mutable string val = n.value;
         val = val.replace("\\", "\\\\");
         val = val.replace("\"", "\\\"");
         val = val.replace("\n", "\\n");
@@ -357,7 +357,7 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     if method == "set" {
         string key_arg = emit_expr(args.get(1), reg, var_types);
         string val_arg = emit_expr(args.get(2), reg, var_types);
-        bool is_val_int = false;
+        mutable bool is_val_int = false;
         if args.len() > 2 {
             TypedExpr val_te = emit_typed_expr(args.get(2), reg, var_types);
             is_val_int = val_te.slate_type == "int";
@@ -493,7 +493,7 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
         if target.kind == NodeKind.Ident and lookup_enum_variant(reg, target.value, expr.value) >= 0 {
             return target.value + "_" + expr.value;
         }
-        string target_type = "";
+        mutable string target_type = "";
         if target.kind == NodeKind.Ident and var_types.has(target.value) {
             target_type = var_types.get(target.value);
         }

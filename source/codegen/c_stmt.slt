@@ -18,14 +18,14 @@ string indent(int level) {
 
 string strip_outer_parens(string code) {
     if code.len() >= 2 and code.starts_with("(") and code.ends_with(")") {
-        mutable list(string) ch = code.chars();
-        mutable list(string) inner = empty;
+        list(string) ch = code.chars();
+        mutable string inner = "";
         mutable int ci = 1;
         while ci < ch.len() - 1 {
-            inner = inner.add(ch.get(ci));
+            inner = inner + ch.get(ci);
             ci = ci + 1;
         }
-        return inner.merge("");
+        return inner;
     }
     return code;
 }

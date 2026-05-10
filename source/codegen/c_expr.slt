@@ -3,6 +3,7 @@ module c_expr;
 use c_types;
 use emitter;
 use type_registry;
+use registry_lookup;
 use slate;
 use c_literals;
 use c_ops;

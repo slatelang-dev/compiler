@@ -2,3 +2,4 @@ module loader;
 
 use project;
 use modules;
+use module_paths;

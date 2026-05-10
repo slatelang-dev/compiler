@@ -2,6 +2,7 @@ module modules;
 
 use project;
 use slate;
+use module_paths;
 
 struct ModuleStub {
     string name;
@@ -61,83 +62,6 @@ LoadedModule load_module(string name, string path) {
 
 LoadedModule load_entry(Project p) {
     return load_module(p.name, p.entry);
-}
-
-string extract_mod_name(string mod_path) {
-    list(string) parts = mod_path.split("/");
-    string name = parts.get(parts.len() - 1);
-    if name.ends_with(".slt") {
-        return name.replace(".slt", "");
-    }
-    return name;
-}
-
-list(string) scan_imports(string source) {
-    mutable list(string) imports = empty;
-    list(string) lines = source.split("\n");
-    mutable int i = 0;
-    while i < lines.len() {
-        string line = lines.get(i);
-        if line.starts_with("use ") {
-            string mod_name = line.replace("use ", "").replace(";", "");
-            imports = imports.add(mod_name);
-        }
-        i += 1;
-    }
-    return imports;
-}
-
-string normalize_path(string path) {
-    mutable string p = path;
-    while p.contains("//") {
-        p = p.replace("//", "/");
-    }
-    return p;
-}
-
-string resolve_parent(string mod_path) {
-    string mp = normalize_path(mod_path);
-    list(string) parts = mp.split("/");
-    mutable int effective_len = parts.len();
-    if effective_len > 0 and parts.get(effective_len - 1) == "" {
-        effective_len = effective_len - 1;
-    }
-    if effective_len <= 1 { return ""; }
-    mutable string parent = "";
-    mutable int i = 0;
-    while i < effective_len - 1 {
-        if i > 0 { parent = parent + "/"; }
-        parent = parent + parts.get(i);
-        i = i + 1;
-    }
-    return parent;
-}
-
-string resolve_module_path(string mod_name, string base_path, string home_path) {
-    string local_exports = base_path + "/" + mod_name + "/exports.slt";
-    string local_single = base_path + "/" + mod_name + ".slt";
-
-    if file(local_exports).exists() {
-        return normalize_path(local_exports);
-    }
-
-    if file(local_single).exists() {
-        return normalize_path(local_single);
-    }
-
-    string deps_dir = home_path + "/.slate/deps";
-    string deps_exports = deps_dir + "/" + mod_name + "/source/exports.slt";
-    string deps_lib = deps_dir + "/" + mod_name + "/source/lib.slt";
-
-    if file(deps_exports).exists() {
-        return normalize_path(deps_exports);
-    }
-
-    if file(deps_lib).exists() {
-        return normalize_path(deps_lib);
-    }
-
-    return normalize_path(local_exports);
 }
 
 list(ModuleStub) discover_modules(Node program, string base_path, list(string) seen) {

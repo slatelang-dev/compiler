@@ -1,0 +1,59 @@
+module c_stmt_helpers;
+
+use c_types;
+use emitter;
+use c_expr;
+use type_registry;
+use slate;
+
+string indent(int level) {
+    mutable string s = "";
+    mutable int i = 0;
+    while i < level {
+        s = s + "    ";
+        i = i + 1;
+    }
+    return s;
+}
+
+string strip_outer_parens(string code) {
+    if code.len() >= 2 and code.starts_with("(") and code.ends_with(")") {
+        list(string) ch = code.chars();
+        mutable string inner = "";
+        mutable int ci = 1;
+        while ci < ch.len() - 1 {
+            inner = inner + ch.get(ci);
+            ci = ci + 1;
+        }
+        return inner;
+    }
+    return code;
+}
+
+string emit_block_body(Node block, int level, Registry reg, table(string, string) var_types, bool is_main, string fn_ret_slate_type) {
+    mutable string s = "";
+    mutable table(string, string) local_types = var_types;
+    mutable table(string, string) current_scope = empty;
+    mutable int i = 0;
+    while i < block.children.len() {
+        Node stmt = block.children.get(i);
+        mutable bool ad = false;
+        if stmt.kind == NodeKind.VarDecl
+        or stmt.kind == NodeKind.MutableDecl
+        or stmt.kind == NodeKind.ConstDecl
+        or stmt.kind == NodeKind.AffineDecl {
+            Node type_node = stmt.children.get(0);
+            mutable string type_str = type_node.value;
+            if type_str == "" {
+                if type_node.kind == NodeKind.TypeList { type_str = "list"; }
+                if type_node.kind == NodeKind.TypeTable { type_str = "table"; }
+            }
+            ad = current_scope.has(stmt.value);
+            current_scope = current_scope.set(stmt.value, type_str);
+            local_types = local_types.set(stmt.value, type_str);
+        }
+        s = s + emit_stmt(stmt, level, reg, local_types, is_main, ad, fn_ret_slate_type) + "\n";
+        i = i + 1;
+    }
+    return s;
+}

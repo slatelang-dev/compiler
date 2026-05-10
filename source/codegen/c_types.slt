@@ -1,6 +1,7 @@
 module c_types;
 
 use type_registry;
+use registry_lookup;
 
 string c_type_with_reg(string slate_type, Registry reg) {
     if slate_type == "" { return "void*"; }

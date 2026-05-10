@@ -1,0 +1,105 @@
+module registry_lookup;
+
+use type_registry;
+use slate;
+
+string lookup_fn_return(Registry r, string name) {
+    if r.fn_returns.has(name) {
+        return r.fn_returns.get(name);
+    }
+    return "int";
+}
+
+string lookup_field_type(Registry r, string struct_name, string field_name) {
+    string key = struct_name + "." + field_name;
+    if r.field_types.has(key) {
+        return r.field_types.get(key);
+    }
+    string owner = find_field_owner(r, field_name, struct_name);
+    if owner != "" {
+        string owner_key = owner + "." + field_name;
+        if r.field_types.has(owner_key) {
+            return r.field_types.get(owner_key);
+        }
+    }
+    return "ptr";
+}
+
+string find_field_name(Registry r, string struct_name, int target_idx) {
+    mutable list(string) keys = r.field_indices.keys();
+    mutable int ki = 0;
+    while ki < keys.len() {
+        string key = keys.get(ki);
+        if key.starts_with(struct_name + ".") and key.ends_with(".idx") {
+            if int(r.field_indices.get(key)) == target_idx {
+                string partial = key.replace(struct_name + ".", "");
+                return partial.replace(".idx", "");
+            }
+        }
+        ki = ki + 1;
+    }
+    return "field_" + string(target_idx);
+}
+
+string find_field_owner(Registry r, string field_name, string target_type) {
+    mutable list(string) keys = r.field_owners.keys();
+    mutable string best = "";
+    mutable int ki = 0;
+    while ki < keys.len() {
+        string key = keys.get(ki);
+        if key.ends_with("." + field_name) {
+            string owner = r.field_owners.get(key);
+            if target_type != "" and owner == target_type {
+                return owner;
+            }
+            if best == "" {
+                best = owner;
+            }
+        }
+        ki = ki + 1;
+    }
+    return best;
+}
+
+int lookup_enum_variant(Registry r, string enum_name, string variant_name) {
+    string key = enum_name + "." + variant_name;
+    if r.enum_variants.has(key) {
+        return int(r.enum_variants.get(key));
+    }
+    return -1;
+}
+
+bool registry_has_struct(Registry r, string name) {
+    return r.struct_names.has(name);
+}
+
+bool registry_has_enum(Registry r, string name) {
+    mutable list(string) keys = r.enum_variants.keys();
+    string prefix = name + ".";
+    mutable int i = 0;
+    while i < keys.len() {
+        if keys.get(i).starts_with(prefix) {
+            return true;
+        }
+        i = i + 1;
+    }
+    return false;
+}
+
+string emit_field_access(Registry r, string struct_type, string target_expr, string field_name) {
+    if struct_type == "" or struct_type == "ptr" or struct_type == "var" or struct_type == "unknown" {
+        string owner = find_field_owner(r, field_name, struct_type);
+        if owner != "" {
+            return "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+        }
+        return target_expr + "->" + field_name;
+    }
+    if registry_has_struct(r, struct_type) {
+        return "((slate_" + struct_type + "*)" + target_expr + ")->" + field_name;
+    }
+    string owner = find_field_owner(r, field_name, struct_type);
+    if owner != "" {
+        return "((slate_" + owner + "*)" + target_expr + ")->" + field_name;
+    }
+    return target_expr + "->" + field_name;
+}

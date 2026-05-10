@@ -2,10 +2,12 @@ module codegen;
 
 use registry_builder;
 use type_registry;
+use registry_lookup;
 use c_types;
 use emitter;
 use c_expr;
 use c_literals;
 use c_ops;
 use c_stmt;
+use c_stmt_helpers;
 use c_walker;

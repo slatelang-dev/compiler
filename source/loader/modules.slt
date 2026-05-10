@@ -124,11 +124,16 @@ string normalize_path(string path) {
 }
 
 string resolve_parent(string mod_path) {
-    list(string) parts = mod_path.split("/");
-    if parts.len() <= 1 { return ""; }
+    string mp = normalize_path(mod_path);
+    list(string) parts = mp.split("/");
+    mutable int effective_len = parts.len();
+    if effective_len > 0 and parts.get(effective_len - 1) == "" {
+        effective_len = effective_len - 1;
+    }
+    if effective_len <= 1 { return ""; }
     mutable string parent = "";
     mutable int i = 0;
-    while i < parts.len() - 1 {
+    while i < effective_len - 1 {
         if i > 0 { parent = parent + "/"; }
         parent = parent + parts.get(i);
         i = i + 1;

@@ -4,7 +4,7 @@ use c_types;
 use emitter;
 use c_expr;
 use type_registry;
-use node;
+use slate;
 
 string indent(int level) {
     mutable string s = "";

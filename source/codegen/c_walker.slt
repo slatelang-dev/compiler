@@ -6,7 +6,6 @@ use c_stmt;
 use c_types;
 use type_registry;
 use registry_builder;
-use node;
 
 # Emit a single function declaration
 

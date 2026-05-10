@@ -1,6 +1,5 @@
 module registry_builder;
 
-use node;
 use type_registry;
 use slate;
 

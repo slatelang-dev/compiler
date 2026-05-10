@@ -3,7 +3,7 @@ module c_expr;
 use c_types;
 use emitter;
 use type_registry;
-use node;
+use slate;
 
 # Emit a typed expression — returns both C code and Slate type
 TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_types) {

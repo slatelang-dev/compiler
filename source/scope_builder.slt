@@ -143,6 +143,15 @@ Scope register_transitive(
         ti += 1;
     }
 
+    string exports_path = base_path + "/exports.slt";
+    if file(exports_path).exists() {
+        if visited_set.has(exports_path) == false {
+            visited_set = visited_set.set(exports_path, 1);
+            queue_paths = queue_paths.add(exports_path);
+            queue_bases = queue_bases.add(base_path);
+        }
+    }
+
     mutable int qi = 0;
     while qi < queue_paths.len() {
         string mod_file = queue_paths.get(qi);

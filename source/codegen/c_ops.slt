@@ -1,0 +1,10 @@
+module c_ops;
+
+use slate;
+
+string emit_binop(string op) {
+    if op == "and" { return "&&"; }
+    if op == "or" { return "||"; }
+    if op == "not" { return "!"; }
+    return op;
+}

@@ -4,6 +4,8 @@ use c_types;
 use emitter;
 use type_registry;
 use slate;
+use c_literals;
+use c_ops;
 
 # Emit a typed expression — returns both C code and Slate type
 TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_types) {
@@ -164,35 +166,6 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
     return typed("(fprintf(stderr, \"codegen: unhandled expr kind\\n\"), NULL)", "int");
 }
 
-string emit_literal(Node n) {
-    if n.kind == NodeKind.IntLit { return n.value; }
-    if n.kind == NodeKind.FloatLit { return n.value; }
-    if n.kind == NodeKind.StringLit {
-        mutable string val = n.value;
-        val = val.replace("\\", "\\\\");
-        val = val.replace("\"", "\\\"");
-        val = val.replace("\n", "\\n");
-        val = val.replace("\r", "\\r");
-        val = val.replace("\t", "\\t");
-        val = val.replace("\u001b", "\\x1b");
-        return "\"" + val + "\"";
-    }
-    if n.kind == NodeKind.CharLit { return n.value; }
-    if n.kind == NodeKind.BoolLit {
-        if n.value == "true" { return "1"; }
-        return "0";
-    }
-    if n.kind == NodeKind.None { return "NULL"; }
-    return "0";
-}
-
-string emit_binop(string op) {
-    if op == "and" { return "&&"; }
-    if op == "or" { return "||"; }
-    if op == "not" { return "!"; }
-    return op;
-}
-
 string emit_args(list(Node) args, int start, Registry reg, table(string, string) var_types) {
     mutable string s = "";
     mutable int i = start;
@@ -202,22 +175,6 @@ string emit_args(list(Node) args, int start, Registry reg, table(string, string)
         i = i + 1;
     }
     return s;
-}
-
-# Heuristic: is this node definitely a numeric (int/float) expression?
-# Used to decide between slate_concat and C + for the + operator.
-
-bool is_numeric_node(Node n) {
-    if n.kind == NodeKind.IntLit { return true; }
-    if n.kind == NodeKind.FloatLit { return true; }
-    if n.kind == NodeKind.BinaryOp {
-        string op = n.value;
-        if op == "-" or op == "*" or op == "/" or op == "%" { return true; }
-        if op == "+" {
-            return is_numeric_node(n.children.get(0)) or is_numeric_node(n.children.get(1));
-        }
-    }
-    return false;
 }
 
 string emit_call(Node expr, Registry reg, table(string, string) var_types) {

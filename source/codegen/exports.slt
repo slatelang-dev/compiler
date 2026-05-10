@@ -5,5 +5,7 @@ use type_registry;
 use c_types;
 use emitter;
 use c_expr;
+use c_literals;
+use c_ops;
 use c_stmt;
 use c_walker;

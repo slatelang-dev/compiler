@@ -32,6 +32,39 @@ Scope register_module_symbols(Node program, Scope scope) {
     return s;
 }
 
+string find_source_root(string path) {
+    mutable string dir = path;
+    mutable bool running = true;
+    while running {
+        string toml_path = dir + "/slate.toml";
+        if file(toml_path).exists() {
+            string toml_content = file(toml_path).read();
+            Project p = load_project(toml_content);
+            if p.entry.len() > 0 {
+                list(string) entry_parts = p.entry.split("/");
+                if entry_parts.len() > 1 {
+                    mutable string entry_dir = "";
+                    mutable int k = 0;
+                    while k < entry_parts.len() - 1 {
+                        if k > 0 { entry_dir = entry_dir + "/"; }
+                        entry_dir = entry_dir + entry_parts.get(k);
+                        k += 1;
+                    }
+                    return dir + "/" + entry_dir;
+                }
+            }
+            return dir + "/source";
+        }
+        string parent = resolve_parent(dir);
+        if parent == "" {
+            running = false;
+        } else {
+            dir = parent;
+        }
+    }
+    return "";
+}
+
 Scope register_transitive(
     Node program,
     string base_path,
@@ -46,7 +79,13 @@ Scope register_transitive(
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.Use {
-            string mod_path = resolve_module_path(decl.value, base_path, home());
+            mutable string mod_path = resolve_module_path(decl.value, base_path, home());
+            if file(mod_path).exists() == false {
+                string fallback = find_source_root(base_path);
+                if fallback != "" {
+                    mod_path = resolve_module_path(decl.value, fallback, home());
+                }
+            }
             if mod_path != "" {
                 if vis.has(mod_path) == false {
                     vis = vis.set(mod_path, 1);
@@ -66,11 +105,15 @@ Scope register_transitive(
             if pr.success {
                 s = register_module_symbols(pr.node, s);
                 string dep_base = resolve_parent(path);
+                string fallback = find_source_root(path);
                 mutable int j = 0;
                 while j < pr.node.children.len() {
                     Node decl = pr.node.children.get(j);
                     if decl.kind == NodeKind.Use {
-                        string dep_path = resolve_module_path(decl.value, dep_base, home());
+                        mutable string dep_path = resolve_module_path(decl.value, dep_base, home());
+                        if file(dep_path).exists() == false and fallback != "" {
+                            dep_path = resolve_module_path(decl.value, fallback, home());
+                        }
                         if dep_path != "" {
                             if vis.has(dep_path) == false {
                                 vis = vis.set(dep_path, 1);

@@ -2,3 +2,4 @@ module compiler;
 
 use loader;
 use codegen;
+use scope_builder;

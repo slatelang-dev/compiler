@@ -341,7 +341,7 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
         string idx_arg = emit_args(args, 1, reg, var_types);
         TypedExpr target_te = emit_typed_expr(target, reg, var_types);
         if target_te.slate_type.starts_with("table") {
-            if target_te.slate_type.contains(", int") {
+            if target_te.slate_type.contains(", int") or target_te.slate_type.contains(", bool") {
                 return "slate_unbox_int(slate_table_get(" + target_expr + ", " + idx_arg + "))";
             }
             return "slate_table_get(" + target_expr + ", " + idx_arg + ")";
@@ -357,19 +357,19 @@ string emit_method_call(Node target, string method, list(Node) args, Registry re
     if method == "set" {
         string key_arg = emit_expr(args.get(1), reg, var_types);
         string val_arg = emit_expr(args.get(2), reg, var_types);
-        mutable bool is_val_int = false;
+        mutable bool is_val_int_or_bool = false;
         if args.len() > 2 {
             TypedExpr val_te = emit_typed_expr(args.get(2), reg, var_types);
-            is_val_int = val_te.slate_type == "int";
+            is_val_int_or_bool = val_te.slate_type == "int" or val_te.slate_type == "bool";
         }
         TypedExpr target_te = emit_typed_expr(target, reg, var_types);
         if target_te.slate_type.starts_with("table") {
-            if target_te.slate_type.contains(", int") or is_val_int {
+            if target_te.slate_type.contains(", int") or target_te.slate_type.contains(", bool") or is_val_int_or_bool {
                 return "slate_table_set(" + target_expr + ", " + key_arg + ", slate_box_int(" + val_arg + "))";
             }
             return "slate_table_set(" + target_expr + ", " + key_arg + ", " + val_arg + ")";
         }
-        if is_val_int {
+        if is_val_int_or_bool {
             return "slate_table_set(" + target_expr + ", " + key_arg + ", slate_box_int(" + val_arg + "))";
         }
         return "slate_table_set(" + target_expr + ", " + key_arg + ", " + val_arg + ")";

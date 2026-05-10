@@ -54,7 +54,11 @@ Registry register_struct_fields(Registry reg, Node struct_decl) {
 string node_type_to_slate(Node type_node) {
     if type_node.kind == NodeKind.TypeVoid   { return "void"; }
     if type_node.kind == NodeKind.TypeList   { return "list"; }
-    if type_node.kind == NodeKind.TypeTable  { return "table"; }
+    if type_node.kind == NodeKind.TypeTable  {
+        string key_t = node_type_to_slate(type_node.children.get(0));
+        string val_t = node_type_to_slate(type_node.children.get(1));
+        return "table(" + key_t + ", " + val_t + ")";
+    }
     if type_node.kind == NodeKind.TypeOption { return "option"; }
     if type_node.kind == NodeKind.TypeResult { return "result"; }
     string val = type_node.value;

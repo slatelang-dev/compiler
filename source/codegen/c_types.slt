@@ -12,9 +12,9 @@ string c_type_with_reg(string slate_type, Registry reg) {
     if slate_type == "string" { return "char*"; }
     if slate_type == "void" { return "void"; }
     if slate_type == "ptr" { return "void*"; }
-    if slate_type == "list" { return "void*"; }
-    if slate_type == "table" { return "void*"; }
-    if slate_type == "option" { return "void*"; }
+    if slate_type == "list" or slate_type.starts_with("list(") { return "void*"; }
+    if slate_type == "table" or slate_type.starts_with("table(") { return "void*"; }
+    if slate_type == "option" or slate_type.starts_with("option(") { return "void*"; }
     if slate_type == "result" { return "void*"; }
     if registry_has_enum(reg, slate_type) { return "slate_" + slate_type; }
     if registry_has_struct(reg, slate_type) { return "slate_" + slate_type + "*"; }

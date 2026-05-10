@@ -2,7 +2,6 @@
 name = "compiler"
 version = "0.2.0"
 description = ""
-entry = "source/main.slt"
 
 [deps]
 slate = { git = "https://github.com/slatelang-dev/slate" }

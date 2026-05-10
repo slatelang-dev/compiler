@@ -66,67 +66,67 @@ string find_source_root(string path) {
 }
 
 Scope register_transitive(
-    Node program,
+    Node prog,
     string base_path,
-    Scope scope,
+    Scope init_scope,
     table(string, int) visited
 ) {
-    mutable Scope s = scope;
-    mutable table(string, int) vis = visited;
-    mutable list(string) queue = empty;
+    mutable Scope out_scope = init_scope;
+    mutable table(string, int) visited_set = visited;
+    mutable list(string) mod_queue = empty;
 
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.Use {
-            mutable string mod_path = resolve_module_path(decl.value, base_path, home());
+    mutable int ti = 0;
+    while ti < prog.children.len() {
+        Node outer_decl = prog.children.get(ti);
+        if outer_decl.kind == NodeKind.Use {
+            mutable string mod_path = resolve_module_path(outer_decl.value, base_path, home());
             if file(mod_path).exists() == false {
-                string fallback = find_source_root(base_path);
-                if fallback != "" {
-                    mod_path = resolve_module_path(decl.value, fallback, home());
+                string base_root = find_source_root(base_path);
+                if base_root != "" {
+                    mod_path = resolve_module_path(outer_decl.value, base_root, home());
                 }
             }
             if mod_path != "" {
-                if vis.has(mod_path) == false {
-                    vis = vis.set(mod_path, 1);
-                    queue = queue.add(mod_path);
+                if visited_set.has(mod_path) == false {
+                    visited_set = visited_set.set(mod_path, 1);
+                    mod_queue = mod_queue.add(mod_path);
                 }
             }
         }
-        i += 1;
+        ti += 1;
     }
 
     mutable int qi = 0;
-    while qi < queue.len() {
-        string path = queue.get(qi);
-        string source = file(path).read();
-        if source != "" {
-            ParseResult pr = parse(source);
+    while qi < mod_queue.len() {
+        string mod_file = mod_queue.get(qi);
+        string mod_source = file(mod_file).read();
+        if mod_source != "" {
+            ParseResult pr = parse(mod_source);
             if pr.success {
-                s = register_module_symbols(pr.node, s);
-                string dep_base = resolve_parent(path);
-                string fallback = find_source_root(path);
-                mutable int j = 0;
-                while j < pr.node.children.len() {
-                    Node decl = pr.node.children.get(j);
-                    if decl.kind == NodeKind.Use {
-                        mutable string dep_path = resolve_module_path(decl.value, dep_base, home());
-                        if file(dep_path).exists() == false and fallback != "" {
-                            dep_path = resolve_module_path(decl.value, fallback, home());
+                out_scope = register_module_symbols(pr.node, out_scope);
+                string mod_parent = resolve_parent(mod_file);
+                string mod_root = find_source_root(mod_file);
+                mutable int dj = 0;
+                while dj < pr.node.children.len() {
+                    Node inner_decl = pr.node.children.get(dj);
+                    if inner_decl.kind == NodeKind.Use {
+                        mutable string dep_path = resolve_module_path(inner_decl.value, mod_parent, home());
+                        if file(dep_path).exists() == false and mod_root != "" {
+                            dep_path = resolve_module_path(inner_decl.value, mod_root, home());
                         }
                         if dep_path != "" {
-                            if vis.has(dep_path) == false {
-                                vis = vis.set(dep_path, 1);
-                                queue = queue.add(dep_path);
+                            if visited_set.has(dep_path) == false {
+                                visited_set = visited_set.set(dep_path, 1);
+                                mod_queue = mod_queue.add(dep_path);
                             }
                         }
                     }
-                    j += 1;
+                    dj += 1;
                 }
             }
         }
         qi += 1;
     }
 
-    return s;
+    return out_scope;
 }

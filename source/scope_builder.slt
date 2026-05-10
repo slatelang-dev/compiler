@@ -80,8 +80,16 @@ string find_module_in_project(string mod_name, string source_root) {
     if file(proj_root + "/slate.toml").exists() == false { return ""; }
     string toml_content = file(proj_root + "/slate.toml").read();
     Project p = load_project(toml_content);
-    if p.entry == "" { return ""; }
-    string entry_path = proj_root + "/" + p.entry;
+    mutable string entry_path = "";
+    if p.entry != "" {
+        entry_path = proj_root + "/" + p.entry;
+    } else {
+        string lib_path = source_root + "/lib.slt";
+        string main_path = source_root + "/main.slt";
+        if file(lib_path).exists() { entry_path = lib_path; }
+        else if file(main_path).exists() { entry_path = main_path; }
+    }
+    if entry_path == "" { return ""; }
     if file(entry_path).exists() == false { return ""; }
     string entry_source = file(entry_path).read();
     ParseResult entry_pr = parse(entry_source);

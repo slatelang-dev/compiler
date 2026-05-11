@@ -146,45 +146,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
 
     # Match
     if stmt.kind == NodeKind.Match {
-        TypedExpr val = emit_typed_expr(stmt.children.get(0), reg, var_types_m);
-        mutable string res = "";
-        mutable int i = 1;
-        while i < stmt.children.len() {
-            Node arm        = stmt.children.get(i);
-            string pattern  = arm.value;
-            Node arm_body   = arm.children.get(arm.children.len() - 1);
-            mutable string branch = "";
-            if i == 1 {
-                branch = ind + "if ";
-            } else if pattern == "else" {
-                res = res + " else {\n";
-                res = res + emit_block_body(arm_body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
-                res = res + ind + "}";
-                i = i + 1;
-            } else {
-                branch = " else if ";
-            }
-            if pattern != "else" {
-                if pattern == "some" or pattern == "ok" {
-                    res = res + branch + "(" + val.code + " != NULL) {\n";
-                } else if pattern == "none" or pattern == "error" {
-                    res = res + branch + "(" + val.code + " == NULL) {\n";
-                } else if pattern == "expr" {
-                    TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg, var_types_m);
-                    if pat_val.slate_type == "string" {
-                        res = res + branch + "(slate_strcmp(" + val.code + ", " + pat_val.code + ") == 0) {\n";
-                    } else {
-                        res = res + branch + "(" + val.code + " == " + pat_val.code + ") {\n";
-                    }
-                } else {
-                    res = res + branch + "(0) {\n";
-                }
-                res = res + emit_block_body(arm_body, level + 1, reg, var_types_m, is_main, fn_ret_slate_type);
-                res = res + ind + "}";
-            }
-            i = i + 1;
-        }
-        return res;
+        return emit_match_stmt(stmt, level, reg, var_types_m, is_main, fn_ret_slate_type);
     }
 
     # Block

@@ -28,35 +28,25 @@ list(string) scan_imports(string source) {
 
 string normalize_path(string path) {
     mutable string p = path;
-    while p.contains("//") {
-        p = p.replace("//", "/");
-    }
+    while p.contains("//") { p = p.replace("//", "/"); }
     bool is_absolute = p.starts_with("/");
     list(string) parts = p.split("/");
     mutable list(string) collapsed = empty;
     mutable int i = 0;
     while i < parts.len() {
         string part = parts.get(i);
-        if part == ".." {
-            if collapsed.len() > 0 and collapsed.get(collapsed.len() - 1) != ".." {
-                collapsed = collapsed.remove(collapsed.len() - 1);
-            } else {
-                collapsed = collapsed.add(part);
-            }
-        } else if part != "" and part != "." {
+        if part == ".." and collapsed.len() > 0 and collapsed.last() != ".." {
+            collapsed = collapsed.remove(collapsed.len() - 1);
+        } else if part != "." and part != "" {
             collapsed = collapsed.add(part);
         }
         i += 1;
     }
     mutable string nm = "";
-    if is_absolute {
-        nm = "/";
-    }
+    if is_absolute { nm = "/"; }
     mutable int j = 0;
     while j < collapsed.len() {
-        if j > 0 or is_absolute {
-            nm = nm + "/";
-        }
+        if j > 0 { nm = nm + "/"; }
         nm = nm + collapsed.get(j);
         j += 1;
     }

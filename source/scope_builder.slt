@@ -127,14 +127,18 @@ Scope register_transitive(
             }
             mutable string mod_path = resolve_module_path(outer_decl.value, base_path, home());
             if debug {
-                print("[resolve] trying '" + mod_path + "' — " + (file(mod_path).exists() ? "FOUND" : "not found"));
+                mutable string found_msg = "not found";
+                if file(mod_path).exists() { found_msg = "FOUND"; }
+                print("[resolve] trying '" + mod_path + "' — " + found_msg);
             }
             if file(mod_path).exists() == false {
                 string base_root = find_source_root(base_path);
                 if base_root != "" {
                     mod_path = resolve_module_path(outer_decl.value, base_root, home());
                     if debug {
-                        print("[resolve] trying source root '" + mod_path + "' — " + (file(mod_path).exists() ? "FOUND" : "not found"));
+                        mutable string found_msg = "not found";
+                        if file(mod_path).exists() { found_msg = "FOUND"; }
+                        print("[resolve] trying source root '" + mod_path + "' — " + found_msg);
                     }
                     if file(mod_path).exists() == false {
                         if resolved_root == "" { resolved_root = base_root; }
@@ -195,14 +199,18 @@ Scope register_transitive(
                         }
                         mutable string dep_path = resolve_module_path(inner_decl.value, mod_base, home());
                         if debug {
-                            print("[resolve] trying '" + dep_path + "' — " + (file(dep_path).exists() ? "FOUND" : "not found"));
+                            mutable string found_msg = "not found";
+                            if file(dep_path).exists() { found_msg = "FOUND"; }
+                            print("[resolve] trying '" + dep_path + "' — " + found_msg);
                         }
                         if file(dep_path).exists() == false {
                             string dep_root = find_source_root(mod_file);
                             if dep_root != "" {
                                 dep_path = resolve_module_path(inner_decl.value, dep_root, home());
                                 if debug {
-                                    print("[resolve] trying dep root '" + dep_path + "' — " + (file(dep_path).exists() ? "FOUND" : "not found"));
+                                    mutable string dep_root_msg = "not found";
+                                    if file(dep_path).exists() { dep_root_msg = "FOUND"; }
+                                    print("[resolve] trying dep root '" + dep_path + "' — " + dep_root_msg);
                                 }
                             }
                         }

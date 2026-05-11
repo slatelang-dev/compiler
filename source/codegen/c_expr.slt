@@ -8,6 +8,9 @@ use slate;
 use c_literals;
 use c_ops;
 
+forward string emit_expr(Node expr, Registry reg, table(string, string) var_types);
+forward TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_types);
+
 # Emit a typed expression — returns both C code and Slate type
 TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_types) {
     if expr.kind == NodeKind.IntLit {

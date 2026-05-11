@@ -3,7 +3,6 @@ module c_walker;
 use slate;
 use emitter;
 use c_stmt;
-use c_stmt_helpers;
 use c_types;
 use type_registry;
 use registry_builder;

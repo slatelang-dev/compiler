@@ -48,7 +48,7 @@ string find_source_root(string path) {
     }
 
     # Start from the directory containing the given path
-    string current = normalize_path(path);
+    mutable string current = normalize_path(path);
     if file(current).exists() and not current.ends_with("/") {
         # If it's a file, go to its parent directory first
         current = resolve_parent(current);

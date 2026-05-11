@@ -48,19 +48,19 @@ string normalize_path(string path) {
         }
         i += 1;
     }
-    mutable string result = "";
+    mutable string nm = "";
     if is_absolute {
-        result = "/";
+        nm = "/";
     }
     mutable int j = 0;
     while j < collapsed.len() {
         if j > 0 or is_absolute {
-            result = result + "/";
+            nm = nm + "/";
         }
-        result = result + collapsed.get(j);
+        nm = nm + collapsed.get(j);
         j += 1;
     }
-    return result;
+    return nm;
 }
 
 string resolve_parent(string mod_path) {

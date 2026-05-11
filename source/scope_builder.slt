@@ -8,7 +8,7 @@ Scope register_module_symbols(Node program, Scope scope) {
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
-        if decl.kind == NodeKind.FnDecl or decl.kind == NodeKind.ForwardDecl {
+        if decl.kind == NodeKind.FnDecl {
             Node return_type = decl.children.get(0);
             Symbol sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(s, decl.value) == false {
@@ -47,45 +47,54 @@ string find_source_root(string path) {
         return "";
     }
 
-    # Start from the directory containing the given path
     mutable string current = normalize_path(path);
-    if file(current).exists() and not current.ends_with("/") {
-        # If it's a file, go to its parent directory first
+    if file(current).exists() and current.ends_with("/") == false {
         current = resolve_parent(current);
+    }
+
+    # If resolve_parent returned "" (single component path), try CWD-relative
+    if current == "" {
+        string cwd = run("pwd").trim();
+        current = normalize_path(cwd + "/" + path);
+        if file(current).exists() and current.ends_with("/") == false {
+            current = resolve_parent(current);
+        }
     }
 
     mutable string dir = current;
     mutable bool running = true;
 
     while running {
-        string toml_path = dir + "/slate.toml";
-        if file(toml_path).exists() {
-            string toml_content = file(toml_path).read();
-            Project p = load_project(toml_content);
-
-            if p.entry.len() > 0 {
-                list(string) entry_parts = p.entry.split("/");
-                if entry_parts.len() > 1 {
-                    # entry = "source/main.slt" → return project/source
-                    mutable string entry_dir = "";
-                    mutable int k = 0;
-                    while k < entry_parts.len() - 1 {
-                        if k > 0 { entry_dir = entry_dir + "/"; }
-                        entry_dir = entry_dir + entry_parts.get(k);
-                        k += 1;
-                    }
-                    return normalize_path(dir + "/" + entry_dir);
-                }
-            }
-            # Default: project/source
-            return normalize_path(dir + "/source");
-        }
-
-        string parent = resolve_parent(dir);
-        if parent == "" or parent == dir {  # safety against loops
+        if dir == "" {
             running = false;
         } else {
-            dir = parent;
+            string toml_path = dir + "/slate.toml";
+            if file(toml_path).exists() {
+                string toml_content = file(toml_path).read();
+                Project p = load_project(toml_content);
+
+                if p.entry.len() > 0 {
+                    list(string) entry_parts = p.entry.split("/");
+                    if entry_parts.len() > 1 {
+                        mutable string entry_dir = "";
+                        mutable int k = 0;
+                        while k < entry_parts.len() - 1 {
+                            if k > 0 { entry_dir = entry_dir + "/"; }
+                            entry_dir = entry_dir + entry_parts.get(k);
+                            k += 1;
+                        }
+                        return normalize_path(dir + "/" + entry_dir);
+                    }
+                }
+                return normalize_path(dir + "/source");
+            }
+
+            string parent = resolve_parent(dir);
+            if parent == "" or parent == dir {
+                running = false;
+            } else {
+                dir = parent;
+            }
         }
     }
 
@@ -122,6 +131,47 @@ string find_module_in_project(string mod_name, string source_root) {
     return "";
 }
 
+string resolve_dep_path(string dep_name, string mod_base, string mod_file, string resolved_root, bool debug) {
+    mutable string dep_path = resolve_module_path(dep_name, mod_base, home());
+    if debug {
+        mutable string found_msg = "not found";
+        if file(dep_path).exists() { found_msg = "FOUND"; }
+        print("[resolve] trying '" + dep_path + "' — " + found_msg);
+    }
+
+    if file(dep_path).exists() == false {
+        # Try source root derived from the module's base directory
+        mutable string dep_root = find_source_root(mod_base);
+
+        # Bug 1 fix: if dep_root is empty, try CWD-relative
+        if dep_root == "" {
+            string cwd = run("pwd").trim();
+            dep_root = find_source_root(normalize_path(cwd + "/" + mod_base));
+        }
+
+        if dep_root != "" {
+            dep_path = resolve_module_path(dep_name, dep_root, home());
+            if debug {
+                mutable string dep_root_msg = "not found";
+                if file(dep_path).exists() { dep_root_msg = "FOUND"; }
+                print("[resolve] trying dep root '" + dep_path + "' — " + dep_root_msg);
+            }
+        }
+    }
+
+    if file(dep_path).exists() == false and resolved_root != "" {
+        if debug {
+            print("[resolve] scanning project for dep '" + dep_name + "'");
+        }
+        dep_path = find_module_in_project(dep_name, resolved_root);
+        if debug {
+            print("[resolve] project scan result: '" + dep_path + "'");
+        }
+    }
+
+    return dep_path;
+}
+
 Scope register_transitive(
     Node prog,
     string base_path,
@@ -135,21 +185,28 @@ Scope register_transitive(
     mutable list(string) queue_bases = empty;
     mutable string resolved_root = "";
 
+    # Resolve base_path to absolute if needed
+    mutable string abs_base = base_path;
+    if abs_base != "" and abs_base.starts_with("/") == false {
+        string cwd = run("pwd").trim();
+        abs_base = normalize_path(cwd + "/" + base_path);
+    }
+
     mutable int ti = 0;
     while ti < prog.children.len() {
         Node outer_decl = prog.children.get(ti);
         if outer_decl.kind == NodeKind.Use {
             if debug {
-                print("[resolve] looking for '" + outer_decl.value + "' in '" + base_path + "'");
+                print("[resolve] looking for '" + outer_decl.value + "' in '" + abs_base + "'");
             }
-            mutable string mod_path = resolve_module_path(outer_decl.value, base_path, home());
+            mutable string mod_path = resolve_module_path(outer_decl.value, abs_base, home());
             if debug {
                 mutable string found_msg = "not found";
                 if file(mod_path).exists() { found_msg = "FOUND"; }
                 print("[resolve] trying '" + mod_path + "' — " + found_msg);
             }
             if file(mod_path).exists() == false {
-                string base_root = find_source_root(base_path);
+                string base_root = find_source_root(abs_base);
                 if base_root != "" {
                     mod_path = resolve_module_path(outer_decl.value, base_root, home());
                     if debug {
@@ -183,7 +240,7 @@ Scope register_transitive(
         ti += 1;
     }
 
-    string exports_path = base_path + "/exports.slt";
+    string exports_path = abs_base + "/exports.slt";
     if file(exports_path).exists() {
         if visited_set.has(exports_path) == false {
             if debug {
@@ -191,7 +248,7 @@ Scope register_transitive(
             }
             visited_set = visited_set.set(exports_path, 1);
             queue_paths = queue_paths.add(exports_path);
-            queue_bases = queue_bases.add(base_path);
+            queue_bases = queue_bases.add(abs_base);
         }
     }
 
@@ -214,32 +271,7 @@ Scope register_transitive(
                         if debug {
                             print("[resolve] looking for dep '" + inner_decl.value + "' from '" + mod_base + "'");
                         }
-                        mutable string dep_path = resolve_module_path(inner_decl.value, mod_base, home());
-                        if debug {
-                            mutable string found_msg = "not found";
-                            if file(dep_path).exists() { found_msg = "FOUND"; }
-                            print("[resolve] trying '" + dep_path + "' — " + found_msg);
-                        }
-                        if file(dep_path).exists() == false {
-                            string dep_root = find_source_root(mod_file);
-                            if dep_root != "" {
-                                dep_path = resolve_module_path(inner_decl.value, dep_root, home());
-                                if debug {
-                                    mutable string dep_root_msg = "not found";
-                                    if file(dep_path).exists() { dep_root_msg = "FOUND"; }
-                                    print("[resolve] trying dep root '" + dep_path + "' — " + dep_root_msg);
-                                }
-                            }
-                        }
-                        if file(dep_path).exists() == false and resolved_root != "" {
-                            if debug {
-                                print("[resolve] scanning project for dep '" + inner_decl.value + "'");
-                            }
-                            dep_path = find_module_in_project(inner_decl.value, resolved_root);
-                            if debug {
-                                print("[resolve] project scan result: '" + dep_path + "'");
-                            }
-                        }
+                        string dep_path = resolve_dep_path(inner_decl.value, mod_base, mod_file, resolved_root, debug);
                         if dep_path != "" {
                             if visited_set.has(dep_path) == false {
                                 if debug {

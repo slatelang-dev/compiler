@@ -77,7 +77,7 @@ Registry register_enum_variant(Registry r, string enum_name, string variant_name
 # append _s so the generated C is valid.
 
 bool is_c_keyword(string name) {
-    table(string, string) keywords = empty;
+    mutable table(string, string) keywords = empty;
     keywords = keywords.set("auto", "1");
     keywords = keywords.set("break", "1");
     keywords = keywords.set("case", "1");

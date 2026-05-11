@@ -8,7 +8,7 @@ Scope register_module_symbols(Node program, Scope scope) {
     mutable int i = 0;
     while i < program.children.len() {
         Node decl = program.children.get(i);
-        if decl.kind == NodeKind.FnDecl {
+        if decl.kind == NodeKind.FnDecl or decl.kind == NodeKind.ForwardDecl {
             Node return_type = decl.children.get(0);
             Symbol sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(s, decl.value) == false {

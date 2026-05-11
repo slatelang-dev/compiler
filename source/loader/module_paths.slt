@@ -72,19 +72,19 @@ string resolve_parent(string mod_path) {
 }
 
 string resolve_module_path(string mod_name, string base_path, string home_path) {
-    // Local package style: mod/exports.slt
+    # Local package style: mod/exports.slt
     string local_exports = base_path + "/" + mod_name + "/exports.slt";
     if file(local_exports).exists() {
         return normalize_path(local_exports);
     }
 
-    // Local single-file style: mod.slt
+    # Local single-file style: mod.slt
     string local_single = base_path + "/" + mod_name + ".slt";
     if file(local_single).exists() {
         return normalize_path(local_single);
     }
 
-    // Dependencies
+    # Dependencies
     string deps_dir = home_path + "/.slate/deps";
     string deps_exports = deps_dir + "/" + mod_name + "/source/exports.slt";
     string deps_lib     = deps_dir + "/" + mod_name + "/source/lib.slt";
@@ -96,6 +96,6 @@ string resolve_module_path(string mod_name, string base_path, string home_path) 
         return normalize_path(deps_lib);
     }
 
-    // Module not found → return empty string (critical!)
+    # Module not found → return empty string (critical!)
     return "";
 }

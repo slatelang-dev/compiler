@@ -31,7 +31,36 @@ string normalize_path(string path) {
     while p.contains("//") {
         p = p.replace("//", "/");
     }
-    return p;
+    bool is_absolute = p.starts_with("/");
+    list(string) parts = p.split("/");
+    mutable list(string) collapsed = empty;
+    mutable int i = 0;
+    while i < parts.len() {
+        string part = parts.get(i);
+        if part == ".." {
+            if collapsed.len() > 0 and collapsed.get(collapsed.len() - 1) != ".." {
+                collapsed = collapsed.remove(collapsed.len() - 1);
+            } else {
+                collapsed = collapsed.add(part);
+            }
+        } else if part != "" and part != "." {
+            collapsed = collapsed.add(part);
+        }
+        i += 1;
+    }
+    mutable string result = "";
+    if is_absolute {
+        result = "/";
+    }
+    mutable int j = 0;
+    while j < collapsed.len() {
+        if j > 0 or is_absolute {
+            result = result + "/";
+        }
+        result = result + collapsed.get(j);
+        j += 1;
+    }
+    return result;
 }
 
 string resolve_parent(string mod_path) {

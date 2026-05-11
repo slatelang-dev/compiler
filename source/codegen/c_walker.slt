@@ -8,6 +8,22 @@ use c_types;
 use type_registry;
 use registry_builder;
 
+string build_params(list(Node) children, int child_count, Registry reg) {
+    mutable string params = "";
+    mutable int i = 1;
+    while i < child_count - 1 {
+        Node param = children.get(i);
+        Node param_type = param.children.get(0);
+        string c_param_type = c_type_with_reg(param_type.value, reg);
+        string param_name   = safe_ident(param.value);
+        if params.len() > 0 { params = params + ", "; }
+        params = params + c_param_type + " " + param_name;
+        i = i + 1;
+    }
+    if params.len() == 0 { params = "void"; }
+    return params;
+}
+
 # Emit a single function declaration
 
 string emit_fn(Node fn_decl, Registry reg) {
@@ -20,21 +36,15 @@ string emit_fn(Node fn_decl, Registry reg) {
 
     mutable table(string, string) var_types = empty;
 
-    # Build parameter list — params are children 1..child_count-2
-    mutable string params = "";
     mutable int i = 1;
     while i < child_count - 1 {
         Node param = children.get(i);
         Node param_type = param.children.get(0);
         string param_slate_type = node_type_to_slate(param_type);
-        string c_param_type = c_type_with_reg(param_slate_type, reg);
-        string param_name   = safe_ident(param.value);
         var_types = var_types.set(param.value, param_slate_type);
-        if params.len() > 0 { params = params + ", "; }
-        params = params + c_param_type + " " + param_name;
         i = i + 1;
     }
-    if params.len() == 0 { params = "void"; }
+    string params = build_params(children, child_count, reg);
 
     mutable string header = ret + " " + fn_name + "(" + params + ") {";
     if fn_name == "main" {
@@ -84,7 +94,7 @@ string emit_struct(Node struct_decl, Registry reg) {
 
 # Emit an enum as a C enum
 
-string emit_enum(Node enum_decl, Registry reg) {
+string emit_enum(Node enum_decl) {
     string name = enum_decl.value;
     mutable string res = "typedef enum {\n";
     mutable int i = 0;
@@ -121,18 +131,7 @@ string emit_fn_prototype(Node fn_decl, Registry reg) {
     Node ret_type_node = children.get(0);
     string ret         = c_type_with_reg(ret_type_node.value, reg);
 
-    mutable string params = "";
-    mutable int i = 1;
-    while i < child_count - 1 {
-        Node param = children.get(i);
-        Node param_type = param.children.get(0);
-        string c_param_type = c_type_with_reg(param_type.value, reg);
-        string param_name   = safe_ident(param.value);
-        if params.len() > 0 { params = params + ", "; }
-        params = params + c_param_type + " " + param_name;
-        i = i + 1;
-    }
-    if params.len() == 0 { params = "void"; }
+    string params = build_params(children, child_count, reg);
 
     if fn_name == "main" {
         return "int main(int argc, char** argv);\n";
@@ -163,7 +162,7 @@ string emit_enums_only(Node program, Registry reg) {
     while i < program.children.len() {
         Node decl = program.children.get(i);
         if decl.kind == NodeKind.EnumDecl {
-            out = out + emit_enum(decl, reg) + "\n";
+            out = out + emit_enum(decl) + "\n";
         }
         i = i + 1;
     }

@@ -77,48 +77,49 @@ Registry register_enum_variant(Registry r, string enum_name, string variant_name
 # append _s so the generated C is valid.
 
 bool is_c_keyword(string name) {
-    if name == "auto"     { return true; }
-    if name == "break"    { return true; }
-    if name == "case"     { return true; }
-    if name == "char"     { return true; }
-    if name == "const"    { return true; }
-    if name == "continue" { return true; }
-    if name == "default"  { return true; }
-    if name == "do"       { return true; }
-    if name == "double"   { return true; }
-    if name == "else"     { return true; }
-    if name == "enum"     { return true; }
-    if name == "extern"   { return true; }
-    if name == "float"    { return true; }
-    if name == "for"      { return true; }
-    if name == "goto"     { return true; }
-    if name == "if"       { return true; }
-    if name == "inline"   { return true; }
-    if name == "int"      { return true; }
-    if name == "long"     { return true; }
-    if name == "register" { return true; }
-    if name == "restrict" { return true; }
-    if name == "return"   { return true; }
-    if name == "short"    { return true; }
-    if name == "signed"   { return true; }
-    if name == "sizeof"   { return true; }
-    if name == "static"   { return true; }
-    if name == "struct"   { return true; }
-    if name == "switch"   { return true; }
-    if name == "typedef"  { return true; }
-    if name == "union"    { return true; }
-    if name == "unsigned" { return true; }
-    if name == "void"     { return true; }
-    if name == "volatile" { return true; }
-    if name == "while"    { return true; }
-    if name == "new"      { return true; }
-    if name == "delete"   { return true; }
-    if name == "class"    { return true; }
-    if name == "true"     { return true; }
-    if name == "false"    { return true; }
-    if name == "NULL"     { return true; }
-    if name == "argv"     { return true; }
-    return false;
+    table(string, string) keywords = empty;
+    keywords = keywords.set("auto", "1");
+    keywords = keywords.set("break", "1");
+    keywords = keywords.set("case", "1");
+    keywords = keywords.set("char", "1");
+    keywords = keywords.set("const", "1");
+    keywords = keywords.set("continue", "1");
+    keywords = keywords.set("default", "1");
+    keywords = keywords.set("do", "1");
+    keywords = keywords.set("double", "1");
+    keywords = keywords.set("else", "1");
+    keywords = keywords.set("enum", "1");
+    keywords = keywords.set("extern", "1");
+    keywords = keywords.set("float", "1");
+    keywords = keywords.set("for", "1");
+    keywords = keywords.set("goto", "1");
+    keywords = keywords.set("if", "1");
+    keywords = keywords.set("inline", "1");
+    keywords = keywords.set("int", "1");
+    keywords = keywords.set("long", "1");
+    keywords = keywords.set("register", "1");
+    keywords = keywords.set("restrict", "1");
+    keywords = keywords.set("return", "1");
+    keywords = keywords.set("short", "1");
+    keywords = keywords.set("signed", "1");
+    keywords = keywords.set("sizeof", "1");
+    keywords = keywords.set("static", "1");
+    keywords = keywords.set("struct", "1");
+    keywords = keywords.set("switch", "1");
+    keywords = keywords.set("typedef", "1");
+    keywords = keywords.set("union", "1");
+    keywords = keywords.set("unsigned", "1");
+    keywords = keywords.set("void", "1");
+    keywords = keywords.set("volatile", "1");
+    keywords = keywords.set("while", "1");
+    keywords = keywords.set("new", "1");
+    keywords = keywords.set("delete", "1");
+    keywords = keywords.set("class", "1");
+    keywords = keywords.set("true", "1");
+    keywords = keywords.set("false", "1");
+    keywords = keywords.set("NULL", "1");
+    keywords = keywords.set("argv", "1");
+    return keywords.has(name);
 }
 
 string safe_ident(string name) {

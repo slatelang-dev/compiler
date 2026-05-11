@@ -2,18 +2,22 @@ module c_literals;
 
 use slate;
 
+string escape_string(string val) {
+    mutable string s = val;
+    s = s.replace("\\", "\\\\");
+    s = s.replace("\"", "\\\"");
+    s = s.replace("\n", "\\n");
+    s = s.replace("\r", "\\r");
+    s = s.replace("\t", "\\t");
+    s = s.replace("\u001b", "\\x1b");
+    return s;
+}
+
 string emit_literal(Node n) {
     if n.kind == NodeKind.IntLit { return n.value; }
     if n.kind == NodeKind.FloatLit { return n.value; }
     if n.kind == NodeKind.StringLit {
-        mutable string val = n.value;
-        val = val.replace("\\", "\\\\");
-        val = val.replace("\"", "\\\"");
-        val = val.replace("\n", "\\n");
-        val = val.replace("\r", "\\r");
-        val = val.replace("\t", "\\t");
-        val = val.replace("\u001b", "\\x1b");
-        return "\"" + val + "\"";
+        return "\"" + escape_string(n.value) + "\"";
     }
     if n.kind == NodeKind.CharLit { return n.value; }
     if n.kind == NodeKind.BoolLit {

@@ -42,6 +42,12 @@ string find_field_name(Registry r, string struct_name, int target_idx) {
 }
 
 string find_field_owner(Registry r, string field_name, string target_type) {
+    if target_type != "" and r.struct_names.has(target_type) {
+        string direct_key = target_type + "." + field_name;
+        if r.field_owners.has(direct_key) {
+            return r.field_owners.get(direct_key);
+        }
+    }
     mutable list(string) keys = r.field_owners.keys();
     mutable string best = "";
     mutable int ki = 0;

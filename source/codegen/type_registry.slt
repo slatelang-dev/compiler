@@ -117,6 +117,7 @@ bool is_c_keyword(string name) {
     if name == "true"     { return true; }
     if name == "false"    { return true; }
     if name == "NULL"     { return true; }
+    if name == "argv"     { return true; }
     return false;
 }
 

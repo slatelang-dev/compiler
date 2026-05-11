@@ -43,16 +43,30 @@ Scope register_module_symbols(Node program, Scope scope) {
 }
 
 string find_source_root(string path) {
-    mutable string dir = path;
+    if path == "" {
+        return "";
+    }
+
+    # Start from the directory containing the given path
+    string current = normalize_path(path);
+    if file(current).exists() and not current.ends_with("/") {
+        # If it's a file, go to its parent directory first
+        current = resolve_parent(current);
+    }
+
+    mutable string dir = current;
     mutable bool running = true;
+
     while running {
         string toml_path = dir + "/slate.toml";
         if file(toml_path).exists() {
             string toml_content = file(toml_path).read();
             Project p = load_project(toml_content);
+
             if p.entry.len() > 0 {
                 list(string) entry_parts = p.entry.split("/");
                 if entry_parts.len() > 1 {
+                    # entry = "source/main.slt" → return project/source
                     mutable string entry_dir = "";
                     mutable int k = 0;
                     while k < entry_parts.len() - 1 {
@@ -60,18 +74,21 @@ string find_source_root(string path) {
                         entry_dir = entry_dir + entry_parts.get(k);
                         k += 1;
                     }
-                    return dir + "/" + entry_dir;
+                    return normalize_path(dir + "/" + entry_dir);
                 }
             }
-            return dir + "/source";
+            # Default: project/source
+            return normalize_path(dir + "/source");
         }
+
         string parent = resolve_parent(dir);
-        if parent == "" {
+        if parent == "" or parent == dir {  # safety against loops
             running = false;
         } else {
             dir = parent;
         }
     }
+
     return "";
 }
 

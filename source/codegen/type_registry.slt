@@ -7,6 +7,7 @@ struct Registry {
     table(string, string) field_indices;
     table(string, string) enum_variants;
     table(string, string) struct_names;
+    table(string, string) enum_names;
 }
 
 Registry new_registry() {
@@ -16,7 +17,8 @@ Registry new_registry() {
         field_owners:  empty,
         field_indices: empty,
         enum_variants: empty,
-        struct_names:  empty
+        struct_names:  empty,
+        enum_names:    empty
     );
 }
 
@@ -27,7 +29,8 @@ Registry register_fn(Registry r, string name, string return_type) {
         field_owners:  r.field_owners,
         field_indices: r.field_indices,
         enum_variants: r.enum_variants,
-        struct_names:  r.struct_names
+        struct_names:  r.struct_names,
+        enum_names:    r.enum_names
     );
 }
 
@@ -40,7 +43,8 @@ Registry register_field(Registry r, string struct_name, string field_name, strin
         field_owners:  r.field_owners.set(type_key, struct_name),
         field_indices: r.field_indices.set(idx_key, string(index)),
         enum_variants: r.enum_variants,
-        struct_names:  r.struct_names
+        struct_names:  r.struct_names,
+        enum_names:    r.enum_names
     );
 }
 
@@ -51,7 +55,8 @@ Registry register_struct(Registry r, string struct_name) {
         field_owners:  r.field_owners,
         field_indices: r.field_indices,
         enum_variants: r.enum_variants,
-        struct_names:  r.struct_names.set(struct_name, "1")
+        struct_names:  r.struct_names.set(struct_name, "1"),
+        enum_names:    r.enum_names
     );
 }
 
@@ -63,7 +68,8 @@ Registry register_enum_variant(Registry r, string enum_name, string variant_name
         field_owners:  r.field_owners,
         field_indices: r.field_indices,
         enum_variants: r.enum_variants.set(key, string(index)),
-        struct_names:  r.struct_names
+        struct_names:  r.struct_names,
+        enum_names:    r.enum_names.set(enum_name, enum_name)
     );
 }
 

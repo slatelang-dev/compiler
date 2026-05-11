@@ -74,16 +74,7 @@ bool registry_has_struct(Registry r, string name) {
 }
 
 bool registry_has_enum(Registry r, string name) {
-    mutable list(string) keys = r.enum_variants.keys();
-    string prefix = name + ".";
-    mutable int i = 0;
-    while i < keys.len() {
-        if keys.get(i).starts_with(prefix) {
-            return true;
-        }
-        i = i + 1;
-    }
-    return false;
+    return r.enum_names.has(name);
 }
 
 string emit_field_access(Registry r, string struct_type, string target_expr, string field_name) {

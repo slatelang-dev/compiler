@@ -109,7 +109,8 @@ Scope register_transitive(
     Node prog,
     string base_path,
     Scope init_scope,
-    table(string, int) visited
+    table(string, int) visited,
+    bool debug
 ) {
     mutable Scope out_scope = init_scope;
     mutable table(string, int) visited_set = visited;
@@ -121,19 +122,37 @@ Scope register_transitive(
     while ti < prog.children.len() {
         Node outer_decl = prog.children.get(ti);
         if outer_decl.kind == NodeKind.Use {
+            if debug {
+                print("[resolve] looking for '" + outer_decl.value + "' in '" + base_path + "'");
+            }
             mutable string mod_path = resolve_module_path(outer_decl.value, base_path, home());
+            if debug {
+                print("[resolve] trying '" + mod_path + "' — " + (file(mod_path).exists() ? "FOUND" : "not found"));
+            }
             if file(mod_path).exists() == false {
                 string base_root = find_source_root(base_path);
                 if base_root != "" {
                     mod_path = resolve_module_path(outer_decl.value, base_root, home());
+                    if debug {
+                        print("[resolve] trying source root '" + mod_path + "' — " + (file(mod_path).exists() ? "FOUND" : "not found"));
+                    }
                     if file(mod_path).exists() == false {
                         if resolved_root == "" { resolved_root = base_root; }
+                        if debug {
+                            print("[resolve] scanning project for '" + outer_decl.value + "' in '" + base_root + "'");
+                        }
                         mod_path = find_module_in_project(outer_decl.value, base_root);
+                        if debug {
+                            print("[resolve] project scan result: '" + mod_path + "'");
+                        }
                     }
                 }
             }
             if mod_path != "" {
                 if visited_set.has(mod_path) == false {
+                    if debug {
+                        print("[resolve] queuing '" + mod_path + "'");
+                    }
                     visited_set = visited_set.set(mod_path, 1);
                     queue_paths = queue_paths.add(mod_path);
                     queue_bases = queue_bases.add(resolve_parent(mod_path));
@@ -146,6 +165,9 @@ Scope register_transitive(
     string exports_path = base_path + "/exports.slt";
     if file(exports_path).exists() {
         if visited_set.has(exports_path) == false {
+            if debug {
+                print("[resolve] queuing exports '" + exports_path + "'");
+            }
             visited_set = visited_set.set(exports_path, 1);
             queue_paths = queue_paths.add(exports_path);
             queue_bases = queue_bases.add(base_path);
@@ -156,6 +178,9 @@ Scope register_transitive(
     while qi < queue_paths.len() {
         string mod_file = queue_paths.get(qi);
         string mod_base = queue_bases.get(qi);
+        if debug {
+            print("[resolve] processing '" + mod_file + "'");
+        }
         string mod_source = file(mod_file).read();
         if mod_source != "" {
             ParseResult pr = parse(mod_source);
@@ -165,18 +190,36 @@ Scope register_transitive(
                 while dj < pr.node.children.len() {
                     Node inner_decl = pr.node.children.get(dj);
                     if inner_decl.kind == NodeKind.Use {
+                        if debug {
+                            print("[resolve] looking for dep '" + inner_decl.value + "' from '" + mod_base + "'");
+                        }
                         mutable string dep_path = resolve_module_path(inner_decl.value, mod_base, home());
+                        if debug {
+                            print("[resolve] trying '" + dep_path + "' — " + (file(dep_path).exists() ? "FOUND" : "not found"));
+                        }
                         if file(dep_path).exists() == false {
                             string dep_root = find_source_root(mod_file);
                             if dep_root != "" {
                                 dep_path = resolve_module_path(inner_decl.value, dep_root, home());
+                                if debug {
+                                    print("[resolve] trying dep root '" + dep_path + "' — " + (file(dep_path).exists() ? "FOUND" : "not found"));
+                                }
                             }
                         }
                         if file(dep_path).exists() == false and resolved_root != "" {
+                            if debug {
+                                print("[resolve] scanning project for dep '" + inner_decl.value + "'");
+                            }
                             dep_path = find_module_in_project(inner_decl.value, resolved_root);
+                            if debug {
+                                print("[resolve] project scan result: '" + dep_path + "'");
+                            }
                         }
                         if dep_path != "" {
                             if visited_set.has(dep_path) == false {
+                                if debug {
+                                    print("[resolve] queuing '" + dep_path + "'");
+                                }
                                 visited_set = visited_set.set(dep_path, 1);
                                 queue_paths = queue_paths.add(dep_path);
                                 queue_bases = queue_bases.add(resolve_parent(dep_path));

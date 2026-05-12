@@ -157,6 +157,10 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         return typed("NULL", "empty");
     }
 
+    if expr.kind == NodeKind.Field {
+        return emit_typed_expr(expr.children.get(0), reg, var_types);
+    }
+
     return typed("(fprintf(stderr, \"codegen: unhandled expr kind\\n\"), NULL)", "int");
 }
 
@@ -250,8 +254,17 @@ string emit_call(Node expr, Registry reg, table(string, string) var_types) {
         mutable int fi = 0;
         while fi < args.len() {
             if fi > 0 { assigns = assigns + "; "; }
-            string fname = safe_ident(find_field_name(reg, fn_name, fi));
-            assigns = assigns + "_tmp->" + fname + " = " + emit_expr(args.get(fi), reg, var_types);
+            Node arg = args.get(fi);
+            mutable string fname = "";
+            mutable string val_code = "";
+            if arg.kind == NodeKind.Field {
+                fname = arg.value;
+                val_code = emit_expr(arg.children.get(0), reg, var_types);
+            } else {
+                fname = find_field_name(reg, fn_name, fi);
+                val_code = emit_expr(arg, reg, var_types);
+            }
+            assigns = assigns + "_tmp->" + safe_ident(fname) + " = " + val_code;
             fi = fi + 1;
         }
         return "({ slate_" + fn_name + "* _tmp = malloc(sizeof(slate_" + fn_name + ")); " + assigns + "; _tmp; })";
@@ -470,6 +483,10 @@ string emit_expr(Node expr, Registry reg, table(string, string) var_types) {
 
     if expr.kind == NodeKind.Empty {
         return "NULL";
+    }
+
+    if expr.kind == NodeKind.Field {
+        return emit_expr(expr.children.get(0), reg, var_types);
     }
 
     return "(fprintf(stderr, \"codegen: unhandled expr kind\\n\"), NULL)";

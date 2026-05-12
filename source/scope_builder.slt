@@ -18,13 +18,19 @@ Scope register_module_symbols(Node program, Scope scope) {
         if decl.kind == NodeKind.StructDecl {
             Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(s, decl.value) == false {
+                print("[debug] register_struct: '" + decl.value + "' at depth " + string(s.depth) + " (id: " + string(s.symbols.len()) + ")");
                 s = declare_symbol(s, sym);
+            } else {
+                print("[debug] skip_struct: '" + decl.value + "' already in scope (depth " + string(s.depth) + ")");
             }
         }
         if decl.kind == NodeKind.EnumDecl {
             Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
             if symbol_exists_in_current_scope(s, decl.value) == false {
+                print("[debug] register_enum: '" + decl.value + "' at depth " + string(s.depth) + " (id: " + string(s.symbols.len()) + ")");
                 s = declare_symbol(s, sym);
+            } else {
+                print("[debug] skip_enum: '" + decl.value + "' already in scope (depth " + string(s.depth) + ")");
             }
             mutable int vi = 0;
             while vi < decl.children.len() {

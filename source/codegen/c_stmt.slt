@@ -32,6 +32,10 @@ string emit_match_stmt(Node stmt, int level, Registry reg, table(string, string)
                 res = res + branch + "(" + val.code + " != NULL) {\n";
             } else if pattern == "none" or pattern == "error" {
                 res = res + branch + "(" + val.code + " == NULL) {\n";
+            } else if pattern == "range" {
+                TypedExpr low_val  = emit_typed_expr(arm.children.get(0), reg, var_types);
+                TypedExpr high_val = emit_typed_expr(arm.children.get(1), reg, var_types);
+                res = res + branch + "(" + val.code + " >= " + low_val.code + " && " + val.code + " <= " + high_val.code + ") {\n";
             } else if pattern == "expr" {
                 TypedExpr pat_val = emit_typed_expr(arm.children.get(0), reg, var_types);
                 if pat_val.slate_type == "string" {

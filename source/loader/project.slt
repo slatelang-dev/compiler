@@ -9,16 +9,20 @@ struct Project {
     string entry;
     string bin;
     bool bare;
+    string target;
+    string opt;
 }
 
-Project make_project(string name, string version, string description, string entry, string bin, bool is_bare) {
+Project make_project(string name, string version, string description, string entry, string bin, bool is_bare, string target, string opt) {
     return Project(
         name: name,
         version: version,
         description: description,
         entry: entry,
         bin: bin,
-        bare: is_bare
+        bare: is_bare,
+        target: target,
+        opt: opt
     );
 }
 
@@ -33,6 +37,8 @@ Project load_project(string toml_source) {
     mutable string entry = "";
     mutable string bin = "";
     mutable bool is_bare = false;
+    mutable string target = "";
+    mutable string opt = "";
     if parsed.has("project.name") {
         name = parsed.get("project.name");
     }
@@ -45,17 +51,25 @@ Project load_project(string toml_source) {
     if parsed.has("project.entry") {
         entry = parsed.get("project.entry");
     }
-    if parsed.has("project.bin") {
+    if parsed.has("build.bin") {
+        bin = parsed.get("build.bin");
+    } else if parsed.has("project.bin") {
         bin = parsed.get("project.bin");
     }
     if parsed.has("project.bare") {
         string bare_str = parsed.get("project.bare");
         is_bare = bare_str == "true";
     }
+    if parsed.has("build.target") {
+        target = parsed.get("build.target");
+    }
+    if parsed.has("build.opt") {
+        opt = parsed.get("build.opt");
+    }
     if bin == "" {
         bin = name;
     }
-    return make_project(name, version, description, entry, bin, is_bare);
+    return make_project(name, version, description, entry, bin, is_bare, target, opt);
 }
 
 bool project_valid(Project p) {

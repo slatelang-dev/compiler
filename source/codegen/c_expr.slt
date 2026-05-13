@@ -20,7 +20,7 @@ TypedExpr emit_typed_expr(Node expr, Registry reg, table(string, string) var_typ
         return typed_str("\"" + escape_string(expr.value) + "\"");
     }
     if expr.kind == NodeKind.CharLit {
-        return typed(expr.value, "char");
+        return typed("'" + expr.value + "'", "char");
     }
     if expr.kind == NodeKind.BoolLit {
         if expr.value == "true" { return typed_bool("1"); }

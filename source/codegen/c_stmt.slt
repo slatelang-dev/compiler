@@ -16,18 +16,22 @@ string emit_match_stmt(Node stmt, int level, Registry reg, table(string, string)
         Node arm        = stmt.children.get(i);
         string pattern  = arm.value;
         Node arm_body   = arm.children.get(arm.children.len() - 1);
-        mutable string branch = "";
-        if i == 1 {
-            branch = indent(level) + "if ";
-        } else if pattern == "else" {
-            res = res + " else {\n";
-            res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
-            res = res + indent(level) + "}";
+        if pattern == "else" {
+            if i > 1 {
+                res = res + " else {\n";
+                res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
+                res = res + indent(level) + "}";
+            } else {
+                res = res + emit_block_body(arm_body, level, reg, var_types, is_main, fn_ret_slate_type);
+            }
             i = i + 1;
         } else {
-            branch = " else if ";
-        }
-        if pattern != "else" {
+            mutable string branch = "";
+            if i == 1 {
+                branch = indent(level) + "if ";
+            } else {
+                branch = " else if ";
+            }
             if pattern == "some" or pattern == "ok" {
                 res = res + branch + "(" + val.code + " != NULL) {\n";
             } else if pattern == "none" or pattern == "error" {
@@ -48,8 +52,8 @@ string emit_match_stmt(Node stmt, int level, Registry reg, table(string, string)
             }
             res = res + emit_block_body(arm_body, level + 1, reg, var_types, is_main, fn_ret_slate_type);
             res = res + indent(level) + "}";
+            i = i + 1;
         }
-        i = i + 1;
     }
     return res;
 }

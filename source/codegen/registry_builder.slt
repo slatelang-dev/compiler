@@ -52,7 +52,12 @@ Registry register_struct_fields(Registry reg, Node struct_decl) {
 
 string node_type_to_slate(Node type_node) {
     if type_node.kind == NodeKind.TypeVoid   { return "void"; }
-    if type_node.kind == NodeKind.TypeList   { return "list"; }
+    if type_node.kind == NodeKind.TypeList   {
+        if type_node.children.len() > 0 and type_node.children.get(0).value != "" {
+            return "list(" + node_type_to_slate(type_node.children.get(0)) + ")";
+        }
+        return "list";
+    }
     if type_node.kind == NodeKind.TypeTable  {
         string key_t = node_type_to_slate(type_node.children.get(0));
         string val_t = node_type_to_slate(type_node.children.get(1));

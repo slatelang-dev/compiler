@@ -73,7 +73,11 @@ string emit_block_body(Node block, int level, Registry reg, table(string, string
             Node type_node = stmt.children.get(0);
             mutable string type_str = type_node.value;
             if type_str == "" {
-                if type_node.kind == NodeKind.TypeList { type_str = "list"; }
+                if type_node.kind == NodeKind.TypeList {
+                    if type_node.children.len() > 0 and type_node.children.get(0).value != "" {
+                        type_str = "list(" + type_node.children.get(0).value + ")";
+                    } else { type_str = "list"; }
+                }
                 if type_node.kind == NodeKind.TypeTable { type_str = "table"; }
             }
             ad = current_scope.has(stmt.value);
@@ -100,7 +104,11 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         Node init       = stmt.children.get(1);
         mutable string declared_type = type_node.value;
         if declared_type == "" {
-            if type_node.kind == NodeKind.TypeList { declared_type = "list"; }
+            if type_node.kind == NodeKind.TypeList {
+                if type_node.children.len() > 0 and type_node.children.get(0).value != "" {
+                    declared_type = "list(" + type_node.children.get(0).value + ")";
+                } else { declared_type = "list"; }
+            }
             if type_node.kind == NodeKind.TypeTable { declared_type = "table"; }
         }
         var_types_m = var_types_m.set(stmt.value, declared_type);

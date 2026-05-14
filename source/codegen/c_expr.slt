@@ -10,6 +10,24 @@ use c_ops;
 use c_call;
 use c_method;
 
+string elem_type_of(string container_type) {
+    int open = container_type.find("(");
+    if open < 0 { return ""; }
+    mutable int close = container_type.len() - 1;
+    mutable int depth = 0;
+    mutable int ci = open + 1;
+    while ci < close {
+        if container_type.get(ci) == "(" { depth = depth + 1; }
+        if container_type.get(ci) == ")" {
+            if depth == 0 { close = ci; }
+            else { depth = depth - 1; }
+        }
+        ci = ci + 1;
+    }
+    if close <= open + 1 { return ""; }
+    return container_type.substr(open + 1, close - open - 1);
+}
+
 TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
     if expr.kind == NodeKind.IntLit { return typed_int(expr.value); }
     if expr.kind == NodeKind.FloatLit { return typed(expr.value, "float"); }
@@ -185,9 +203,11 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             mc_arg_strs = mc_arg_strs.add(emit_expr(expr.children.get(mi), ctx));
             mi = mi + 1;
         }
-        string fn_ret = lookup_fn_return(ctx.reg, method);
+        mutable string fn_ret = lookup_fn_return(ctx.reg, method);
         if method == "get" {
             string idx_arg = build_args_str(mc_arg_strs, 0);
+            string elem = elem_type_of(target_type);
+            if elem != "" { fn_ret = elem; }
             if target_type.starts_with("table") {
                 if target_type.contains(", int") or target_type.contains(", bool") {
                     return typed("slate_unbox_int(slate_table_get(" + target_str + ", " + idx_arg + "))", fn_ret);

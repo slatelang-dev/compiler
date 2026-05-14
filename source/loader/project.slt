@@ -1,5 +1,16 @@
 module project;
 
+string compiler_version() {
+    string toml_path = home() + "/.slate/deps/compiler/slate.toml";
+    if file(toml_path).exists() {
+        table(string, string) parsed = toml(file(toml_path).read()).parse();
+        if parsed.has("project.version") {
+            return parsed.get("project.version");
+        }
+    }
+    return "";
+}
+
 # Project configuration — loaded from slate.toml
 
 struct Project {
@@ -11,9 +22,11 @@ struct Project {
     bool bare;
     string target;
     string opt;
+    string toolchain_version;
+    string toolchain_backend;
 }
 
-Project make_project(string name, string version, string description, string entry, string bin, bool is_bare, string target, string opt) {
+Project make_project(string name, string version, string description, string entry, string bin, bool is_bare, string target, string opt, string toolchain_version, string toolchain_backend) {
     return Project(
         name: name,
         version: version,
@@ -22,12 +35,14 @@ Project make_project(string name, string version, string description, string ent
         bin: bin,
         bare: is_bare,
         target: target,
-        opt: opt
+        opt: opt,
+        toolchain_version: toolchain_version,
+        toolchain_backend: toolchain_backend
     );
 }
 
 # Parse a slate.toml string into a Project
-# Looks for [project] section keys
+# Looks for [project] and [build] and [toolchain] section keys
 
 Project load_project(string toml_source) {
     table(string, string) parsed = toml(toml_source).parse();
@@ -39,6 +54,8 @@ Project load_project(string toml_source) {
     mutable bool is_bare = false;
     mutable string target = "";
     mutable string opt = "";
+    mutable string toolchain_version = "";
+    mutable string toolchain_backend = "";
     if parsed.has("project.name") {
         name = parsed.get("project.name");
     }
@@ -66,10 +83,16 @@ Project load_project(string toml_source) {
     if parsed.has("build.opt") {
         opt = parsed.get("build.opt");
     }
+    if parsed.has("toolchain.version") {
+        toolchain_version = parsed.get("toolchain.version");
+    }
+    if parsed.has("toolchain.backend") {
+        toolchain_backend = parsed.get("toolchain.backend");
+    }
     if bin == "" {
         bin = name;
     }
-    return make_project(name, version, description, entry, bin, is_bare, target, opt);
+    return make_project(name, version, description, entry, bin, is_bare, target, opt, toolchain_version, toolchain_backend);
 }
 
 bool project_valid(Project p) {

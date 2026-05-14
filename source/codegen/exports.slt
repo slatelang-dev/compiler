@@ -6,6 +6,8 @@ use registry_lookup;
 use c_types;
 use emitter;
 use c_expr;
+use c_call;
+use c_method;
 use c_literals;
 use c_ops;
 use c_stmt;

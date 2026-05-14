@@ -25,3 +25,12 @@ TypedExpr typed_str(string code) {
 TypedExpr typed_bool(string code) {
     return TypedExpr(code: code, slate_type: "bool");
 }
+
+struct EmitContext {
+    Registry reg;
+    table(string, string) var_types;
+}
+
+EmitContext make_ctx(Registry reg, table(string, string) var_types) {
+    return EmitContext(reg: reg, var_types: var_types);
+}

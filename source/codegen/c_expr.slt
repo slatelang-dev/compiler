@@ -11,12 +11,13 @@ use c_call;
 use c_method;
 
 string elem_type_of(string container_type) {
+    list(string) cc = container_type.chars();
     mutable int depth = 0;
     mutable int capturing = 0;
     mutable string out = "";
     mutable int i = 0;
-    while i < container_type.len() {
-        string ch = container_type.get(i);
+    while i < cc.len() {
+        string ch = cc.get(i);
         if ch == "(" {
             if depth == 0 { capturing = 1; }
             depth = depth + 1;

@@ -11,21 +11,24 @@ use c_call;
 use c_method;
 
 string elem_type_of(string container_type) {
-    int open = container_type.find("(");
-    if open < 0 { return ""; }
-    mutable int close = container_type.len() - 1;
     mutable int depth = 0;
-    mutable int ci = open + 1;
-    while ci < close {
-        if container_type.get(ci) == "(" { depth = depth + 1; }
-        if container_type.get(ci) == ")" {
-            if depth == 0 { close = ci; }
-            else { depth = depth - 1; }
+    mutable int capturing = 0;
+    mutable string out = "";
+    mutable int i = 0;
+    while i < container_type.len() {
+        string ch = container_type.get(i);
+        if ch == "(" {
+            if depth == 0 { capturing = 1; }
+            depth = depth + 1;
+        } else if ch == ")" {
+            depth = depth - 1;
+            if depth == 0 { capturing = 0; }
+        } else if capturing == 1 {
+            out = out + ch;
         }
-        ci = ci + 1;
+        i = i + 1;
     }
-    if close <= open + 1 { return ""; }
-    return container_type.substr(open + 1, close - open - 1);
+    return out;
 }
 
 TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {

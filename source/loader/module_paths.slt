@@ -36,7 +36,8 @@ string normalize_path(string path) {
     while i < parts.len() {
         string part = parts.get(i);
         if part == ".." and collapsed.len() > 0 and collapsed.last() != ".." {
-            collapsed = collapsed.remove(collapsed.len() - 1);
+            int last_idx = collapsed.len() - 1;
+            collapsed = collapsed.remove(last_idx);
         } else if part != "." and part != "" {
             collapsed = collapsed.add(part);
         }

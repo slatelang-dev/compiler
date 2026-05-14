@@ -35,7 +35,9 @@ string normalize_path(string path) {
     mutable int i = 0;
     while i < parts.len() {
         string part = parts.get(i);
-        if part == ".." and collapsed.len() > 0 and collapsed.last() != ".." {
+        mutable bool should_pop = part == ".." and collapsed.len() > 0;
+        if should_pop { should_pop = collapsed.last() != ".."; }
+        if should_pop {
             int last_idx = collapsed.len() - 1;
             collapsed = collapsed.remove(last_idx);
         } else if part != "." and part != "" {

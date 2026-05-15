@@ -6,10 +6,10 @@ string escape_string(string val) {
     mutable string s = val;
     s = s.replace("\\", "\\\\");
     s = s.replace("\"", "\\\"");
-    s = s.replace(run("printf", "\\x0a"), "\\n");
-    s = s.replace(run("printf", "\\x0d"), "\\r");
-    s = s.replace(run("printf", "\\x09"), "\\t");
-    s = s.replace(run("printf", "\\x1b"), "\\x1b");
+    s = s.replace("\u000a", "\\n");
+    s = s.replace("\u000d", "\\r");
+    s = s.replace("\u0009", "\\t");
+    s = s.replace("\u001b", "\\x1b");
     return s;
 }
 

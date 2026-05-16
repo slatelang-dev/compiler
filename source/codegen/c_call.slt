@@ -6,18 +6,6 @@ use registry_lookup;
 use slate;
 
 string build_call_str(string fn_name, list(string) arg_strs, Registry reg) {
-    if fn_name == "int" {
-        if arg_strs.len() == 0 { return "0"; }
-        return "atoll(" + arg_strs.get(0) + ")";
-    }
-    if fn_name == "float" {
-        if arg_strs.len() == 0 { return "0.0"; }
-        return "atof(" + arg_strs.get(0) + ")";
-    }
-    if fn_name == "bool" {
-        if arg_strs.len() == 0 { return "0"; }
-        return "atoll(" + arg_strs.get(0) + ")";
-    }
     if fn_name == "time"  { return "slate_time()"; }
     if fn_name == "home"  { return "slate_home()"; }
     if fn_name == "args"  { return "slate_args()"; }

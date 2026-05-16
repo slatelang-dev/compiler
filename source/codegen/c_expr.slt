@@ -135,6 +135,26 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             }
             return typed_str("slate_int_to_str(" + arg_te.code + ")");
         }
+        if fn_name == "int" {
+            if args.len() == 0 { return typed("0", "int"); }
+            TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
+            if arg_te.slate_type == "int" { return arg_te; }
+            if arg_te.slate_type == "bool" { return typed("(int64_t)" + arg_te.code, "int"); }
+            return typed("atoll(" + arg_te.code + ")", "int");
+        }
+        if fn_name == "float" {
+            if args.len() == 0 { return typed("0.0", "float"); }
+            TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
+            if arg_te.slate_type == "float" { return arg_te; }
+            if arg_te.slate_type == "int" { return typed("(double)" + arg_te.code, "float"); }
+            return typed("atof(" + arg_te.code + ")", "float");
+        }
+        if fn_name == "bool" {
+            if args.len() == 0 { return typed("0", "bool"); }
+            TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
+            if arg_te.slate_type == "bool" { return arg_te; }
+            return typed("atoll(" + arg_te.code + ")", "bool");
+        }
         if fn_name == "run" {
             if args.len() == 1 {
                 TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);

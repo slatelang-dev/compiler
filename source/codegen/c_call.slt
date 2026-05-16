@@ -8,15 +8,15 @@ use slate;
 string build_call_str(string fn_name, list(string) arg_strs, Registry reg) {
     if fn_name == "int" {
         if arg_strs.len() == 0 { return "0"; }
-        return "slate_str_to_int(" + arg_strs.get(0) + ")";
+        return "atoll(" + arg_strs.get(0) + ")";
     }
     if fn_name == "float" {
         if arg_strs.len() == 0 { return "0.0"; }
-        return "slate_str_to_float(" + arg_strs.get(0) + ")";
+        return "atof(" + arg_strs.get(0) + ")";
     }
     if fn_name == "bool" {
         if arg_strs.len() == 0 { return "0"; }
-        return "slate_str_to_int(" + arg_strs.get(0) + ")";
+        return "atoll(" + arg_strs.get(0) + ")";
     }
     if fn_name == "time"  { return "slate_time()"; }
     if fn_name == "home"  { return "slate_home()"; }
@@ -26,10 +26,10 @@ string build_call_str(string fn_name, list(string) arg_strs, Registry reg) {
         return "slate_read_n(" + build_args_str(arg_strs, 0) + ")";
     }
     if fn_name == "write" {
-        return "slate_write(" + build_args_str(arg_strs, 0) + ")";
+        return "fputs(" + build_args_str(arg_strs, 0) + ", stdout)";
     }
     if fn_name == "file" {
-        return "slate_file(" + build_args_str(arg_strs, 0) + ")";
+        return build_args_str(arg_strs, 0);
     }
     if fn_name == "exec" {
         return "slate_exec(" + build_args_str(arg_strs, 0) + ")";
@@ -38,7 +38,7 @@ string build_call_str(string fn_name, list(string) arg_strs, Registry reg) {
         return "slate_alloc(" + build_args_str(arg_strs, 0) + ")";
     }
     if fn_name == "free" {
-        return "slate_free(" + build_args_str(arg_strs, 0) + ")";
+        return "free(" + build_args_str(arg_strs, 0) + ")";
     }
     return fn_name + "(" + build_args_str(arg_strs, 0) + ")";
 }

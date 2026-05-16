@@ -214,7 +214,7 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if elem != "" { fn_ret = elem; }
             if target_type.starts_with("table") {
                 if target_type.contains(", int") or target_type.contains(", bool") {
-                    return typed("slate_unbox_int(slate_table_get(" + target_str + ", " + idx_arg + "))", fn_ret);
+                    return typed("(int64_t)slate_table_get(" + target_str + ", " + idx_arg + ")", fn_ret);
                 }
                 return typed("slate_table_get(" + target_str + ", " + idx_arg + ")", fn_ret);
             }
@@ -236,12 +236,12 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             }
             if target_type.starts_with("table") {
                 if target_type.contains(", int") or target_type.contains(", bool") or is_val_int_or_bool {
-                    return typed("slate_table_set(" + target_str + ", " + key_arg + ", slate_box_int(" + val_arg + "))", fn_ret);
+                    return typed("slate_table_set(" + target_str + ", " + key_arg + ", (void*)(" + val_arg + "))", fn_ret);
                 }
                 return typed("slate_table_set(" + target_str + ", " + key_arg + ", " + val_arg + ")", fn_ret);
             }
             if is_val_int_or_bool {
-                return typed("slate_table_set(" + target_str + ", " + key_arg + ", slate_box_int(" + val_arg + "))", fn_ret);
+                return typed("slate_table_set(" + target_str + ", " + key_arg + ", (void*)(" + val_arg + "))", fn_ret);
             }
             return typed("slate_table_set(" + target_str + ", " + key_arg + ", " + val_arg + ")", fn_ret);
         }

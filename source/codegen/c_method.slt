@@ -68,7 +68,7 @@ string build_method_str(string target_str, string method, list(string) arg_strs,
         return "(" + target_str + " != NULL)";
     }
     if method == "or" {
-        return "slate_option_or(" + target_str + ", " + build_args_str(arg_strs, 0) + ")";
+        return "(" + target_str + " != NULL ? " + target_str + " : " + build_args_str(arg_strs, 0) + ")";
     }
     return target_str + "->" + method + "(" + build_args_str(arg_strs, 0) + ")";
 }

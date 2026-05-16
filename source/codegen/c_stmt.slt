@@ -43,7 +43,7 @@ string emit_match_stmt(Node stmt, int level, Registry reg, table(string, string)
             } else if pattern == "expr" {
                 TypedExpr pat_val = emit_typed_expr(arm.children.get(0), make_ctx(reg, var_types));
                 if pat_val.slate_type == "string" {
-                    res = res + branch + "(slate_strcmp(" + val.code + ", " + pat_val.code + ") == 0) {\n";
+                    res = res + branch + "(slate_strcmp(" + val.code + "->data, " + pat_val.code + "->data) == 0) {\n";
                 } else {
                     res = res + branch + "(" + val.code + " == " + pat_val.code + ") {\n";
                 }
@@ -163,7 +163,7 @@ string emit_stmt(Node stmt, int level, Registry reg, table(string, string) var_t
         }
         TypedExpr val = emit_typed_expr(stmt.children.get(0), make_ctx(reg, var_types_m));
         if registry_has_enum(reg, val.slate_type) and fn_ret_slate_type == "string" {
-            return ind + "return slate_" + val.slate_type + "_to_str(" + val.code + ");";
+            return ind + "return slate_cstr(slate_" + val.slate_type + "_to_str(" + val.code + "));";
         }
         return ind + "return " + val.code + ";";
     }

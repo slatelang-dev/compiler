@@ -75,11 +75,15 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             mutable string cat_rc = rc;
             if registry_has_enum(ctx.reg, lt) {
                 cat_lc = "slate_" + lt + "_to_str(" + cat_lc + ")";
+            } else if lt == "string" {
+                cat_lc = cat_lc + "->data";
             }
             if registry_has_enum(ctx.reg, rt) {
                 cat_rc = "slate_" + rt + "_to_str(" + cat_rc + ")";
+            } else if rt == "string" {
+                cat_rc = cat_rc + "->data";
             }
-            return typed("slate_concat(" + cat_lc + ", " + cat_rc + ")", "string");
+            return typed("slate_cstr(slate_concat(" + cat_lc + ", " + cat_rc + "))", "string");
         }
         if op == "==" or op == "!=" {
             mutable string eq_lc = lc;
@@ -90,7 +94,11 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
                 eq_rc = "slate_" + rt + "_to_str(" + eq_rc + ")";
             }
             if lt == "string" or rt == "string" {
-                string cmp = "slate_strcmp(" + eq_lc + ", " + eq_rc + ")";
+                mutable string cl = eq_lc;
+                mutable string cr = eq_rc;
+                if lt == "string" { cl = cl + "->data"; }
+                if rt == "string" { cr = cr + "->data"; }
+                string cmp = "slate_strcmp(" + cl + ", " + cr + ")";
                 if op == "==" { return typed_bool("(" + cmp + " == 0)"); }
                 return typed_bool("(" + cmp + " != 0)");
             }
@@ -131,12 +139,15 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if args.len() == 0 { return typed_str("\"\""); }
             TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
             if registry_has_enum(ctx.reg, arg_te.slate_type) {
-                return typed_str("slate_" + arg_te.slate_type + "_to_str(" + arg_te.code + ")");
+                return typed_str("slate_cstr(slate_" + arg_te.slate_type + "_to_str(" + arg_te.code + "))");
             }
             if arg_te.slate_type == "float" {
-                return typed_str("slate_float_to_str(" + arg_te.code + ")");
+                return typed_str("slate_cstr(slate_float_to_str(" + arg_te.code + "))");
             }
-            return typed_str("slate_int_to_str(" + arg_te.code + ")");
+            if arg_te.slate_type == "string" {
+                return typed_str(arg_te.code);
+            }
+            return typed_str("slate_cstr(slate_int_to_str(" + arg_te.code + "))");
         }
         if fn_name == "int" {
             if args.len() == 0 { return typed("0", "int"); }
@@ -165,7 +176,7 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if args.len() == 1 {
                 TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
                 if arg_te.slate_type == "list" or arg_te.slate_type.starts_with("list") {
-                    return typed("slate_run_list(" + arg_te.code + ")", "string");
+                    return typed("slate_cstr(slate_run_list(" + arg_te.code + "))", "string");
                 }
             }
             int arg_count = args.len();
@@ -176,7 +187,7 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
                 run_arg_strs = run_arg_strs.add(emit_expr(args.get(ri), ctx));
                 ri = ri + 1;
             }
-            return typed("slate_run_args(" + string(arg_count) + ", " + build_args_str(run_arg_strs, 0) + ")", "string");
+            return typed("slate_cstr(slate_run_args(" + string(arg_count) + ", " + build_args_str(run_arg_strs, 0) + "))", "string");
         }
         if registry_has_struct(ctx.reg, fn_name) {
             mutable string assigns = "";

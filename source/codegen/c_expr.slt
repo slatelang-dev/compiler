@@ -36,7 +36,7 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
     if expr.kind == NodeKind.IntLit { return typed_int(expr.value); }
     if expr.kind == NodeKind.FloatLit { return typed(expr.value, "float"); }
     if expr.kind == NodeKind.StringLit {
-        return typed_str("\"" + escape_string(expr.value) + "\"");
+        return typed_str("slate_static_string(\"" + escape_string(expr.value) + "\")");
     }
     if expr.kind == NodeKind.CharLit { return typed("'" + expr.value + "'", "char"); }
     if expr.kind == NodeKind.BoolLit {
@@ -122,6 +122,9 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if registry_has_enum(ctx.reg, arg_te.slate_type) {
                 return typed("puts(slate_" + arg_te.slate_type + "_to_str(" + arg_te.code + "))", "int");
             }
+            if arg_te.slate_type == "string" {
+                return typed("puts(" + arg_te.code + "->data)", "int");
+            }
             return typed("puts(" + arg_te.code + ")", "int");
         }
         if fn_name == "string" {
@@ -140,6 +143,7 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
             if arg_te.slate_type == "int" { return arg_te; }
             if arg_te.slate_type == "bool" { return typed("(int64_t)" + arg_te.code, "int"); }
+            if arg_te.slate_type == "string" { return typed("atoll(" + arg_te.code + "->data)", "int"); }
             return typed("atoll(" + arg_te.code + ")", "int");
         }
         if fn_name == "float" {
@@ -147,30 +151,32 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
             if arg_te.slate_type == "float" { return arg_te; }
             if arg_te.slate_type == "int" { return typed("(double)" + arg_te.code, "float"); }
+            if arg_te.slate_type == "string" { return typed("atof(" + arg_te.code + "->data)", "float"); }
             return typed("atof(" + arg_te.code + ")", "float");
         }
         if fn_name == "bool" {
             if args.len() == 0 { return typed("0", "bool"); }
             TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
             if arg_te.slate_type == "bool" { return arg_te; }
+            if arg_te.slate_type == "string" { return typed("atoll(" + arg_te.code + "->data)", "bool"); }
             return typed("atoll(" + arg_te.code + ")", "bool");
         }
         if fn_name == "run" {
             if args.len() == 1 {
                 TypedExpr arg_te = emit_typed_expr(args.get(0), ctx);
                 if arg_te.slate_type == "list" or arg_te.slate_type.starts_with("list") {
-                    return typed("slate_run_list(" + arg_te.code + ")", "int");
+                    return typed("slate_run_list(" + arg_te.code + ")", "string");
                 }
             }
             int arg_count = args.len();
-            if arg_count == 0 { return typed("slate_run_args(0, NULL)", "int"); }
+            if arg_count == 0 { return typed("slate_run_args(0, NULL)", "string"); }
             mutable list(string) run_arg_strs = empty;
             mutable int ri = 0;
             while ri < args.len() {
                 run_arg_strs = run_arg_strs.add(emit_expr(args.get(ri), ctx));
                 ri = ri + 1;
             }
-            return typed("slate_run_args(" + string(arg_count) + ", " + build_args_str(run_arg_strs, 0) + ")", "int");
+            return typed("slate_run_args(" + string(arg_count) + ", " + build_args_str(run_arg_strs, 0) + ")", "string");
         }
         if registry_has_struct(ctx.reg, fn_name) {
             mutable string assigns = "";
@@ -277,7 +283,7 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
         string ftype = lookup_field_type(ctx.reg, target_te.slate_type, expr.value);
         return typed(emit_field_access(ctx.reg, target_te.slate_type, target_te.code, expr.value), ftype);
     }
-    if expr.kind == NodeKind.Interp { return typed_str("\"" + expr.value + "\""); }
+    if expr.kind == NodeKind.Interp { return typed_str("slate_static_string(\"" + escape_string(expr.value) + "\")"); }
     if expr.kind == NodeKind.Block {
         mutable string code = "slate_empty_list()";
         mutable int bi = 0;

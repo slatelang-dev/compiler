@@ -14,7 +14,7 @@ string build_call_str(string fn_name, list(string) arg_strs, Registry reg) {
         return "slate_read_n(" + build_args_str(arg_strs, 0) + ")";
     }
     if fn_name == "write" {
-        return "fputs(" + build_args_str(arg_strs, 0) + ", stdout)";
+        return "fputs(" + build_args_str(arg_strs, 0) + "->data, stdout)";
     }
     if fn_name == "file" {
         return build_args_str(arg_strs, 0);

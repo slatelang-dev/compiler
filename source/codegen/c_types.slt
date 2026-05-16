@@ -10,7 +10,7 @@ string c_type_with_reg(string slate_type, Registry reg) {
     if slate_type == "float" { return "double"; }
     if slate_type == "bool" { return "int8_t"; }
     if slate_type == "char" { return "int32_t"; }
-    if slate_type == "string" { return "char*"; }
+    if slate_type == "string" { return "StringObj*"; }
     if slate_type == "void" { return "void"; }
     if slate_type == "ptr" { return "void*"; }
     if slate_type == "list" or slate_type.starts_with("list(") { return "void*"; }

@@ -101,7 +101,7 @@ Registry seed_c_runtime(Registry r) {
     reg = register_fn(reg, "wait",      "int");
     reg = register_fn(reg, "waitpid",   "int");
     reg = register_fn(reg, "execvp",    "int");
-    reg = register_fn(reg, "slate_run_list", "int");
+    reg = register_fn(reg, "slate_run_list", "string");
     reg = register_fn(reg, "exit",      "void");
     reg = register_fn(reg, "getenv",    "ptr");
     reg = register_fn(reg, "atoi",      "int");

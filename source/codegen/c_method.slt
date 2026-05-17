@@ -15,24 +15,24 @@ string build_method_str(string target_str, string method, list(string) arg_strs,
         return "slate_add(" + target_str + ", " + build_args_str(arg_strs, 0) + ")";
     }
     if method == "has" {
-        return "slate_has(" + target_str + ", " + arg_strs.get(0) + "->data)";
+        return "slate_has(" + target_str + ", ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "keys"   { return "slate_keys(" + target_str + ")"; }
     if method == "values" { return "slate_values(" + target_str + ")"; }
     if method == "contains" {
-        return "slate_contains(" + target_str + "->data, " + arg_strs.get(0) + "->data)";
+        return "slate_contains(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "split" {
-        return "slate_split(" + target_str + "->data, " + arg_strs.get(0) + "->data)";
+        return "slate_split(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "replace" {
-        return "slate_cstr(slate_replace(" + target_str + "->data, " + arg_strs.get(0) + "->data, " + arg_strs.get(1) + "->data))";
+        return "slate_cstr(slate_replace(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data, ((StringObj*)(" + arg_strs.get(1) + "))->data))";
     }
     if method == "starts_with" {
-        return "slate_starts_with(" + target_str + "->data, " + arg_strs.get(0) + "->data)";
+        return "slate_starts_with(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "ends_with" {
-        return "slate_ends_with(" + target_str + "->data, " + arg_strs.get(0) + "->data)";
+        return "slate_ends_with(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "trim"    { return "slate_cstr(slate_trim(" + target_str + "->data))"; }
     if method == "upper"   { return "slate_cstr(slate_str_upper(" + target_str + "->data))"; }
@@ -57,10 +57,10 @@ string build_method_str(string target_str, string method, list(string) arg_strs,
     if method == "string" { return "slate_cstr(slate_to_string(" + target_str + "->data))"; }
     if method == "read"   { return "slate_cstr(slate_file_read(" + target_str + "->data))"; }
     if method == "write" {
-        return "slate_file_write(" + target_str + "->data, " + arg_strs.get(0) + "->data)";
+        return "slate_file_write(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "append" {
-        return "slate_file_append(" + target_str + "->data, " + arg_strs.get(0) + "->data)";
+        return "slate_file_append(" + target_str + "->data, ((StringObj*)(" + arg_strs.get(0) + "))->data)";
     }
     if method == "list" { return "slate_file_list(" + target_str + "->data)"; }
     if method == "exists" {

@@ -76,12 +76,12 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if registry_has_enum(ctx.reg, lt) {
                 cat_lc = "slate_" + lt + "_to_str(" + cat_lc + ")";
             } else if lt == "string" {
-                cat_lc = cat_lc + "->data";
+                cat_lc = "((StringObj*)(" + cat_lc + "))->data";
             }
             if registry_has_enum(ctx.reg, rt) {
                 cat_rc = "slate_" + rt + "_to_str(" + cat_rc + ")";
             } else if rt == "string" {
-                cat_rc = cat_rc + "->data";
+                cat_rc = "((StringObj*)(" + cat_rc + "))->data";
             }
             return typed("slate_cstr(slate_concat(" + cat_lc + ", " + cat_rc + "))", "string");
         }
@@ -96,8 +96,8 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if lt == "string" or rt == "string" {
                 mutable string cl = eq_lc;
                 mutable string cr = eq_rc;
-                if lt == "string" { cl = cl + "->data"; }
-                if rt == "string" { cr = cr + "->data"; }
+                if lt == "string" { cl = "((StringObj*)(" + cl + "))->data"; }
+                if rt == "string" { cr = "((StringObj*)(" + cr + "))->data"; }
                 string cmp = "slate_strcmp(" + cl + ", " + cr + ")";
                 if op == "==" { return typed_bool("(" + cmp + " == 0)"); }
                 return typed_bool("(" + cmp + " != 0)");
@@ -251,9 +251,9 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if elem != "" { fn_ret = elem; }
             if target_type.starts_with("table") {
                 if target_type.contains(", int") or target_type.contains(", bool") {
-                    return typed("(int64_t)slate_table_get(" + target_str + ", " + idx_arg + "->data)", fn_ret);
+                    return typed("(int64_t)slate_table_get(" + target_str + ", ((StringObj*)(" + idx_arg + "))->data)", fn_ret);
                 }
-                return typed("slate_table_get(" + target_str + ", " + idx_arg + "->data)", fn_ret);
+                return typed("slate_table_get(" + target_str + ", ((StringObj*)(" + idx_arg + "))->data)", fn_ret);
             }
             if mc_arg_strs.len() > 0 {
                 TypedExpr idx_te = emit_typed_expr(expr.children.get(1), ctx);
@@ -264,10 +264,10 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
                     return typed("slate_get(" + target_str + ", " + idx_arg + ")", fn_ret);
                 }
             }
-            return typed("slate_table_get(" + target_str + ", " + idx_arg + "->data)", fn_ret);
+            return typed("slate_table_get(" + target_str + ", ((StringObj*)(" + idx_arg + "))->data)", fn_ret);
         }
         if method == "set" {
-            string key_arg = mc_arg_strs.get(0) + "->data";
+            string key_arg = "((StringObj*)(" + mc_arg_strs.get(0) + "))->data";
             string val_arg = mc_arg_strs.get(1);
             mutable bool is_val_int_or_bool = false;
             if mc_arg_strs.len() > 1 {

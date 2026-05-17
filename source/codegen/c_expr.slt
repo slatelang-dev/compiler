@@ -251,9 +251,9 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if elem != "" { fn_ret = elem; }
             if target_type.starts_with("table") {
                 if target_type.contains(", int") or target_type.contains(", bool") {
-                    return typed("(int64_t)slate_table_get(" + target_str + ", " + idx_arg + ")", fn_ret);
+                    return typed("(int64_t)slate_table_get(" + target_str + ", " + idx_arg + "->data)", fn_ret);
                 }
-                return typed("slate_table_get(" + target_str + ", " + idx_arg + ")", fn_ret);
+                return typed("slate_table_get(" + target_str + ", " + idx_arg + "->data)", fn_ret);
             }
             if mc_arg_strs.len() > 0 {
                 TypedExpr idx_te = emit_typed_expr(expr.children.get(1), ctx);
@@ -264,10 +264,10 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
                     return typed("slate_get(" + target_str + ", " + idx_arg + ")", fn_ret);
                 }
             }
-            return typed("slate_table_get(" + target_str + ", " + idx_arg + ")", fn_ret);
+            return typed("slate_table_get(" + target_str + ", " + idx_arg + "->data)", fn_ret);
         }
         if method == "set" {
-            string key_arg = mc_arg_strs.get(0);
+            string key_arg = mc_arg_strs.get(0) + "->data";
             string val_arg = mc_arg_strs.get(1);
             mutable bool is_val_int_or_bool = false;
             if mc_arg_strs.len() > 1 {

@@ -15,7 +15,7 @@ string build_method_str(string target_str, string method, list(string) arg_strs,
         return "slate_add(" + target_str + ", " + build_args_str(arg_strs, 0) + ")";
     }
     if method == "has" {
-        return "slate_has(" + target_str + ", " + arg_strs.get(0) + ")";
+        return "slate_has(" + target_str + ", " + arg_strs.get(0) + "->data)";
     }
     if method == "keys"   { return "slate_keys(" + target_str + ")"; }
     if method == "values" { return "slate_values(" + target_str + ")"; }

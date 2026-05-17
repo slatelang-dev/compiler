@@ -7,11 +7,11 @@ use slate;
 
 string build_call_str(string fn_name, list(string) arg_strs, Registry reg) {
     if fn_name == "time"  { return "slate_time()"; }
-    if fn_name == "home"  { return "slate_cstr(slate_home())"; }
+    if fn_name == "home"  { return "slate_home()"; }
     if fn_name == "args"  { return "slate_args()"; }
-    if fn_name == "read"  { return "slate_cstr(slate_read())"; }
+    if fn_name == "read"  { return "slate_read()"; }
     if fn_name == "read_n" {
-        return "slate_cstr(slate_read_n(" + build_args_str(arg_strs, 0) + "))";
+        return "slate_read_n(" + build_args_str(arg_strs, 0) + ")";
     }
     if fn_name == "write" {
         return "fputs(((StringObj*)(" + build_args_str(arg_strs, 0) + "))->data, stdout)";

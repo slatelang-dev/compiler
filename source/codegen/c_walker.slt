@@ -107,15 +107,15 @@ string emit_enum(Node enum_decl) {
         i = i + 1;
     }
     res = res + "} slate_" + name + ";\n";
-    res = res + "static inline char* slate_" + name + "_to_str(slate_" + name + " val) {\n";
+    res = res + "static inline StringObj* slate_" + name + "_to_str(slate_" + name + " val) {\n";
     res = res + "    switch (val) {\n";
     i = 0;
     while i < enum_decl.children.len() {
         Node variant = enum_decl.children.get(i);
-        res = res + "        case " + name + "_" + variant.value + ": return \"" + variant.value + "\";\n";
+        res = res + "        case " + name + "_" + variant.value + ": return slate_cstr(\"" + variant.value + "\");\n";
         i = i + 1;
     }
-    res = res + "        default: return \"unknown\";\n";
+    res = res + "        default: return slate_cstr(\"unknown\");\n";
     res = res + "    }\n";
     res = res + "}\n";
     return res;

@@ -16,7 +16,8 @@ string strip_outer_parens(string code) {
         mutable string inner = "";
         mutable int ci = 1;
         while ci < ch.len() - 1 {
-            inner = inner + ch.get(ci);
+            string c = ch.get(ci);
+            inner = inner + c;
             ci = ci + 1;
         }
         return inner;

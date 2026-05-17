@@ -258,6 +258,9 @@ TypedExpr emit_typed_expr(Node expr, EmitContext ctx) {
             if mc_arg_strs.len() > 0 {
                 TypedExpr idx_te = emit_typed_expr(expr.children.get(1), ctx);
                 if idx_te.slate_type == "int" {
+                    if fn_ret == "string" {
+                        return typed("((StringObj*)slate_get(" + target_str + ", " + idx_arg + "))", fn_ret);
+                    }
                     return typed("slate_get(" + target_str + ", " + idx_arg + ")", fn_ret);
                 }
             }
